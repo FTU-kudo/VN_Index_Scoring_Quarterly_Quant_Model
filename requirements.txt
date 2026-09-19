@@ -6,8 +6,6 @@ pyarrow>=14.0.0           # parquet read/write backend
 # ── Vietnamese market data ───────────────────────────────────────────────────
 vnstock>=4.0.0
 
-# ── Technical indicators ─────────────────────────────────────────────────────
-pandas-ta>=0.3.14b        # MA, RSI, MACD, Bollinger Bands
 
 # ── Econometrics & Statistics ────────────────────────────────────────────────
 statsmodels>=0.14.0       # OLS, VAR, ADF, KPSS, Granger causality, IRF
