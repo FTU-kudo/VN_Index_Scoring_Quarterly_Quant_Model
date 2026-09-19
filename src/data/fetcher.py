@@ -140,14 +140,16 @@ def fetch_foreign_flows(
                     td = Trading(symbol=ticker, source="KBS")
                     hist = td.price_board([ticker])
                 
-                # Cột foreign buy/sell tùy phiên bản vnstock
-                # Fallback: trả về 0 nếu không có
                 if "buyForeignValue" in hist.columns:
                     net = hist["buyForeignValue"] - hist["sellForeignValue"]
                     records.append(net)
                 time.sleep(0.5)
             except Exception as e:
                 logger.warning(f"[FF] {ticker} cả VCI & KBS đều lỗi: {e}")
+                err_str = str(e).lower()
+                if "timed out" in err_str or "timeout" in err_str or "max retries exceeded" in err_str:
+                    logger.error("[FF] Bị chặn IP (Timeout/Max Retries) tại GitHub Actions. Dừng fetch foreign flow để tránh treo hệ thống.")
+                    break
                 continue
 
         if records:
