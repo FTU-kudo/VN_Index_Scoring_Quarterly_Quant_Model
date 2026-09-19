@@ -1,0 +1,41 @@
+name: "🔍 Daily Data Validation"
+
+on:
+  schedule:
+    # Hàng ngày T2-T6 lúc 11:05 UTC = 18:05 ICT (sau giờ đóng cửa VN)
+    - cron: "5 11 * * 1-5"
+
+  workflow_dispatch: {}
+
+jobs:
+  validate-daily:
+    name: "Validate & Update Daily Indicators"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: "📦 Install core dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy pyarrow vnstock python-dotenv requests
+
+      - name: "📊 Run daily update"
+        env:
+          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
+        run: python run_daily_update.py
+
+      - name: "📤 Upload daily logs"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: "daily-update-${{ github.run_number }}"
+          path: logs/
+          retention-days: 14

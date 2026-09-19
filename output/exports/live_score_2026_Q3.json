@@ -1,0 +1,194 @@
+{
+  "metadata": {
+    "quarter": "2026-Q3",
+    "generated_at": "2026-09-20T00:36:50.269371",
+    "data_range": "2021-01-01 → 2026-09-19",
+    "disclaimer": "Kết quả từ dữ liệu thực tế. Nguồn thiếu được báo rõ."
+  },
+  "latest_market_data": {
+    "vni_close": 1815.66,
+    "vni_date": "2026-09-18",
+    "dxy": 100.22000122070312,
+    "us10y": 4.998000144958496
+  },
+  "mlr_results": {
+    "n_obs": 1273,
+    "r2": 0.24439501126210705,
+    "adj_r2": 0.2371987732741272,
+    "aic": -7914.647144317696,
+    "bic": -7847.70843353645,
+    "dw": 1.6655175904583859,
+    "features": [
+      "delta_dxy",
+      "delta_us10y",
+      "rsi_14",
+      "macd_hist",
+      "bb_pct",
+      "rvol_20d",
+      "price_vs_ma200",
+      "drawdown_60d",
+      "vix_zscore",
+      "spx_ret_5d",
+      "log_return_lag1",
+      "log_return_lag5"
+    ],
+    "adf_resid_pvalue": 1.8435606741092478e-25,
+    "resid_stationary": true,
+    "latest_pred_ret": -0.00025600261570831817
+  },
+  "wfv_results": {
+    "model": "XGBoost",
+    "n_features": 16,
+    "n_folds": 6,
+    "mean_accuracy": 0.5623,
+    "std_accuracy": 0.0772,
+    "mean_f1": 0.5574,
+    "latest_prediction": "DOWN",
+    "latest_proba": {
+      "DOWN": 0.616,
+      "NEUTRAL": 0.384
+    },
+    "latest_confidence": 0.616
+  },
+  "backtest": {
+    "sig1": {
+      "strategy": "sig1",
+      "n_days": 1476,
+      "cumulative_return": -0.1762,
+      "annualized_return": -0.0325,
+      "sharpe_ratio": -0.2692,
+      "max_drawdown": -0.3431,
+      "win_rate": 0.1335
+    },
+    "sig2": {
+      "strategy": "sig2",
+      "n_days": 1476,
+      "cumulative_return": 0.1088,
+      "annualized_return": 0.0178,
+      "sharpe_ratio": 0.0891,
+      "max_drawdown": -0.3108,
+      "win_rate": 0.5075
+    },
+    "sig3": {
+      "strategy": "sig3",
+      "n_days": 1476,
+      "cumulative_return": 0.8519,
+      "annualized_return": 0.1109,
+      "sharpe_ratio": 0.5286,
+      "max_drawdown": -0.2822,
+      "win_rate": 0.5149
+    },
+    "buy_hold": {
+      "strategy": "Buy & Hold",
+      "cumulative_return": 0.9526,
+      "annualized_return": 0.1209,
+      "sharpe_ratio": 0.5735
+    }
+  },
+  "quarterly_score": {
+    "quarter": "2026-Q3",
+    "computed_at": "2026-09-20 00:36 ICT",
+    "total_score": 44.46,
+    "label": "REDUCE",
+    "emoji": "🟠",
+    "description": "Giảm tỷ trọng",
+    "groups": {
+      "technical_price": {
+        "raw": 54.76,
+        "weight": 0.3,
+        "data_source": "vnstock OHLCV (THỰC TẾ)"
+      },
+      "global_intermarket": {
+        "raw": 38.72,
+        "weight": 0.25,
+        "data_source": "yfinance DXY+US10Y+VIX+SPX (THỰC TẾ)"
+      },
+      "mlr_signal": {
+        "raw": 51.6,
+        "weight": 0.2,
+        "data_source": "OLS trên VNI+DXY+US10Y+RSI (THỰC TẾ)"
+      },
+      "ml_direction": {
+        "raw": 23.93,
+        "weight": 0.15,
+        "data_source": "XGBoost/LR WFV 6 folds (THỰC TẾ)"
+      },
+      "macro_monetary": {
+        "raw": null,
+        "weight": 0.1,
+        "data_source": "⚠️ THIẾU DATA: SBV API không public. Cần nhập thủ công macro_sbv.csv"
+      },
+      "valuation_pepb": {
+        "raw": 58.19417781268262,
+        "weight": 0.0,
+        "data_source": "VN_PE_PB_analysis"
+      }
+    },
+    "group_details": {
+      "technical_price": {
+        "rsi_14": 54.3557608648533,
+        "rsi_score": 60,
+        "price_vs_ma200_pct": 1.29,
+        "ma200_score": 60,
+        "drawdown_from_peak_60d_pct": -3.32,
+        "bb_position_pct": 57.13
+      },
+      "global_intermarket": {
+        "dxy": 100.22,
+        "dxy_zscore": 1.0,
+        "us10y_yield": 4.998,
+        "us10y_score": 10.0,
+        "vix_zscore": -1.019,
+        "spx_5d_return_pct": -0.08
+      },
+      "mlr_signal": {
+        "adj_r2": 0.2372,
+        "r2": 0.2444,
+        "dw": 1.666,
+        "n_obs": 1273,
+        "predicted_return": -0.000256
+      },
+      "ml_direction": {
+        "model": "XGBoost",
+        "mean_accuracy": 0.5623,
+        "std_accuracy": 0.0772,
+        "mean_f1": 0.5574,
+        "n_folds_wfv": 6,
+        "direction_forecast": "DOWN",
+        "confidence": 0.616
+      },
+      "macro_monetary": {
+        "status": "MISSING",
+        "lý do": "SBV (Ngân hàng Nhà nước VN) không có public REST API. Dữ liệu lãi suất OMO, tỷ giá trung tâm cần thu thập thủ công từ sbv.gov.vn",
+        "cần": "data/raw/macro_sbv.csv với schema: date, omo_overnight_rate, deposit_12m_rate, usd_vnd_official",
+        "nguồn": "https://www.sbv.gov.vn/webcenter/portal/en/home/fm/ti"
+      },
+      "valuation_pepb": {
+        "pe_zscore_5y": -0.328,
+        "median_pe_market": 10.32,
+        "source": "VN_PE_PB_analysis pipeline (THỰC TẾ)"
+      }
+    },
+    "latest_vni": {
+      "date": "2026-09-18 00:00:00",
+      "close": 1815.66,
+      "log_return": -0.003908,
+      "rsi_14": 54.36
+    },
+    "data_gaps": [
+      "macro_monetary"
+    ]
+  },
+  "feature_importance_top10": {
+    "rvol_20d": 0.10619831830263138,
+    "vix_zscore": 0.10418087989091873,
+    "drawdown_60d": 0.09573844820261002,
+    "price_vs_ma200": 0.08048204332590103,
+    "rsi_14": 0.07194981724023819,
+    "ret_20d": 0.06131790205836296,
+    "bb_pct": 0.06057783588767052,
+    "log_return_lag5": 0.05397642031311989,
+    "macd_hist": 0.05243054777383804,
+    "delta_dxy": 0.04987195506691933
+  }
+}
