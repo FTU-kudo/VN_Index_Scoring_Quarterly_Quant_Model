@@ -35,6 +35,8 @@ jobs:
     name: "Run Q${{ github.event.inputs.quarter || 'Auto' }} Scoring Pipeline"
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write
 
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────
