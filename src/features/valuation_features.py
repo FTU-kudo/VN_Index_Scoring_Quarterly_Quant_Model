@@ -140,13 +140,14 @@ def compute_zscore_rolling(
     return zscore
 
 
-def compute_pe_pb_features(df_pepb: pd.DataFrame) -> pd.DataFrame:
+def compute_pe_pb_features(df_pepb: pd.DataFrame, df_macro: pd.DataFrame = None) -> pd.DataFrame:
     """
     Tính Z-score cho P/E và P/B, và phân loại vùng định giá.
 
     Parameters
     ----------
     df_pepb : DataFrame với cột 'date', 'median_pe', 'median_pb'
+    df_macro: DataFrame vĩ mô để lấy vn10y_yield tính EYG
 
     Returns
     -------
@@ -154,6 +155,8 @@ def compute_pe_pb_features(df_pepb: pd.DataFrame) -> pd.DataFrame:
       - pe_zscore, pb_zscore
       - pe_valuation_zone : {cheap, fair, expensive}
       - pb_valuation_zone : {cheap, fair, expensive}
+      - eyg : Earnings Yield Gap
+      - eyg_zscore : Z-score của EYG
       - valuation_composite_score (0–100, 100 = rẻ nhất)
     """
     if df_pepb.empty or "median_pe" not in df_pepb.columns:
@@ -184,14 +187,30 @@ def compute_pe_pb_features(df_pepb: pd.DataFrame) -> pd.DataFrame:
         lambda z: _zone(z, PB_ZSCORE_OVERBOUGHT, PB_ZSCORE_OVERSOLD)
     )
 
-    # Composite valuation score (0–100): -Z → score cao = rẻ
-    # Normalize -zscore vào [0, 100] dùng percentile rank
-    df["pe_score_raw"] = -df["pe_zscore"]    # Đảo chiều: rẻ → score cao
+    # Tính Earnings Yield Gap (EYG) nếu có VN10Y
+    if df_macro is not None and "vn10y_yield" in df_macro.columns:
+        df = df.merge(df_macro[["date", "vn10y_yield"]], on="date", how="left")
+        df["vn10y_yield"] = df["vn10y_yield"].ffill()
+        # EYG = (1/PE)*100 - VN10Y
+        df["eyg"] = (1 / df["median_pe"]) * 100 - df["vn10y_yield"]
+        df["eyg_zscore"] = compute_zscore_rolling(df["eyg"])
+    else:
+        df["eyg"] = np.nan
+        df["eyg_zscore"] = np.nan
+
+    # Composite valuation score (0–100): -Z → score cao = rẻ cho PE/PB, +Z → rẻ cho EYG
+    df["pe_score_raw"] = -df["pe_zscore"]
     df["pb_score_raw"] = -df["pb_zscore"]
-    df["valuation_composite_score"] = (
-        (df["pe_score_raw"].rank(pct=True) * 0.6 +
-         df["pb_score_raw"].rank(pct=True) * 0.4) * 100
-    )
+    df["eyg_score_raw"] = df["eyg_zscore"]
+    
+    pe_rank = df["pe_score_raw"].rank(pct=True)
+    pb_rank = df["pb_score_raw"].rank(pct=True)
+    eyg_rank = df["eyg_score_raw"].rank(pct=True)
+
+    if df["eyg_zscore"].notna().any():
+        df["valuation_composite_score"] = (pe_rank * 0.4 + pb_rank * 0.3 + eyg_rank * 0.3) * 100
+    else:
+        df["valuation_composite_score"] = (pe_rank * 0.6 + pb_rank * 0.4) * 100
 
     return df
 
@@ -271,7 +290,8 @@ def compute_margin_risk_score(
 
 def build_valuation_leverage_features(
     df_vni: pd.DataFrame,
-    df_margin: pd.DataFrame
+    df_margin: pd.DataFrame,
+    df_macro: pd.DataFrame = None
 ) -> pd.DataFrame:
     """
     Pipeline đầy đủ: tổng hợp tất cả valuation và leverage features.
@@ -282,10 +302,10 @@ def build_valuation_leverage_features(
     """
     logger.info("[ValLev] Building valuation & leverage features...")
 
-    # 1. P/E, P/B Z-score
+    # 1. P/E, P/B Z-score và EYG
     df_pepb = load_sector_pepb_history()
     if not df_pepb.empty:
-        df_pepb = compute_pe_pb_features(df_pepb)
+        df_pepb = compute_pe_pb_features(df_pepb, df_macro)
     else:
         # Tạo empty frame để pipeline không bị lỗi
         df_pepb = pd.DataFrame({
@@ -294,6 +314,7 @@ def build_valuation_leverage_features(
             "pe_zscore": np.nan, "pb_zscore": np.nan,
             "pe_valuation_zone": "unknown",
             "pb_valuation_zone": "unknown",
+            "eyg": np.nan, "eyg_zscore": np.nan,
             "valuation_composite_score": 50.0
         })
 
@@ -304,8 +325,8 @@ def build_valuation_leverage_features(
     df_vl = df_vni[["date"]].copy()
     df_vl = df_vl.merge(
         df_pepb[["date", "median_pe", "median_pb", "pe_zscore", "pb_zscore",
-                 "pe_valuation_zone", "pb_valuation_zone",
-                 "valuation_composite_score"]],
+                 "pe_valuation_zone", "pb_valuation_zone", 
+                 "eyg", "eyg_zscore", "valuation_composite_score"]],
         on="date", how="left"
     )
     df_vl = df_vl.merge(

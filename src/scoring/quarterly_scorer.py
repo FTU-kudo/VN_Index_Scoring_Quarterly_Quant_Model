@@ -111,8 +111,22 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
     else:
         m2_score = 50.0
 
+    # ── VN Bonds (10Y Yield & Spread) ──────────────────────────────────────────
+    vn10y = df_latest.get("vn10y_yield", np.nan)
+    vn_spread = df_latest.get("vn_yield_spread", np.nan)
+    if pd.notna(vn10y) and pd.notna(vn_spread):
+        # VN10Y > 6% = 0, < 2.5% = 100
+        vn10y_score = _clamp_score(100 - (vn10y - 2.5) * 28.5)
+        # Spread < 0 = inverted curve (rủi ro), Spread > 1.5% = tốt
+        spread_score = _clamp_score((vn_spread + 0.2) * 58)
+        bond_score = (vn10y_score + spread_score) / 2
+        scores["bond_market_score"] = bond_score
+        details["vn_bonds"] = f"VN10Y {vn10y:.2f}% | Spread {vn_spread:.2f}% → score {bond_score:.0f}"
+    else:
+        bond_score = 50.0
+
     # ── Tổng điểm nhóm Macro ─────────────────────────────────────────────────
-    raw = np.mean([omo_score, trend_bonus, fx_score, m2_score])
+    raw = np.mean([omo_score, trend_bonus, fx_score, m2_score, bond_score])
     raw = _clamp_score(raw)
 
     return {
@@ -122,11 +136,11 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         "weighted_score": round(raw * SCORING_WEIGHTS["macro_monetary"], 2),
         "sub_scores":    scores,
         "details":       details,
-        "rationale":     _macro_rationale(omo, d_omo, fx_z, m2, raw)
+        "rationale":     _macro_rationale(omo, d_omo, fx_z, m2, raw, df_latest)
     }
 
 
-def _macro_rationale(omo, d_omo, fx_z, m2, score) -> str:
+def _macro_rationale(omo, d_omo, fx_z, m2, score, df_latest) -> str:
     parts = []
     if pd.notna(omo):
         parts.append(f"OMO rate {omo:.2f}% ({'low/favorable' if omo < 5 else 'elevated'})")
@@ -136,6 +150,12 @@ def _macro_rationale(omo, d_omo, fx_z, m2, score) -> str:
         parts.append(f"USD/VND z={fx_z:.1f} ({'pressure' if fx_z > 1 else 'stable'})")
     if pd.notna(m2):
         parts.append(f"M2 tăng {m2:.1f}% YoY ({'mạnh' if m2 > 15 else ('yếu' if m2 < 8 else 'bình thường')})")
+    
+    vn10y = df_latest.get("vn10y_yield", np.nan)
+    vn_spread = df_latest.get("vn_yield_spread", np.nan)
+    if pd.notna(vn10y) and pd.notna(vn_spread):
+        parts.append(f"VN10Y {vn10y:.2f}% (Spread {vn_spread:.2f}%)")
+        
     label = "THUẬN LỢI" if score > 65 else ("TRUNG TÍNH" if score > 40 else "BẤT LỢI")
     return f"Macro: {label} — " + " | ".join(parts) if parts else f"Macro: {label}"
 
@@ -253,7 +273,17 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
     else:
         margin_score = 50.0
 
-    raw = np.mean([pe_score, pb_score, margin_score])
+    # ── Earnings Yield Gap (EYG) ──────────────────────────────────────────────
+    eyg_z = df_latest.get("eyg_zscore", np.nan)
+    if pd.notna(eyg_z):
+        # z > 0 (EYG cao, chứng khoán rẻ hơn trái phiếu) -> score cao
+        eyg_score = _clamp_score(50 + eyg_z * 25)
+        scores["eyg_score"] = eyg_score
+        details["eyg_zscore"] = f"EYG Z-score = {eyg_z:.2f} → score {eyg_score:.0f}"
+    else:
+        eyg_score = 50.0
+
+    raw = np.mean([pe_score, pb_score, margin_score, eyg_score])
     raw = _clamp_score(raw)
 
     # Valuation composite từ valuation_features.py (nếu có)
@@ -269,9 +299,9 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
         "weighted_score": round(raw * SCORING_WEIGHTS["valuation_leverage"], 2),
         "sub_scores":     scores,
         "details":        details,
-        "rationale":      (f"PE Z={pe_z:.2f} | PB Z={pb_z:.2f} | Margin risk={mrisk:.0f}")
-            if all(pd.notna(v) for v in [pe_z, pb_z, mrisk])
-            else "Valuation: Dữ liệu P/E, P/B hoặc margin không đầy đủ"
+        "rationale":      (f"PE Z={pe_z:.2f} | EYG Z={eyg_z:.2f} | Margin risk={mrisk:.0f}")
+            if all(pd.notna(v) for v in [pe_z, eyg_z, mrisk])
+            else "Valuation: Dữ liệu P/E, P/B, EYG hoặc margin không đầy đủ"
     }
 
 
@@ -341,6 +371,9 @@ def score_quant_model(
     raw = (mlr_score * 0.5 + var_score * 0.5) + quality_bonus + granger_bonus
     raw = _clamp_score(raw)
 
+    r2_str = f"{mlr_adj_r2:.3f}" if mlr_adj_r2 is not None and pd.notna(mlr_adj_r2) else "N/A"
+    granger_str = str(granger_leaders) if granger_leaders is not None else "N/A"
+
     return {
         "group":          "quant_model",
         "raw_score":      round(raw, 2),
@@ -349,7 +382,7 @@ def score_quant_model(
         "sub_scores":     scores,
         "details":        details,
         "rationale":      (f"MLR={mlr_score:.0f} | VAR={var_score:.0f} | "
-                          f"R²={mlr_adj_r2:.3f} | Granger={granger_leaders}")
+                          f"R²={r2_str} | Granger={granger_str}")
     }
 
 

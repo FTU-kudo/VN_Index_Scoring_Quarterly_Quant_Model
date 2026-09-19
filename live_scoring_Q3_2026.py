@@ -655,7 +655,7 @@ def run_backtest_simple_signals(df):
 # BƯỚC 6: QUARTERLY SCORING
 # ══════════════════════════════════════════════════════════════════════════════
 
-def compute_live_score(df_vni, df_global, mlr_res, wfv_res):
+def compute_live_score(df_vni, df_global, df_bonds, mlr_res, wfv_res):
     """
     Tính điểm Q3/2026 dựa trên DỮ LIỆU THỰC TẾ.
     Chỉ chấm điểm những nhóm có data thực, còn lại báo rõ MISSING.
@@ -828,18 +828,46 @@ def compute_live_score(df_vni, df_global, mlr_res, wfv_res):
                                "data_source": f"XGBoost/LR WFV {wfv_res.get('n_folds', 0)} folds (THỰC TẾ)"}
     details["ml_direction"] = ml_details
 
-    # ── Nhóm E: Macro & Tiền tệ — BÁO RÕ THIẾU DATA ─────────────────────────
-    scores["macro_monetary"] = {
-        "raw": None,
-        "weight": 0.10,
-        "data_source": "⚠️ THIẾU DATA: SBV API không public. Cần nhập thủ công macro_sbv.csv"
-    }
-    details["macro_monetary"] = {
-        "status": "MISSING",
-        "lý do": "SBV (Ngân hàng Nhà nước VN) không có public REST API. Dữ liệu lãi suất OMO, tỷ giá trung tâm cần thu thập thủ công từ sbv.gov.vn",
-        "cần": "data/raw/macro_sbv.csv với schema: date, omo_overnight_rate, deposit_12m_rate, usd_vnd_official",
-        "nguồn": "https://www.sbv.gov.vn/webcenter/portal/en/home/fm/ti"
-    }
+    # ── Nhóm E: Macro & Tiền tệ — Có thêm Bond Data ─────────────────────────
+    macro_score = None
+    macro_details = {}
+
+    vn10y = np.nan
+    if df_bonds is not None and not df_bonds.empty:
+        df_bonds["date"] = pd.to_datetime(df_bonds["date"])
+        latest_bond = df_bonds.iloc[-1]
+        vn10y = latest_bond.get("vn10y_yield", np.nan)
+        vn2y = latest_bond.get("vn2y_yield", np.nan)
+        
+        if pd.notna(vn10y) and pd.notna(vn2y):
+            vn_spread = vn10y - vn2y
+            macro_details["vn10y_yield"] = round(vn10y, 2)
+            macro_details["vn_spread"] = round(vn_spread, 2)
+            
+            vn10y_s = max(0, min(100, 100 - (vn10y - 2.5) * 28.5))
+            spread_s = max(0, min(100, (vn_spread + 0.2) * 58))
+            macro_score = (vn10y_s + spread_s) / 2
+            
+            macro_details["bond_score"] = round(macro_score, 1)
+            macro_details["status"] = "Partial Data (Bonds only)"
+        else:
+            macro_details["status"] = "MISSING SBV Data"
+    else:
+        macro_details["status"] = "MISSING"
+
+    if macro_score is not None:
+        scores["macro_monetary"] = {
+            "raw": round(macro_score, 2),
+            "weight": 0.10,
+            "data_source": "Vietnam_Bonds JSON (THỰC TẾ)"
+        }
+    else:
+        scores["macro_monetary"] = {
+            "raw": None,
+            "weight": 0.10,
+            "data_source": "⚠️ THIẾU DATA"
+        }
+    details["macro_monetary"] = macro_details
 
     # ── Nhóm F: Định giá P/E, P/B — Tích hợp từ VN_PE_PB_analysis nếu có ──
     pepb_score = None
@@ -856,12 +884,31 @@ def compute_live_score(df_vni, df_global, mlr_res, wfv_res):
                     (market_pe - market_pe.rolling(252*5, min_periods=252).mean()) /
                     market_pe.rolling(252*5, min_periods=252).std()
                 )
+                
+                # Combine with bonds to compute EYG if available
+                eyg_score = 50.0
+                if df_bonds is not None and not df_bonds.empty:
+                    df_pepb_merged = df_pepb.merge(df_bonds, on="date", how="left")
+                    df_pepb_merged["vn10y_yield"] = df_pepb_merged["vn10y_yield"].ffill()
+                    df_pepb_merged["eyg"] = (1 / df_pepb_merged["median_pe"]) * 100 - df_pepb_merged["vn10y_yield"]
+                    zscore_eyg = (
+                        (df_pepb_merged["eyg"] - df_pepb_merged["eyg"].rolling(252*5, min_periods=252).mean()) /
+                        df_pepb_merged["eyg"].rolling(252*5, min_periods=252).std()
+                    )
+                    if not zscore_eyg.empty and pd.notna(zscore_eyg.iloc[-1]):
+                        z_eyg = zscore_eyg.iloc[-1]
+                        pepb_details["eyg_zscore_5y"] = round(z_eyg, 3)
+                        pepb_details["eyg"] = round(df_pepb_merged["eyg"].iloc[-1], 2)
+                        eyg_score = max(0, min(100, 50 + z_eyg * 25))
+
                 if not zscore_pe.empty and pd.notna(zscore_pe.iloc[-1]):
                     z = zscore_pe.iloc[-1]
                     pepb_details["pe_zscore_5y"] = round(z, 3)
                     pepb_details["median_pe_market"] = round(market_pe.iloc[-1], 2)
-                    pepb_score = max(0, min(100, 50 - z * 25))
-                    pepb_details["source"] = "VN_PE_PB_analysis pipeline (THỰC TẾ)"
+                    
+                    pe_s = max(0, min(100, 50 - z * 25))
+                    pepb_score = (pe_s + eyg_score) / 2 if eyg_score != 50.0 else pe_s
+                    pepb_details["source"] = "VN_PE_PB_analysis + Vietnam_Bonds (THỰC TẾ)"
         except Exception as e:
             pepb_details["error"] = str(e)
 
@@ -947,6 +994,14 @@ def main():
     # ── Step 1–4: Fetch & Feature Engineering ────────────────────────────────
     df_vni    = fetch_vnindex()
     df_global = fetch_global()
+    
+    try:
+        from src.data.fetcher import fetch_vietnam_bonds
+        df_bonds = fetch_vietnam_bonds()
+    except Exception as e:
+        log.warning(f"⚠️ Không thể fetch bond data: {e}")
+        df_bonds = None
+
     df_vni    = compute_technical_indicators(df_vni)
     df        = build_feature_matrix(df_vni, df_global)
 
@@ -963,7 +1018,7 @@ def main():
     bt_res = run_backtest_simple_signals(df)
 
     # ── Step 6: Scoring ───────────────────────────────────────────────────────
-    score_record = compute_live_score(df_vni, df_global, mlr_res, wfv_res)
+    score_record = compute_live_score(df_vni, df_global, df_bonds, mlr_res, wfv_res)
 
     # ══════════════════════════════════════════════════════════════════════════
     # IN KẾT QUẢ CHI TIẾT

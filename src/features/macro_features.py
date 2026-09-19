@@ -226,14 +226,46 @@ def build_m2_credit_features(df_m2: pd.DataFrame) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 5. Pipeline Tổng hợp Macro Features
+# 5. Vietnam Bonds Features
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def build_vietnam_bond_features(df_bonds: pd.DataFrame) -> pd.DataFrame:
+    """
+    Tạo features từ lợi suất trái phiếu chính phủ Việt Nam.
+
+    Biến tạo ra:
+      - vn_yield_spread : Độ dốc đường cong lợi suất (10Y - 2Y)
+      - vn10y_zscore    : Z-score 60 ngày của VN10Y
+    """
+    df = df_bonds.copy()
+    if df.empty or "vn10y_yield" not in df.columns or "vn2y_yield" not in df.columns:
+        logger.warning("[BONDS] DataFrame rỗng hoặc thiếu cột — bỏ qua")
+        return df
+
+    # Độ dốc đường cong lợi suất
+    df["vn_yield_spread"] = df["vn10y_yield"] - df["vn2y_yield"]
+
+    # Z-score 60 ngày cho VN10Y (đo lường sự bất thường)
+    roll_mean = df["vn10y_yield"].rolling(60, min_periods=20).mean()
+    roll_std  = df["vn10y_yield"].rolling(60, min_periods=20).std()
+    df["vn10y_zscore"] = (df["vn10y_yield"] - roll_mean) / roll_std.replace(0, np.nan)
+
+    # Lag features
+    df = create_lag_features(df, ["vn10y_yield", "vn_yield_spread", "vn10y_zscore"],
+                             lags=[5, 10, 20])
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 6. Pipeline Tổng hợp Macro Features
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def build_macro_features(
     df_vni_dates: pd.DataFrame,
     df_macro_sbv: pd.DataFrame,
     df_fx: pd.DataFrame,
-    df_m2: pd.DataFrame
+    df_m2: pd.DataFrame,
+    df_bonds: pd.DataFrame = None
 ) -> pd.DataFrame:
     """
     Pipeline đầy đủ: merge tất cả macro features theo ngày giao dịch VNI.
@@ -271,6 +303,16 @@ def build_macro_features(
         result = result.merge(df_m2_feat[["date"] + m2_cols], on="date", how="left")
         # Forward fill monthly data xuống daily
         for col in m2_cols:
+            if col in result.columns:
+                result[col] = result[col].ffill()
+
+    # 4. Vietnam Bonds features
+    if df_bonds is not None and not df_bonds.empty:
+        df_bonds_feat = build_vietnam_bond_features(df_bonds)
+        bond_cols = [c for c in df_bonds_feat.columns if c != "date"]
+        result = result.merge(df_bonds_feat[["date"] + bond_cols], on="date", how="left")
+        # Forward fill in case bond data is slightly delayed
+        for col in bond_cols:
             if col in result.columns:
                 result[col] = result[col].ffill()
 

@@ -87,41 +87,37 @@ def build_ml_features(
         for w in [5, 10, 20]:
             df[f"ret_mom_{w}d"] = df[return_col].rolling(w, min_periods=w//2).sum()
 
-    # ── B. Technical Indicators ───────────────────────────────────────────────
+    # ── B. Technical Indicators (Pure Pandas/Numpy) ──────────────────────────
     if price_col in df.columns:
-        try:
-            import pandas_ta as ta
-            ta_df = df[[price_col]].copy()
-            ta_df.columns = ["close"]
+        ta_df = df[[price_col]].copy()
+        ta_df.columns = ["close"]
 
-            # RSI 14 ngày
-            df["rsi_14"] = ta.rsi(ta_df["close"], length=14)
+        # RSI 14
+        delta = ta_df["close"].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss.replace(0, np.nan)
+        df["rsi_14"] = 100 - (100 / (1 + rs))
 
-            # MACD (12, 26, 9)
-            macd_result = ta.macd(ta_df["close"], fast=12, slow=26, signal=9)
-            if macd_result is not None and not macd_result.empty:
-                df["macd_line"]   = macd_result.iloc[:, 0].values
-                df["macd_signal"] = macd_result.iloc[:, 2].values
-                df["macd_hist"]   = macd_result.iloc[:, 1].values
+        # MACD (12, 26, 9)
+        ema12 = ta_df["close"].ewm(span=12, adjust=False).mean()
+        ema26 = ta_df["close"].ewm(span=26, adjust=False).mean()
+        df["macd_line"] = ema12 - ema26
+        df["macd_signal"] = df["macd_line"].ewm(span=9, adjust=False).mean()
+        df["macd_hist"] = df["macd_line"] - df["macd_signal"]
 
-            # Bollinger Bands (20, 2σ)
-            bb_result = ta.bbands(ta_df["close"], length=20, std=2)
-            if bb_result is not None and not bb_result.empty:
-                df["bb_upper"]  = bb_result.iloc[:, 0].values
-                df["bb_mid"]    = bb_result.iloc[:, 1].values
-                df["bb_lower"]  = bb_result.iloc[:, 2].values
-                df["bb_pct"]    = (df[price_col] - df["bb_lower"]) / (
-                    df["bb_upper"] - df["bb_lower"]
-                ).replace(0, np.nan)
+        # Bollinger Bands (20, 2σ)
+        sma20 = ta_df["close"].rolling(window=20).mean()
+        std20 = ta_df["close"].rolling(window=20).std()
+        df["bb_upper"] = sma20 + (std20 * 2)
+        df["bb_lower"] = sma20 - (std20 * 2)
+        df["bb_mid"] = sma20
+        df["bb_pct"] = (ta_df["close"] - df["bb_lower"]) / (df["bb_upper"] - df["bb_lower"]).replace(0, np.nan)
 
-            # EMA 20/50
-            df["ema_20"] = ta.ema(ta_df["close"], length=20)
-            df["ema_50"] = ta.ema(ta_df["close"], length=50)
-            if "ema_20" in df.columns and "ema_50" in df.columns:
-                df["ema_cross"] = (df["ema_20"] > df["ema_50"]).astype(int)
-
-        except ImportError:
-            logger.warning("[ML-FE] pandas_ta chưa cài — bỏ qua technical indicators")
+        # EMA 20/50
+        df["ema_20"] = ta_df["close"].ewm(span=20, adjust=False).mean()
+        df["ema_50"] = ta_df["close"].ewm(span=50, adjust=False).mean()
+        df["ema_cross"] = (df["ema_20"] > df["ema_50"]).astype(int)
 
     # ── C. Cross-asset features (từ global_features) ─────────────────────────
     cross_asset_cols = [

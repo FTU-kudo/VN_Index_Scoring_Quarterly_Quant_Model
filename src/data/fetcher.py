@@ -132,8 +132,14 @@ def fetch_foreign_flows(
         vn30_symbols = get_vn30_tickers()
         for ticker in vn30_symbols:
             try:
-                td = Trading(symbol=ticker, source="VCI")
-                hist = td.price_board([ticker])
+                try:
+                    td = Trading(symbol=ticker, source="VCI")
+                    hist = td.price_board([ticker])
+                except Exception as e:
+                    logger.warning(f"[FF] {ticker} (VCI) lỗi: {e}. Đang dùng nguồn backup KBS...")
+                    td = Trading(symbol=ticker, source="KBS")
+                    hist = td.price_board([ticker])
+                
                 # Cột foreign buy/sell tùy phiên bản vnstock
                 # Fallback: trả về 0 nếu không có
                 if "buyForeignValue" in hist.columns:
@@ -141,7 +147,7 @@ def fetch_foreign_flows(
                     records.append(net)
                 time.sleep(0.5)
             except Exception as e:
-                logger.warning(f"[FF] {ticker}: {e}")
+                logger.warning(f"[FF] {ticker} cả VCI & KBS đều lỗi: {e}")
                 continue
 
         if records:
@@ -150,11 +156,11 @@ def fetch_foreign_flows(
             df.columns = ["date", "net_foreign_flow_b_vnd"]
             df["net_foreign_flow_b_vnd"] /= 1e9  # Đổi sang tỷ VND
         else:
-            # Fallback: tạo dummy column nếu API không support
-            logger.warning("[FF] Không lấy được dữ liệu, tạo placeholder 0")
+            # Fallback: tạo empty column nếu API không support (không hardcode 0)
+            logger.warning("[FF] Không lấy được dữ liệu, để trống (NaN)")
             vni = fetch_vnindex_ohlcv(start=start, end=end)
             df = vni[["date"]].copy()
-            df["net_foreign_flow_b_vnd"] = 0.0
+            df["net_foreign_flow_b_vnd"] = np.nan
 
         df["date"] = pd.to_datetime(df["date"])
         df = df.sort_values("date").reset_index(drop=True)
@@ -377,3 +383,51 @@ def fetch_m2_credit_manual() -> pd.DataFrame:
         )
         return pd.DataFrame(columns=["date", "m2_yoy_pct",
                                      "credit_growth_yoy_pct", "m2_b_vnd"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 6. Vietnam Bonds — Từ dự án Vietnam_Bonds
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def fetch_vietnam_bonds() -> pd.DataFrame:
+    """
+    Tải dữ liệu đường cong lợi suất trái phiếu chính phủ Việt Nam.
+    Dữ liệu lấy từ project Vietnam_Bonds (JSON format).
+
+    Returns
+    -------
+    DataFrame: date, vn2y_yield, vn10y_yield
+    """
+    import json
+    
+    # Path tới dự án Vietnam_Bonds (cùng cấp với thư mục hiện tại hoặc hardcode như yêu cầu)
+    bond_path = Path(r"d:\17. Quant Analysis\Vietnam_Bonds\exports\data\fitted_curve_ns.json")
+    
+    if not bond_path.exists():
+        logger.warning(f"[BONDS] Không tìm thấy dữ liệu trái phiếu tại {bond_path}")
+        return pd.DataFrame(columns=["date", "vn2y_yield", "vn10y_yield"])
+        
+    logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ {bond_path}...")
+    try:
+        with open(bond_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        df = pd.DataFrame(data)
+        if df.empty:
+            return pd.DataFrame(columns=["date", "vn2y_yield", "vn10y_yield"])
+            
+        df["date"] = pd.to_datetime(df["date"])
+        
+        # Lấy kỳ hạn 2 năm và 10 năm
+        df_2y = df[df["tenor_yr"] == 2.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn2y_yield"})
+        df_10y = df[df["tenor_yr"] == 10.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn10y_yield"})
+        
+        # Merge lại theo date
+        merged = pd.merge(df_10y, df_2y, on="date", how="outer")
+        merged = merged.sort_values("date").reset_index(drop=True)
+        logger.info(f"[BONDS] Tải thành công {len(merged)} ngày dữ liệu trái phiếu")
+        return merged
+    except Exception as e:
+        logger.error(f"[BONDS] Lỗi tải dữ liệu trái phiếu: {e}")
+        return pd.DataFrame(columns=["date", "vn2y_yield", "vn10y_yield"])
+
