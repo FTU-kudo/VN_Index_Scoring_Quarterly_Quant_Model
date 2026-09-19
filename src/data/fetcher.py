@@ -56,9 +56,9 @@ def fetch_vnindex_ohlcv(
 
     logger.info("[VNI] Đang tải OHLCV từ vnstock API...")
     try:
-        from vnstock import Vnstock
-        vn = Vnstock(symbol=VNINDEX_TICKER, source="VCI")
-        df = vn.quote.history(
+        from vnstock.api.quote import Quote
+        q = Quote(symbol=VNINDEX_TICKER, source="VCI")
+        df = q.history(
             start=start, end=end, interval="1D"
         ).reset_index()
         df.columns = [c.lower() for c in df.columns]
