@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VN-Index Quant Score 2026-Q3</title>
+  
+<style>
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --hero-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    
+    --color-green: #16a34a;
+    --color-blue: #2563eb;
+    --color-amber: #d97706;
+    --color-orange: #ea580c;
+    --color-red: #dc2626;
+    --badge-ok-bg: #dcfce7;
+    --badge-ok-text: #16a34a;
+    --badge-fail-bg: #fee2e2;
+    --badge-fail-text: #dc2626;
+  }
+  body.dark-mode {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --hero-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+    
+    --color-green: #22c55e;
+    --color-blue: #3b82f6;
+    --color-amber: #f59e0b;
+    --color-orange: #f97316;
+    --color-red: #ef4444;
+    --badge-ok-bg: #052e16;
+    --badge-ok-text: #4ade80;
+    --badge-fail-bg: #2d0a0a;
+    --badge-fail-text: #f87171;
+  }
+  
+  * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+  body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: var(--bg-primary);
+         color: var(--text-main); margin: 0; padding: 0; }
+  
+  /* Navbar */
+  .navbar { background: var(--bg-card); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--card-shadow); }
+  .nav-left { display: flex; align-items: center; gap: 20px; }
+  .clock { font-size: 16px; font-weight: 600; font-family: monospace; color: var(--color-blue); background: var(--bg-primary); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+  .nav-right { display: flex; gap: 10px; }
+  .btn { cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-main); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .btn:hover { background: var(--border-color); }
+
+  .page-wrapper { max-width: 1300px; margin: 30px auto; padding: 0 20px; display: flex; gap: 30px; align-items: flex-start; }
+  .sidebar { width: 250px; flex-shrink: 0; position: sticky; top: 80px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px 0; box-shadow: var(--card-shadow); }
+  .sidebar ul { list-style: none; padding: 0; margin: 0; }
+  .sidebar li { padding: 12px 20px; cursor: pointer; font-size: 15px; font-weight: 600; border-left: 3px solid transparent; color: var(--text-muted); transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+  .sidebar li:hover { background: var(--bg-primary); color: var(--text-main); }
+  .sidebar li.active { border-left-color: var(--color-blue); color: var(--color-blue); background: var(--bg-primary); }
+  .main-content { flex-grow: 1; min-width: 0; }
+  .tab-content { display: none; animation: fadeIn 0.3s; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  h1 { color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-top: 0; }
+  h2 { color: var(--text-muted); margin-top: 0; margin-bottom: 20px; }
+  h3 { color: var(--text-main); }
+  
+  .hero { background: var(--hero-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 32px; margin-bottom: 28px; text-align: center; box-shadow: var(--card-shadow); }
+  .score-big { font-size: 72px; font-weight: 900; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+  .score-label { font-size: 28px; font-weight: 700; margin-top: 8px; }
+  .score-desc  { color: var(--text-muted); margin-top: 6px; font-size: 16px; }
+  .progress-bar { background: var(--bg-primary); border-radius: 8px; height: 12px; margin: 6px 0; overflow: hidden; border: 1px solid var(--border-color); }
+  .progress-fill { height: 100%; border-radius: 8px; transition: width 1s ease-out; }
+  
+  .grid-6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  
+  .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; box-shadow: var(--card-shadow); transition: transform 0.2s; }
+  .card:hover { transform: translateY(-3px); }
+  .card-title { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+  .card-value { font-size: 24px; font-weight: 700; }
+  .card-detail { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+  
+  .section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 24px; margin-bottom: 24px; box-shadow: var(--card-shadow); }
+  
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th { background: var(--bg-primary); color: var(--text-muted); padding: 12px 14px; text-align: left; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+  td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+  tr:hover td { background: var(--bg-primary); }
+  
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .badge-ok     { background: var(--badge-ok-bg); color: var(--badge-ok-text); }
+  .badge-fail   { background: var(--badge-fail-bg); color: var(--badge-fail-text); }
+  .leading-badge { background: var(--color-blue); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12px; margin-left: 8px; }
+  .report-badge { display: inline-block; white-space: nowrap; }
+  
+  .rationale { color: var(--text-muted); font-style: italic; font-size: 14px; border-left: 3px solid var(--border-color); padding-left: 14px; margin-top: 12px; }
+  .disclaimer { color: var(--text-muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: center; padding-bottom: 40px; }
+  
+  /* Lang toggle */
+  .lang-vi { display: none; }
+  body.lang-vi-active .lang-vi { display: inline; }
+  body.lang-vi-active .lang-en { display: none; }
+  
+  .chart-container { position: sticky; top: 1.5rem; align-self: flex-start; height: 350px; width: 100%; display: flex; justify-content: center; }
+</style>
+
+</head>
+<body>
+  
+    <div class="navbar">
+      <div class="nav-left">
+        <div style="font-weight: 700; font-size: 18px; color: var(--color-blue);">
+          VNI Quant
+        </div>
+        <div class="clock" id="clock">Loading time...</div>
+      </div>
+      <div class="nav-right">
+        <button class="btn" id="lang-btn">🇻🇳 VI</button>
+        <button class="btn" id="theme-btn">🌙 Dark</button>
+      </div>
+    </div>
+    
+  <div class="page-wrapper">
+    <div class="sidebar">
+      <ul>
+        <li class="tab-link active" onclick="openTab(event, 'tab-overview')">
+           🏠 <span class="lang-en">Overview</span><span class="lang-vi">Tổng Quan</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-pillars')">
+           🧩 <span class="lang-en">Pillars Analysis</span><span class="lang-vi">Phân Rã Điểm Số</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-models')">
+           📐 <span class="lang-en">Econometric Models</span><span class="lang-vi">Mô hình Kinh tế lượng</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-history')">
+           📈 <span class="lang-en">Score History</span><span class="lang-vi">Lịch sử Điểm số</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-methodology')">
+           🧠 <span class="lang-en">Methodology</span><span class="lang-vi">Phương pháp luận</span>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="main-content">
+      <h1>📊 <span class="lang-en">VN-Index Quantitative Scoring Model</span><span class="lang-vi">Hệ thống Chấm điểm Định lượng VN-Index</span>
+        <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">2026-Q3 Report</span>
+      </h1>
+      
+    <script>
+      window.chartDataRadar = {
+        labels: ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"],
+        datasets: [{
+          label: 'Score',
+          data: [54.46, 32.38, 24.23, 53.2, 56.36, 75.0],
+          fill: true,
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+        }]
+      };
+    </script>
+    
+        <script>
+          window.chartDataLine = {
+            labels: ["2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3"],
+            datasets: [{
+              label: 'Total Score',
+              data: [66.61, 55.019999999999996, 57.64, 56.24999999999999, 54.78999999999999, 49.72, 60.949999999999996, 53.37, 51.44, 63.7, 54.00000000000001, 71.57, 58.29, 61.34, 46.07000000000001],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#fff',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              fill: true,
+              tension: 0.3
+            }]
+          };
+        </script>
+        
+      
+      <div id="tab-overview" class="tab-content active">
+        
+    <div class="hero">
+      <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px; font-weight: 500;">
+        <span class="lang-en">VN-INDEX QUARTERLY QUANTITATIVE SCORE</span><span class="lang-vi">ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ</span> — 2026-Q3
+        &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-21 02:14
+      </div>
+      <div class="score-big" style="color: var(--color-amber);">46.1</div>
+      <div class="score-label" style="color: var(--color-amber);">🟡 HOLD</div>
+      <div class="score-desc"><span class="lang-en">Neutral — Await confirming signals</span><span class="lang-vi">Trung lập — Chờ tín hiệu xác nhận</span></div>
+      <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:46.07%; background:var(--color-amber);"></div>
+        </div>
+      </div>
+      <div style="margin-top: 14px; color: var(--text-muted); font-size: 14px;">
+        <span class="lang-en">Leading Indicator</span><span class="lang-vi">Nhóm dẫn dắt</span>:
+        <span class="leading-badge"><span class="lang-en">Valuation Leverage</span><span class="lang-vi">Valuation Leverage</span></span>
+      </div>
+    </div>
+    
+        <div class="grid-6">
+        <div class="card">
+          <div class="card-title">💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span></div>
+          <div class="card-value" style="color:var(--color-amber);">54.5</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:54.46%;background:var(--color-amber);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 13.62 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span></div>
+          <div class="card-value" style="color:var(--color-orange);">32.4</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:32.38%;background:var(--color-orange);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 6.48 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span></div>
+          <div class="card-value" style="color:var(--color-orange);">24.2</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:24.23%;background:var(--color-orange);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 4.85 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span></div>
+          <div class="card-value" style="color:var(--color-amber);">53.2</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:53.2%;background:var(--color-amber);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 7.98 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span></div>
+          <div class="card-value" style="color:var(--color-amber);">56.4</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:56.36%;background:var(--color-amber);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 5.64 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span></div>
+          <div class="card-value" style="color:var(--color-blue);">75.0</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:75.0%;background:var(--color-blue);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 7.50 pts</div>
+        </div></div>
+        
+    <div class="section" style="border-color:var(--color-amber);">
+      <h2>🟡 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2026-Q3</h2>
+      <h3 style="color:var(--color-amber);">HOLD: Neutral — Await confirming signals</h3>
+      <div class="rationale">
+        <span class="lang-en">This is a quantitative analysis report. Please combine with fundamental analysis and your risk tolerance before making investment decisions.</span><span class="lang-vi">Đây là báo cáo phân tích định lượng. Vui lòng kết hợp với phân tích cơ bản và mức độ chịu đựng rủi ro cá nhân trước khi ra quyết định đầu tư.</span>
+      </div>
+    </div>
+      </div>
+      
+      <div id="tab-pillars" class="tab-content">
+        
+    <div>
+      <div class="card" style="display:flex; flex-direction:column; margin-bottom: 24px;">
+        <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;"><span class="lang-en">Pillars Overview</span><span class="lang-vi">Tổng quan 6 trụ cột</span></h3>
+        <div class="chart-container" style="flex:1; min-height: 400px;">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+      <div class="grid-2">
+    
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span> — 54.5/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td class="var-col"><span class="lang-en">Vn1Y Yield</span><span class="lang-vi">Vn1Y Yield</span></td><td>3.90% → score 59</td></tr><tr><td class="var-col"><span class="lang-en">Ir Trend</span><span class="lang-vi">Ir Trend</span></td><td>Δ VN1Y = -0.0254 (→ Hold) → score 53</td></tr><tr><td class="var-col"><span class="lang-en">Usd Vnd</span><span class="lang-vi">Usd Vnd</span></td><td>Z-score = -1.26 → score 69</td></tr><tr><td class="var-col"><span class="lang-en">Vn Bonds</span><span class="lang-vi">Vn Bonds</span></td><td>VN10Y 4.41% | Spread 0.45% → score 41</td></tr></tbody>
+          </table>
+          <div class="rationale">Macro: NEUTRAL — VN1Y rate 3.90% (low/favorable) | USD/VND z=-1.3 (stable) | VN10Y 4.41% (Spread 0.45%)</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-orange); margin-top:0; font-size: 16px;">🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span> — 32.4/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td class="var-col"><span class="lang-en">Dxy</span><span class="lang-vi">Dxy</span></td><td>Z = 0.14 → score 47</td></tr><tr><td class="var-col"><span class="lang-en">Us10Y</span><span class="lang-vi">Us10Y</span></td><td>5.00% → score 0</td></tr><tr><td class="var-col"><span class="lang-en">Jpy Carry</span><span class="lang-vi">Jpy Carry</span></td><td>Z = -1.18 (neutral) → score 32</td></tr></tbody>
+          </table>
+          <div class="rationale">Global: Incomplete data — need DXY, US10Y, NFF, JPY</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-orange); margin-top:0; font-size: 16px;">📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span> — 24.2/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td class="var-col"><span class="lang-en">Pe Zscore</span><span class="lang-vi">Pe Zscore</span></td><td>Z = 3.73 (OVERVALUED) → score 0</td></tr><tr><td class="var-col"><span class="lang-en">Pb Zscore</span><span class="lang-vi">Pb Zscore</span></td><td>Z = 3.27 (OVERVALUED) → score 0</td></tr><tr><td class="var-col"><span class="lang-en">Margin Risk</span><span class="lang-vi">Margin Risk</span></td><td>Risk = 15/100 (SAFE) → score 85</td></tr></tbody>
+          </table>
+          <div class="rationale">Valuation: Incomplete P/E, P/B, EYG, or margin data</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span> — 53.2/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td class="var-col"><span class="lang-en">Mlr Forecast</span><span class="lang-vi">Mlr Forecast</span></td><td>Forecast log-return = -0.0007 → score 48</td></tr><tr><td class="var-col"><span class="lang-en">Var Forecast</span><span class="lang-vi">Var Forecast</span></td><td>VAR T+5 return = -0.0035 → score 40</td></tr><tr><td class="var-col"><span class="lang-en">Mlr Adj R2</span><span class="lang-vi">Mlr Adj R2</span></td><td>Adj-R² = 0.9445 → confidence bonus 9.4</td></tr><tr><td class="var-col"><span class="lang-en">Granger Leaders</span><span class="lang-vi">Granger Leaders</span></td><td>0 vars Granger-cause VNI (p<5%)</td></tr></tbody>
+          </table>
+          <div class="rationale">MLR=48 | VAR=40 | R²=0.945 | Granger=0</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span> — 56.4/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td class="var-col"><span class="lang-en">Model Quality</span><span class="lang-vi">Model Quality</span></td><td>Accuracy=99.2% F1=0.991 → quality 99</td></tr><tr><td class="var-col"><span class="lang-en">Ml Signal</span><span class="lang-vi">Ml Signal</span></td><td>Forecast: DOWN (conf=96%)</td></tr></tbody>
+          </table>
+          <div class="rationale">ML: Forecast: DOWN (conf=96%) | Quality=99</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-blue); margin-top:0; font-size: 16px;">🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span> — 75.0/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td class="var-col"><span class="lang-en">Ftse Upgrade</span><span class="lang-vi">Ftse Upgrade</span></td><td>Status: pending → score 55
+  Est passive inflow: $6.4B USD
+  Effect: Sentiment premium VN30 +15-25% during rebalancing</td></tr><tr><td class="var-col"><span class="lang-en">Rebalancing</span><span class="lang-vi">Rebalancing</span></td><td>0 months to rebalancing → bonus +20</td></tr><tr><td class="var-col"><span class="lang-en">Adtv</span><span class="lang-vi">Adtv</span></td><td>ADTV data unavailable → neutral score 50</td></tr></tbody>
+          </table>
+          <div class="rationale">FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index</div>
+        </div></div></div>
+      </div>
+      
+      <div id="tab-models" class="tab-content">
+        
+        <div class="section">
+          <h2>📐 <span class="lang-en">Multiple Linear Regression (MLR) Results</span><span class="lang-vi">Kết quả Hồi quy Đa biến (MLR)</span></h2>
+          <p style="color:var(--text-muted); font-size:13px; font-family:monospace; background:var(--bg-primary); padding:10px; border-radius:6px;">
+            R_VNI = α + β₁·ΔVN1Y + β₂·ΔDXY + β₃·NFF + β₄·Z(PE) + β₅·ΔMrg + β₆·ΔUS10Y + β₇·ΔUSD/JPY + ε
+          </p>
+          <table>
+            <thead><tr>
+              <th><span class="lang-en">Variable</span><span class="lang-vi">Biến độc lập</span></th><th>Beta (β)</th><th>P-value</th>
+              <th><span class="lang-en">Sign Expected</span><span class="lang-vi">Dấu kỳ vọng</span></th><th><span class="lang-en">Sign Actual</span><span class="lang-vi">Dấu thực tế</span></th><th><span class="lang-en">Sign OK</span><span class="lang-vi">Đúng kỳ vọng?</span></th>
+            </tr></thead>
+            <tbody><tr>
+              <td>delta_vn1y_yield</td>
+              <td style="font-weight:700;">0.000452</td>
+              <td style="color:var(--text-muted);">0.3848 </td>
+              <td>-</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">❌</span></td>
+            </tr><tr>
+              <td>delta_dxy</td>
+              <td style="font-weight:700;">0.006499</td>
+              <td style="color:var(--text-muted);">0.507 </td>
+              <td>-</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">❌</span></td>
+            </tr><tr>
+              <td>pe_zscore</td>
+              <td style="font-weight:700;">-0.000021</td>
+              <td style="color:var(--color-amber);">0.0506 *</td>
+              <td>-</td>
+              <td>-</td>
+              <td><span class="badge badge-ok">✅</span></td>
+            </tr><tr>
+              <td>delta_us10y</td>
+              <td style="font-weight:700;">0.000683</td>
+              <td style="color:var(--text-muted);">0.2226 </td>
+              <td>-</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">❌</span></td>
+            </tr><tr>
+              <td>delta_usdjpy</td>
+              <td style="font-weight:700;">-0.006539</td>
+              <td style="color:var(--text-muted);">0.2012 </td>
+              <td>+</td>
+              <td>-</td>
+              <td><span class="badge badge-fail">❌</span></td>
+            </tr><tr>
+              <td>usd_vnd_pct_change</td>
+              <td style="font-weight:700;">0.050950</td>
+              <td style="color:var(--color-green);">0.0077 ***</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>rsi_14</td>
+              <td style="font-weight:700;">0.000004</td>
+              <td style="color:var(--color-blue);">0.0255 **</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>macd_hist</td>
+              <td style="font-weight:700;">0.000723</td>
+              <td style="color:var(--color-green);">0.0 ***</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>bb_pct</td>
+              <td style="font-weight:700;">0.002591</td>
+              <td style="color:var(--color-green);">0.0 ***</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>rvol_20d</td>
+              <td style="font-weight:700;">0.001096</td>
+              <td style="color:var(--color-blue);">0.0364 **</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>drawdown_from_peak</td>
+              <td style="font-weight:700;">-0.000554</td>
+              <td style="color:var(--text-muted);">0.3675 </td>
+              <td>?</td>
+              <td>-</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>price_vs_ma200</td>
+              <td style="font-weight:700;">0.018761</td>
+              <td style="color:var(--color-green);">0.0 ***</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>log_return_lag1</td>
+              <td style="font-weight:700;">0.845924</td>
+              <td style="color:var(--color-green);">0.0 ***</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr><tr>
+              <td>log_return_lag5</td>
+              <td style="font-weight:700;">0.058965</td>
+              <td style="color:var(--color-green);">0.0 ***</td>
+              <td>?</td>
+              <td>+</td>
+              <td><span class="badge badge-fail">—</span></td>
+            </tr></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div id="tab-history" class="tab-content">
+        
+        <div class="section">
+          <h2>📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
+          <div class="chart-container" style="height: 300px;">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <div id="tab-methodology" class="tab-content">
+        
+    <div class="section">
+      <h2>🧠 <span class="lang-en">Interpretation of Results & Methodology</span><span class="lang-vi">Diễn giải Kết quả & Phương pháp luận</span></h2>
+      
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">1. Composite Scoring System (0-100)</span><span class="lang-vi">1. Hệ thống Chấm điểm Tổng hợp (0-100)</span></h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        <span class="lang-en">The model evaluates the VN-Index across 6 fundamental and quantitative pillars. Each pillar is assigned a specific weight based on empirical backtesting: <strong>Macro & Monetary (25%)</strong>, <strong>Valuation & Leverage (20%)</strong>, <strong>Global Intermarket (20%)</strong>, <strong>Quant Model (15%)</strong>, <strong>Machine Learning (10%)</strong>, and <strong>Market Structure (10%)</strong>. A score closer to 100 indicates a highly favorable environment for equities, while a score near 0 suggests extreme risk.</span><span class="lang-vi">Mô hình đánh giá VN-Index qua 6 trụ cột cơ bản và định lượng. Mỗi trụ cột được gán trọng số dựa trên kiểm định lịch sử: <strong>Vĩ mô & Tiền tệ (25%)</strong>, <strong>Định giá & Đòn bẩy (20%)</strong>, <strong>Liên thị trường (20%)</strong>, <strong>Mô hình Định lượng (15%)</strong>, <strong>Machine Learning (10%)</strong>, và <strong>Cấu trúc Thị trường (10%)</strong>. Điểm gần 100 cho thấy môi trường rất thuận lợi cho cổ phiếu, trong khi điểm gần 0 cảnh báo rủi ro cực đại.</span>
+      </p>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">2. Econometric Models</span><span class="lang-vi">2. Mô hình Kinh tế lượng</span></h3>
+      <ul style="font-size: 14px; line-height: 1.6; color: var(--text-muted); padding-left: 20px;">
+        <li><strong><span class="lang-en">Multiple Linear Regression (MLR)</span><span class="lang-vi">Hồi quy Đa biến (MLR)</span>:</strong> <span class="lang-en">Predicts the next quarter return by regressing it against macro variables (DXY, US10Y, VN1Y Yield, etc.). We use Newey-West HAC robust standard errors to correct for heteroskedasticity and autocorrelation, ensuring reliable Beta coefficients.</span><span class="lang-vi">Dự báo lợi suất quý tiếp theo dựa trên các biến vĩ mô (DXY, US10Y, Lợi suất VN1Y...). Mô hình sử dụng sai số chuẩn mạnh Newey-West HAC để khắc phục hiện tượng phương sai thay đổi và tự tương quan, đảm bảo hệ số Beta đáng tin cậy.</span></li>
+        <li><strong><span class="lang-en">Vector Autoregression (VAR)</span><span class="lang-vi">Tự hồi quy Vectơ (VAR)</span>:</strong> <span class="lang-en">Analyzes the dynamic impact of macro shocks over time. It utilizes Granger Causality Tests to determine if variables like DXY lead the VN-Index, and Impulse Response Functions (IRF) to simulate the market reaction to external shocks.</span><span class="lang-vi">Phân tích tác động động lượng của các cú sốc vĩ mô qua thời gian. Mô hình dùng Kiểm định Nhân quả Granger để xác định xem các biến như DXY có dẫn dắt VN-Index hay không, và Hàm phản ứng xung (IRF) để mô phỏng phản ứng của thị trường trước cú sốc bên ngoài.</span></li>
+      </ul>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">3. Machine Learning & Reliability</span><span class="lang-vi">3. Học máy & Độ tin cậy</span></h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        <span class="lang-en">The system incorporates an <strong>XGBoost / Random Forest Classifier</strong> to predict market trends (UP, DOWN, SIDEWAY). To eliminate <em>look-ahead bias</em> (peeking into the future), we strictly employ <strong>Walk-Forward Validation (WFV)</strong> with an expanding window. This means the model is only trained on historical data up to a specific point and tested on unseen future data, mirroring real-world trading conditions.</span><span class="lang-vi">Hệ thống sử dụng bộ phân loại <strong>XGBoost / Random Forest</strong> để dự báo xu hướng (UP, DOWN, SIDEWAY). Để loại bỏ hoàn toàn <em>thành kiến nhìn trước (look-ahead bias)</em>, chúng tôi áp dụng nghiêm ngặt <strong>Kiểm định Trượt (Walk-Forward Validation)</strong> với cửa sổ mở rộng. Điều này đảm bảo mô hình chỉ học từ dữ liệu quá khứ và dự báo trên dữ liệu tương lai chưa từng thấy, phản ánh đúng điều kiện giao dịch thực tế.</span>
+      </p>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">4. Asset Allocation Recommendations</span><span class="lang-vi">4. Khuyến nghị Phân bổ Tài sản</span></h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        <span class="lang-en">Based on the composite score, the model outputs 5 strategic recommendations:</span><span class="lang-vi">Dựa trên điểm số tổng hợp, mô hình đưa ra 5 mức khuyến nghị chiến lược:</span>
+        <br>• <strong>80-100:</strong> <span class="lang-en">Strong Buy (85-100% Equities)</span><span class="lang-vi">Rất hấp dẫn (85-100% Cổ phiếu)</span>
+        <br>• <strong>65-79:</strong> <span class="lang-en">Accumulate (70-85% Equities)</span><span class="lang-vi">Hấp dẫn / Tích lũy (70-85% Cổ phiếu)</span>
+        <br>• <strong>50-64:</strong> <span class="lang-en">Neutral (40-60% Equities)</span><span class="lang-vi">Trung lập (40-60% Cổ phiếu)</span>
+        <br>• <strong>35-49:</strong> <span class="lang-en">Reduce (20-40% Equities)</span><span class="lang-vi">Kém hấp dẫn / Giảm tỷ trọng (20-40% Cổ phiếu)</span>
+        <br>• <strong>0-34:</strong> <span class="lang-en">Defensive (0-20% Equities)</span><span class="lang-vi">Phòng thủ / Tiền mặt (0-20% Cổ phiếu)</span>
+      </p>
+    </div>
+    
+      </div>
+
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
+        Generated at: 2026-09-21 02:14:58
+      </div>
+    </div>
+  </div>
+  
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Real-time Clock
+  function updateClock() {
+    const now = new Date();
+    const options = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const formatter = new Intl.DateTimeFormat('sv-SE', options); // sv-SE gives ISO-like format YYYY-MM-DD HH:mm:ss
+    document.getElementById('clock').innerText = formatter.format(now) + ' ICT';
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Tab switching logic
+  function openTab(evt, tabName) {
+    const tabContents = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < tabContents.length; i++) {
+      tabContents[i].classList.remove("active");
+    }
+    const tabLinks = document.getElementsByClassName("tab-link");
+    for (let i = 0; i < tabLinks.length; i++) {
+      tabLinks[i].classList.remove("active");
+    }
+    document.getElementById(tabName).classList.add("active");
+    if (evt) {
+      evt.currentTarget.classList.add("active");
+    }
+    // Re-render charts so canvas picks up new dimensions when unhidden
+    if (typeof renderCharts === 'function') {
+      setTimeout(renderCharts, 50);
+    }
+  }
+
+  // Theme Toggle
+  const themeBtn = document.getElementById('theme-btn');
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    themeBtn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+    renderCharts(); // Re-render charts for theme colors
+  });
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeBtn.innerHTML = '☀️ Light';
+  }
+
+  // Dynamic Keyword Translation
+  function translateDynamicContent(isVi) {
+    const dict = {
+      "score": "điểm",
+      "Forecast": "Dự báo",
+      "stable": "ổn định",
+      "strong": "mạnh",
+      "weak": "yếu",
+      "normal": "bình thường",
+      "pressure": "áp lực",
+      "high_risk": "rủi ro cao",
+      "neutral": "trung tính",
+      "hikes": "tăng",
+      "cuts": "cắt giảm",
+      "growth": "tăng trưởng",
+      "Incomplete": "Không đầy đủ",
+      "data": "dữ liệu",
+      "need": "cần",
+      "weekly": "tuần",
+      "bil": "tỷ",
+      "Status": "Trạng thái",
+      "confirmed": "đã xác nhận",
+      "pending": "đang chờ",
+      "completed": "hoàn thành",
+      "months to rebalancing": "tháng tới kỳ cơ cấu",
+      "bonus": "điểm thưởng",
+      "unavailable": "không có",
+      "neutral": "trung lập",
+      "Vn1Y Yield": "Lợi suất TPCP VN1Y",
+      "Vn10Y Yield": "Lợi suất TPCP VN10Y",
+      "Vn Yield Spread": "Độ dốc (Spread) 10Y-2Y/1Y"
+    };
+    
+    const els = document.querySelectorAll('td:nth-child(1), td:nth-child(2), .rationale');
+    els.forEach(el => {
+      if (!el.dataset.orig) el.dataset.orig = el.innerHTML;
+      let text = el.dataset.orig;
+      if (isVi) {
+        for (const [en, vi] of Object.entries(dict)) {
+          const regex = new RegExp(`\\b${en}\\b`, 'g');
+          text = text.replace(regex, vi);
+        }
+        // Also case-insensitive replacements for some
+        text = text.replace(/\\bscore\\b/gi, "điểm");
+      }
+      el.innerHTML = text;
+    });
+  }
+
+  // Language Toggle
+  const langBtn = document.getElementById('lang-btn');
+  langBtn.addEventListener('click', () => {
+    document.body.classList.toggle('lang-vi-active');
+    const isVi = document.body.classList.contains('lang-vi-active');
+    localStorage.setItem('lang', isVi ? 'vi' : 'en');
+    langBtn.innerHTML = isVi ? '🇬🇧 EN' : '🇻🇳 VI';
+    
+    // Radar Chart Labels Translation
+    if (window.chartDataRadar && radarChartInstance) {
+      const radarVi = {
+        "Macro & Monetary": "Vĩ mô & Tiền tệ",
+        "Global & Intermarket": "Biến số Toàn cầu",
+        "Valuation & Leverage": "Định giá & Đòn bẩy",
+        "Quant Model": "Mô hình Định lượng",
+        "ML Forecast": "Dự báo Máy học",
+        "Market Structure": "Cấu trúc Thị trường"
+      };
+      const baseLabels = ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"];
+      window.chartDataRadar.labels = baseLabels.map(l => isVi ? radarVi[l] : l);
+      radarChartInstance.update();
+    }
+    
+    translateDynamicContent(isVi);
+  });
+  
+  if (localStorage.getItem('lang') === 'vi') {
+    document.body.classList.add('lang-vi-active');
+    langBtn.innerHTML = '🇬🇧 EN';
+    // Let charts and dynamic content translate on next tick
+    setTimeout(() => translateDynamicContent(true), 100);
+  }
+  
+  // Charts setup
+  let radarChartInstance = null;
+  let lineChartInstance = null;
+
+  function renderCharts() {
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#e2e8f0' : '#0f172a';
+    const gridColor = isDark ? '#64748b' : '#e2e8f0';
+    
+    // Radar Chart
+    const radarCtx = document.getElementById('radarChart');
+    if (radarCtx && window.chartDataRadar) {
+      if (radarChartInstance) radarChartInstance.destroy();
+      radarChartInstance = new Chart(radarCtx, {
+        type: 'radar',
+        data: window.chartDataRadar,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { color: gridColor, lineWidth: 1 },
+              grid: { color: gridColor, lineWidth: 1 },
+              pointLabels: { color: textColor, font: { size: 12 } },
+              ticks: { display: false, min: 0, max: 100 }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Line Chart
+    const lineCtx = document.getElementById('lineChart');
+    if (lineCtx && window.chartDataLine) {
+      if (lineChartInstance) lineChartInstance.destroy();
+      lineChartInstance = new Chart(lineCtx, {
+        type: 'line',
+        data: window.chartDataLine,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: textColor } },
+            y: { grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  }
+  
+  // Initial render is handled at end of body
+</script>
+
+  <script>
+    // Trigger charts on load
+    document.addEventListener("DOMContentLoaded", () => {
+      if (typeof renderCharts === 'function') renderCharts();
+    });
+  </script>
+</body>
+</html>
