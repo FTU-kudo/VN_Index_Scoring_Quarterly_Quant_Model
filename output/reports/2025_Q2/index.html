@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VN-Index Quant Score 2025-Q2</title>
+  
+<style>
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --hero-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    
+    --color-green: #16a34a;
+    --color-blue: #2563eb;
+    --color-amber: #d97706;
+    --color-orange: #ea580c;
+    --color-red: #dc2626;
+    --badge-ok-bg: #dcfce7;
+    --badge-ok-text: #16a34a;
+    --badge-fail-bg: #fee2e2;
+    --badge-fail-text: #dc2626;
+  }
+  body.dark-mode {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --hero-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+    
+    --color-green: #22c55e;
+    --color-blue: #3b82f6;
+    --color-amber: #f59e0b;
+    --color-orange: #f97316;
+    --color-red: #ef4444;
+    --badge-ok-bg: #052e16;
+    --badge-ok-text: #4ade80;
+    --badge-fail-bg: #2d0a0a;
+    --badge-fail-text: #f87171;
+  }
+  
+  * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+  body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: var(--bg-primary);
+         color: var(--text-main); margin: 0; padding: 0; }
+  
+  /* Navbar */
+  .navbar { background: var(--bg-card); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--card-shadow); }
+  .nav-left { display: flex; align-items: center; gap: 20px; }
+  .clock { font-size: 16px; font-weight: 600; font-family: monospace; color: var(--color-blue); background: var(--bg-primary); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+  .nav-right { display: flex; gap: 10px; }
+  .btn { cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-main); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .btn:hover { background: var(--border-color); }
+
+  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+  h1 { color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 12px; }
+  h2 { color: var(--text-muted); margin-top: 36px; }
+  h3 { color: var(--text-main); }
+  
+  .hero { background: var(--hero-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 32px; margin-bottom: 28px; text-align: center; box-shadow: var(--card-shadow); }
+  .score-big { font-size: 72px; font-weight: 900; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+  .score-label { font-size: 28px; font-weight: 700; margin-top: 8px; }
+  .score-desc  { color: var(--text-muted); margin-top: 6px; font-size: 16px; }
+  .progress-bar { background: var(--bg-primary); border-radius: 8px; height: 12px; margin: 6px 0; overflow: hidden; border: 1px solid var(--border-color); }
+  .progress-fill { height: 100%; border-radius: 8px; transition: width 1s ease-out; }
+  
+  .grid-6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  
+  .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; box-shadow: var(--card-shadow); transition: transform 0.2s; }
+  .card:hover { transform: translateY(-3px); }
+  .card-title { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+  .card-value { font-size: 24px; font-weight: 700; }
+  .card-detail { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+  
+  .section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 24px; margin-bottom: 24px; box-shadow: var(--card-shadow); }
+  
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th { background: var(--bg-primary); color: var(--text-muted); padding: 12px 14px; text-align: left; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+  td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+  tr:hover td { background: var(--bg-primary); }
+  
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .badge-ok     { background: var(--badge-ok-bg); color: var(--badge-ok-text); }
+  .badge-fail   { background: var(--badge-fail-bg); color: var(--badge-fail-text); }
+  .leading-badge { background: var(--color-blue); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12px; margin-left: 8px; }
+  .report-badge { display: inline-block; white-space: nowrap; }
+  
+  .rationale { color: var(--text-muted); font-style: italic; font-size: 14px; border-left: 3px solid var(--border-color); padding-left: 14px; margin-top: 12px; }
+  .disclaimer { color: var(--text-muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: center; padding-bottom: 40px; }
+  
+  /* Lang toggle */
+  .lang-vi { display: none; }
+  body.lang-vi-active .lang-vi { display: inline; }
+  body.lang-vi-active .lang-en { display: none; }
+  
+  .chart-container { position: sticky; top: 1.5rem; align-self: flex-start; height: 350px; width: 100%; display: flex; justify-content: center; }
+</style>
+
+</head>
+<body>
+  
+    <div class="navbar">
+      <div class="nav-left">
+        <div style="font-weight: 700; font-size: 18px; color: var(--color-blue);">
+          VNI Quant
+        </div>
+        <div class="clock" id="clock">Loading time...</div>
+      </div>
+      <div class="nav-right">
+        <button class="btn" id="lang-btn">🇻🇳 VI</button>
+        <button class="btn" id="theme-btn">🌙 Dark</button>
+      </div>
+    </div>
+    
+  <div class="container">
+    <h1 style="margin-top:10px;">📊 <span class="lang-en">VN-Index Comprehensive Quantitative Scoring Model</span><span class="lang-vi">Hệ thống Chấm điểm Định lượng VN-Index Toàn diện</span>
+      <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">2025-Q2 Report</span>
+    </h1>
+
+    
+    <div class="hero">
+      <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px; font-weight: 500;">
+        <span class="lang-en">VN-INDEX QUARTERLY QUANTITATIVE SCORE</span><span class="lang-vi">ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ</span> — 2025-Q2
+        &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-20 14:43
+      </div>
+      <div class="score-big" style="color: var(--color-amber);">53.2</div>
+      <div class="score-label" style="color: var(--color-amber);">🟡 HOLD</div>
+      <div class="score-desc"><span class="lang-en">Neutral — Await confirming signals</span><span class="lang-vi">Trung lập — Chờ tín hiệu xác nhận</span></div>
+      <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:53.24%; background:var(--color-amber);"></div>
+        </div>
+      </div>
+      <div style="margin-top: 14px; color: var(--text-muted); font-size: 14px;">
+        <span class="lang-en">Leading Indicator</span><span class="lang-vi">Nhóm dẫn dắt</span>:
+        <span class="leading-badge"><span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span></span>
+      </div>
+    </div>
+    
+    <div class="grid-6">
+        <div class="card">
+          <div class="card-title">💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span></div>
+          <div class="card-value" style="color:var(--color-amber);">53.8</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:53.78%;background:var(--color-amber);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 13.45 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span></div>
+          <div class="card-value" style="color:var(--color-orange);">32.8</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:32.79%;background:var(--color-orange);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 6.56 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span></div>
+          <div class="card-value" style="color:var(--color-amber);">56.2</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:56.17%;background:var(--color-amber);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 11.23 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span></div>
+          <div class="card-value" style="color:var(--color-amber);">50.0</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:50.0%;background:var(--color-amber);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 7.50 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span></div>
+          <div class="card-value" style="color:var(--color-amber);">50.0</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:50.0%;background:var(--color-amber);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 5.00 pts</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span></div>
+          <div class="card-value" style="color:var(--color-green);">95.0</div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:95.0%;background:var(--color-green);"></div>
+          </div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 9.50 pts</div>
+        </div></div>
+    
+    <script>
+      window.chartDataRadar = {
+        labels: ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"],
+        datasets: [{
+          label: 'Score',
+          data: [53.78, 32.79, 56.17, 50.0, 50.0, 95.0],
+          fill: true,
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+        }]
+      };
+    </script>
+    
+        <script>
+          window.chartDataLine = {
+            labels: ["2026-Q1", "2025-Q4", "2026-Q3", "2026-Q2", "2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2"],
+            datasets: [{
+              label: 'Total Score',
+              data: [53.53999999999999, 53.53999999999999, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#fff',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              fill: true,
+              tension: 0.3
+            }]
+          };
+        </script>
+        
+    
+    <div class="grid-2">
+      <div class="card" style="display:flex; flex-direction:column;">
+        <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;"><span class="lang-en">Pillars Overview</span><span class="lang-vi">Tổng quan 6 trụ cột</span></h3>
+        <div class="chart-container" style="flex:1;">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+      <div>
+    
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span> — 53.8/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td>Omo Overnight Rate</td><td>N/A → default 50</td></tr><tr><td>Usd Vnd</td><td>Z-score = -1.26 → score 69</td></tr></tbody>
+          </table>
+          <div class="rationale">Macro: NEUTRAL — USD/VND z=-1.3 (stable)</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-orange); margin-top:0; font-size: 16px;">🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span> — 32.8/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td>Dxy</td><td>Z = 0.08 → score 48</td></tr><tr><td>Us10Y</td><td>5.00% → score 0</td></tr></tbody>
+          </table>
+          <div class="rationale">Global: Incomplete data — need DXY, US10Y, NFF</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span> — 56.2/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td>Margin Risk</td><td>Risk = 15/100 (SAFE) → score 85</td></tr></tbody>
+          </table>
+          <div class="rationale">Valuation: Incomplete P/E, P/B, EYG, or margin data</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span> — 50.0/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td>Mlr Forecast</td><td>No MLR forecast</td></tr></tbody>
+          </table>
+          <div class="rationale">MLR=50 | VAR=50 | R²=N/A | Granger=N/A</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span> — 50.0/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td>Ml Signal</td><td>ML prediction not run</td></tr></tbody>
+          </table>
+          <div class="rationale">ML: ML prediction not run | Quality=50</div>
+        </div>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:var(--color-green); margin-top:0; font-size: 16px;">🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span> — 95.0/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th></tr></thead>
+            <tbody><tr><td>Ftse Upgrade</td><td>Status: confirmed → score 75
+  Est passive inflow: $6.4B USD
+  Effect: Sentiment premium VN30 +15-25% during rebalancing</td></tr><tr><td>Rebalancing</td><td>0 months to rebalancing → bonus +20</td></tr><tr><td>Adtv</td><td>ADTV data unavailable → neutral score 50</td></tr></tbody>
+          </table>
+          <div class="rationale">FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index</div>
+        </div></div></div>
+    
+    
+        <div class="section">
+          <h2>📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
+          <div class="chart-container" style="height: 300px;">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+    
+    <div class="section" style="border-color:var(--color-amber);">
+      <h2>🟡 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2025-Q2</h2>
+      <h3 style="color:var(--color-amber);">HOLD: Neutral — Await confirming signals</h3>
+      <div class="rationale">
+        <span class="lang-en">This is a quantitative analysis report. Please combine with fundamental analysis and your risk tolerance before making investment decisions.</span><span class="lang-vi">Đây là báo cáo phân tích định lượng. Vui lòng kết hợp với phân tích cơ bản và mức độ chịu đựng rủi ro cá nhân trước khi ra quyết định đầu tư.</span>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
+      Generated at: 2026-09-20 14:43:04
+    </div>
+  </div>
+  
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Real-time Clock
+  function updateClock() {
+    const now = new Date();
+    const options = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const formatter = new Intl.DateTimeFormat('sv-SE', options); // sv-SE gives ISO-like format YYYY-MM-DD HH:mm:ss
+    document.getElementById('clock').innerText = formatter.format(now) + ' ICT';
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Theme Toggle
+  const themeBtn = document.getElementById('theme-btn');
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    themeBtn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+    renderCharts(); // Re-render charts for theme colors
+  });
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeBtn.innerHTML = '☀️ Light';
+  }
+
+  // Dynamic Keyword Translation
+  function translateDynamicContent(isVi) {
+    const dict = {
+      "score": "điểm",
+      "Forecast": "Dự báo",
+      "stable": "ổn định",
+      "strong": "mạnh",
+      "weak": "yếu",
+      "normal": "bình thường",
+      "pressure": "áp lực",
+      "hikes": "tăng",
+      "cuts": "cắt giảm",
+      "growth": "tăng trưởng",
+      "Incomplete": "Không đầy đủ",
+      "data": "dữ liệu",
+      "need": "cần",
+      "weekly": "tuần",
+      "bil": "tỷ",
+      "Status": "Trạng thái",
+      "confirmed": "đã xác nhận",
+      "pending": "đang chờ",
+      "completed": "hoàn thành",
+      "months to rebalancing": "tháng tới kỳ cơ cấu",
+      "bonus": "điểm thưởng",
+      "unavailable": "không có",
+      "neutral": "trung lập"
+    };
+    
+    const els = document.querySelectorAll('td:nth-child(2), .rationale');
+    els.forEach(el => {
+      if (!el.dataset.orig) el.dataset.orig = el.innerHTML;
+      let text = el.dataset.orig;
+      if (isVi) {
+        for (const [en, vi] of Object.entries(dict)) {
+          const regex = new RegExp(`\\b${en}\\b`, 'g');
+          text = text.replace(regex, vi);
+        }
+        // Also case-insensitive replacements for some
+        text = text.replace(/\\bscore\\b/gi, "điểm");
+      }
+      el.innerHTML = text;
+    });
+  }
+
+  // Language Toggle
+  const langBtn = document.getElementById('lang-btn');
+  langBtn.addEventListener('click', () => {
+    document.body.classList.toggle('lang-vi-active');
+    const isVi = document.body.classList.contains('lang-vi-active');
+    localStorage.setItem('lang', isVi ? 'vi' : 'en');
+    langBtn.innerHTML = isVi ? '🇬🇧 EN' : '🇻🇳 VI';
+    
+    // Radar Chart Labels Translation
+    if (window.chartDataRadar && radarChartInstance) {
+      const radarVi = {
+        "Macro & Monetary": "Vĩ mô & Tiền tệ",
+        "Global & Intermarket": "Biến số Toàn cầu",
+        "Valuation & Leverage": "Định giá & Đòn bẩy",
+        "Quant Model": "Mô hình Định lượng",
+        "ML Forecast": "Dự báo Máy học",
+        "Market Structure": "Cấu trúc Thị trường"
+      };
+      const baseLabels = ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"];
+      window.chartDataRadar.labels = baseLabels.map(l => isVi ? radarVi[l] : l);
+      radarChartInstance.update();
+    }
+    
+    translateDynamicContent(isVi);
+  });
+  
+  if (localStorage.getItem('lang') === 'vi') {
+    document.body.classList.add('lang-vi-active');
+    langBtn.innerHTML = '🇬🇧 EN';
+    // Let charts and dynamic content translate on next tick
+    setTimeout(() => translateDynamicContent(true), 100);
+  }
+  
+  // Charts setup
+  let radarChartInstance = null;
+  let lineChartInstance = null;
+
+  function renderCharts() {
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#e2e8f0' : '#0f172a';
+    const gridColor = isDark ? '#64748b' : '#e2e8f0';
+    
+    // Radar Chart
+    const radarCtx = document.getElementById('radarChart');
+    if (radarCtx && window.chartDataRadar) {
+      if (radarChartInstance) radarChartInstance.destroy();
+      radarChartInstance = new Chart(radarCtx, {
+        type: 'radar',
+        data: window.chartDataRadar,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { color: gridColor, lineWidth: 1 },
+              grid: { color: gridColor, lineWidth: 1 },
+              pointLabels: { color: textColor, font: { size: 12 } },
+              ticks: { display: false, min: 0, max: 100 }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Line Chart
+    const lineCtx = document.getElementById('lineChart');
+    if (lineCtx && window.chartDataLine) {
+      if (lineChartInstance) lineChartInstance.destroy();
+      lineChartInstance = new Chart(lineCtx, {
+        type: 'line',
+        data: window.chartDataLine,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: textColor } },
+            y: { grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  }
+  
+  // Initial render is handled at end of body
+</script>
+
+  <script>
+    // Trigger charts on load
+    document.addEventListener("DOMContentLoaded", () => {
+      renderCharts();
+    });
+  </script>
+</body>
+</html>

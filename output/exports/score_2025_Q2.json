@@ -1,0 +1,155 @@
+{
+  "metadata": {
+    "quarter": "2025-Q2",
+    "generated_at": "2026-09-20T14:43:04.528033",
+    "model_version": "1.0.0",
+    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
+  },
+  "quarterly_score": {
+    "quarter": "2025-Q2",
+    "date_computed": "2026-09-20 14:43",
+    "total_score": 53.24,
+    "label": "HOLD",
+    "emoji": "🟡",
+    "label_description": "Neutral — Await confirming signals",
+    "most_divergent_pillar": "market_structure",
+    "group_scores": {
+      "macro_monetary": {
+        "raw_score": 53.78,
+        "weighted_score": 13.45
+      },
+      "global_intermarket": {
+        "raw_score": 32.79,
+        "weighted_score": 6.56
+      },
+      "valuation_leverage": {
+        "raw_score": 56.17,
+        "weighted_score": 11.23
+      },
+      "quant_model": {
+        "raw_score": 50.0,
+        "weighted_score": 7.5
+      },
+      "ml_forecast": {
+        "raw_score": 50.0,
+        "weighted_score": 5.0
+      },
+      "market_structure": {
+        "raw_score": 95.0,
+        "weighted_score": 9.5
+      }
+    },
+    "group_details": {
+      "macro_monetary": {
+        "omo_overnight_rate": "N/A → default 50",
+        "usd_vnd": "Z-score = -1.26 → score 69"
+      },
+      "global_intermarket": {
+        "dxy": "Z = 0.08 → score 48",
+        "us10y": "5.00% → score 0"
+      },
+      "valuation_leverage": {
+        "margin_risk": "Risk = 15/100 (SAFE) → score 85"
+      },
+      "quant_model": {
+        "mlr_forecast": "No MLR forecast"
+      },
+      "ml_forecast": {
+        "ml_signal": "ML prediction not run"
+      },
+      "market_structure": {
+        "ftse_upgrade": "Status: confirmed → score 75\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
+        "rebalancing": "0 months to rebalancing → bonus +20",
+        "adtv": "ADTV data unavailable → neutral score 50"
+      }
+    },
+    "group_rationale": {
+      "macro_monetary": "Macro: NEUTRAL — USD/VND z=-1.3 (stable)",
+      "global_intermarket": "Global: Incomplete data — need DXY, US10Y, NFF",
+      "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
+      "quant_model": "MLR=50 | VAR=50 | R²=N/A | Granger=N/A",
+      "ml_forecast": "ML: ML prediction not run | Quality=50",
+      "market_structure": "FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index"
+    }
+  },
+  "mlr_regression": null,
+  "granger_causality": null,
+  "ml_walk_forward_validation": {},
+  "feature_importance": [
+    {
+      "feature": "index",
+      "importance": 0.0,
+      "rank": 1
+    },
+    {
+      "feature": "usd_vnd_close",
+      "importance": 0.0,
+      "rank": 2
+    },
+    {
+      "feature": "usd_vnd_pct_change",
+      "importance": 0.0,
+      "rank": 3
+    },
+    {
+      "feature": "usd_vnd_zscore",
+      "importance": 0.0,
+      "rank": 4
+    },
+    {
+      "feature": "fx_5d_change",
+      "importance": 0.0,
+      "rank": 5
+    },
+    {
+      "feature": "fx_devaluation_flag",
+      "importance": 0.0,
+      "rank": 6
+    },
+    {
+      "feature": "usd_vnd_pct_change_lag1",
+      "importance": 0.0,
+      "rank": 7
+    },
+    {
+      "feature": "usd_vnd_pct_change_lag5",
+      "importance": 0.0,
+      "rank": 8
+    },
+    {
+      "feature": "usd_vnd_pct_change_lag10",
+      "importance": 0.0,
+      "rank": 9
+    },
+    {
+      "feature": "usd_vnd_zscore_lag1",
+      "importance": 0.0,
+      "rank": 10
+    },
+    {
+      "feature": "usd_vnd_zscore_lag5",
+      "importance": 0.0,
+      "rank": 11
+    },
+    {
+      "feature": "usd_vnd_zscore_lag10",
+      "importance": 0.0,
+      "rank": 12
+    },
+    {
+      "feature": "dxy_close",
+      "importance": 0.0,
+      "rank": 13
+    },
+    {
+      "feature": "us10y_yield",
+      "importance": 0.0,
+      "rank": 14
+    },
+    {
+      "feature": "dxy_pct_change",
+      "importance": 0.0,
+      "rank": 15
+    }
+  ]
+}
