@@ -516,14 +516,14 @@ def build_html_report(
 
     # Layout for Radar + Details
     layout_html = f"""
-    <div class="grid-2">
-      <div class="card" style="display:flex; flex-direction:column;">
+    <div>
+      <div class="card" style="display:flex; flex-direction:column; margin-bottom: 24px;">
         <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">{t("Pillars Overview", "Tổng quan 6 trụ cột")}</h3>
-        <div class="chart-container" style="flex:1;">
+        <div class="chart-container" style="flex:1; min-height: 400px;">
           <canvas id="radarChart"></canvas>
         </div>
       </div>
-      <div>
+      <div class="grid-2">
     """
     
     details_html = ""
@@ -536,7 +536,7 @@ def build_html_report(
 
         rows_html = ""
         for k, v in details.items():
-            rows_html += f"<tr><td>{k.replace('_',' ').title()}</td><td>{str(v)}</td></tr>"
+            rows_html += f"<tr><td class=\"var-col\">{t(k.replace('_', ' ').title())}</td><td>{str(v)}</td></tr>"
 
         details_html += f"""
         <div class="section" style="padding:16px;">
