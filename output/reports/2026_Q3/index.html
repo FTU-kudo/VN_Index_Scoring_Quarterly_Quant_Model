@@ -57,9 +57,19 @@
   .btn { cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-main); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
   .btn:hover { background: var(--border-color); }
 
-  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-  h1 { color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 12px; }
-  h2 { color: var(--text-muted); margin-top: 36px; }
+  .page-wrapper { max-width: 1300px; margin: 30px auto; padding: 0 20px; display: flex; gap: 30px; align-items: flex-start; }
+  .sidebar { width: 250px; flex-shrink: 0; position: sticky; top: 80px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px 0; box-shadow: var(--card-shadow); }
+  .sidebar ul { list-style: none; padding: 0; margin: 0; }
+  .sidebar li { padding: 12px 20px; cursor: pointer; font-size: 15px; font-weight: 600; border-left: 3px solid transparent; color: var(--text-muted); transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+  .sidebar li:hover { background: var(--bg-primary); color: var(--text-main); }
+  .sidebar li.active { border-left-color: var(--color-blue); color: var(--color-blue); background: var(--bg-primary); }
+  .main-content { flex-grow: 1; min-width: 0; }
+  .tab-content { display: none; animation: fadeIn 0.3s; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  h1 { color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-top: 0; }
+  h2 { color: var(--text-muted); margin-top: 0; margin-bottom: 20px; }
   h3 { color: var(--text-main); }
   
   .hero { background: var(--hero-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 32px; margin-bottom: 28px; text-align: center; box-shadow: var(--card-shadow); }
@@ -118,16 +128,75 @@
       </div>
     </div>
     
-  <div class="container">
-    <h1 style="margin-top:10px;">📊 <span class="lang-en">VN-Index Comprehensive Quantitative Scoring Model</span><span class="lang-vi">Hệ thống Chấm điểm Định lượng VN-Index Toàn diện</span>
-      <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">2026-Q3 Report</span>
-    </h1>
-
+  <div class="page-wrapper">
+    <div class="sidebar">
+      <ul>
+        <li class="tab-link active" onclick="openTab(event, 'tab-overview')">
+           🏠 <span class="lang-en">Overview</span><span class="lang-vi">Tổng Quan</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-pillars')">
+           🧩 <span class="lang-en">Pillars Analysis</span><span class="lang-vi">Phân Rã Điểm Số</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-models')">
+           📐 <span class="lang-en">Econometric Models</span><span class="lang-vi">Mô hình Kinh tế lượng</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-history')">
+           📈 <span class="lang-en">Score History</span><span class="lang-vi">Lịch sử Điểm số</span>
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-methodology')">
+           🧠 <span class="lang-en">Methodology</span><span class="lang-vi">Phương pháp luận</span>
+        </li>
+      </ul>
+    </div>
     
+    <div class="main-content">
+      <h1>📊 <span class="lang-en">VN-Index Quantitative Scoring Model</span><span class="lang-vi">Hệ thống Chấm điểm Định lượng VN-Index</span>
+        <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">2026-Q3 Report</span>
+      </h1>
+      
+    <script>
+      window.chartDataRadar = {
+        labels: ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"],
+        datasets: [{
+          label: 'Score',
+          data: [53.78, 32.79, 56.17, 50.0, 50.0, 95.0],
+          fill: true,
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+        }]
+      };
+    </script>
+    
+        <script>
+          window.chartDataLine = {
+            labels: ["2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3"],
+            datasets: [{
+              label: 'Total Score',
+              data: [53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#fff',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              fill: true,
+              tension: 0.3
+            }]
+          };
+        </script>
+        
+      
+      <div id="tab-overview" class="tab-content active">
+        
     <div class="hero">
       <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px; font-weight: 500;">
         <span class="lang-en">VN-INDEX QUARTERLY QUANTITATIVE SCORE</span><span class="lang-vi">ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ</span> — 2026-Q3
-        &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-20 14:49
+        &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-20 14:54
       </div>
       <div class="score-big" style="color: var(--color-amber);">53.2</div>
       <div class="score-label" style="color: var(--color-amber);">🟡 HOLD</div>
@@ -143,7 +212,7 @@
       </div>
     </div>
     
-    <div class="grid-6">
+        <div class="grid-6">
         <div class="card">
           <div class="card-title">💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span></div>
           <div class="card-value" style="color:var(--color-amber);">53.8</div>
@@ -192,44 +261,18 @@
           </div>
           <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 9.50 pts</div>
         </div></div>
-    
-    <script>
-      window.chartDataRadar = {
-        labels: ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"],
-        datasets: [{
-          label: 'Score',
-          data: [53.78, 32.79, 56.17, 50.0, 50.0, 95.0],
-          fill: true,
-          backgroundColor: 'rgba(59, 130, 246, 0.2)',
-          borderColor: 'rgba(59, 130, 246, 1)',
-          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
-        }]
-      };
-    </script>
-    
-        <script>
-          window.chartDataLine = {
-            labels: ["2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3"],
-            datasets: [{
-              label: 'Total Score',
-              data: [53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995],
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              borderWidth: 3,
-              pointBackgroundColor: '#3b82f6',
-              pointBorderColor: '#fff',
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              fill: true,
-              tension: 0.3
-            }]
-          };
-        </script>
         
-    
+    <div class="section" style="border-color:var(--color-amber);">
+      <h2>🟡 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2026-Q3</h2>
+      <h3 style="color:var(--color-amber);">HOLD: Neutral — Await confirming signals</h3>
+      <div class="rationale">
+        <span class="lang-en">This is a quantitative analysis report. Please combine with fundamental analysis and your risk tolerance before making investment decisions.</span><span class="lang-vi">Đây là báo cáo phân tích định lượng. Vui lòng kết hợp với phân tích cơ bản và mức độ chịu đựng rủi ro cá nhân trước khi ra quyết định đầu tư.</span>
+      </div>
+    </div>
+      </div>
+      
+      <div id="tab-pillars" class="tab-content">
+        
     <div class="grid-2">
       <div class="card" style="display:flex; flex-direction:column;">
         <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;"><span class="lang-en">Pillars Overview</span><span class="lang-vi">Tổng quan 6 trụ cột</span></h3>
@@ -289,23 +332,24 @@
           </table>
           <div class="rationale">FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index</div>
         </div></div></div>
-    
-    
+      </div>
+      
+      <div id="tab-models" class="tab-content">
+        
+      </div>
+      
+      <div id="tab-history" class="tab-content">
+        
         <div class="section">
           <h2>📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
           <div class="chart-container" style="height: 300px;">
             <canvas id="lineChart"></canvas>
           </div>
         </div>
-    
-    <div class="section" style="border-color:var(--color-amber);">
-      <h2>🟡 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2026-Q3</h2>
-      <h3 style="color:var(--color-amber);">HOLD: Neutral — Await confirming signals</h3>
-      <div class="rationale">
-        <span class="lang-en">This is a quantitative analysis report. Please combine with fundamental analysis and your risk tolerance before making investment decisions.</span><span class="lang-vi">Đây là báo cáo phân tích định lượng. Vui lòng kết hợp với phân tích cơ bản và mức độ chịu đựng rủi ro cá nhân trước khi ra quyết định đầu tư.</span>
       </div>
-    </div>
-    
+      
+      <div id="tab-methodology" class="tab-content">
+        
     <div class="section">
       <h2>🧠 <span class="lang-en">Interpretation of Results & Methodology</span><span class="lang-vi">Diễn giải Kết quả & Phương pháp luận</span></h2>
       
@@ -336,10 +380,12 @@
       </p>
     </div>
     
+      </div>
 
-    <div class="disclaimer">
-      <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
-      Generated at: 2026-09-20 14:49:28
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
+        Generated at: 2026-09-20 14:54:11
+      </div>
     </div>
   </div>
   
@@ -354,6 +400,26 @@
   }
   setInterval(updateClock, 1000);
   updateClock();
+
+  // Tab switching logic
+  function openTab(evt, tabName) {
+    const tabContents = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < tabContents.length; i++) {
+      tabContents[i].classList.remove("active");
+    }
+    const tabLinks = document.getElementsByClassName("tab-link");
+    for (let i = 0; i < tabLinks.length; i++) {
+      tabLinks[i].classList.remove("active");
+    }
+    document.getElementById(tabName).classList.add("active");
+    if (evt) {
+      evt.currentTarget.classList.add("active");
+    }
+    // Re-render charts so canvas picks up new dimensions when unhidden
+    if (typeof renderCharts === 'function') {
+      setTimeout(renderCharts, 50);
+    }
+  }
 
   // Theme Toggle
   const themeBtn = document.getElementById('theme-btn');
@@ -504,7 +570,7 @@
   <script>
     // Trigger charts on load
     document.addEventListener("DOMContentLoaded", () => {
-      renderCharts();
+      if (typeof renderCharts === 'function') renderCharts();
     });
   </script>
 </body>

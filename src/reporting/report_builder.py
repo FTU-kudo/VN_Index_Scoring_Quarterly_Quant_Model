@@ -126,9 +126,19 @@ _HTML_STYLE = """
   .btn { cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-main); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
   .btn:hover { background: var(--border-color); }
 
-  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-  h1 { color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 12px; }
-  h2 { color: var(--text-muted); margin-top: 36px; }
+  .page-wrapper { max-width: 1300px; margin: 30px auto; padding: 0 20px; display: flex; gap: 30px; align-items: flex-start; }
+  .sidebar { width: 250px; flex-shrink: 0; position: sticky; top: 80px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px 0; box-shadow: var(--card-shadow); }
+  .sidebar ul { list-style: none; padding: 0; margin: 0; }
+  .sidebar li { padding: 12px 20px; cursor: pointer; font-size: 15px; font-weight: 600; border-left: 3px solid transparent; color: var(--text-muted); transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+  .sidebar li:hover { background: var(--bg-primary); color: var(--text-main); }
+  .sidebar li.active { border-left-color: var(--color-blue); color: var(--color-blue); background: var(--bg-primary); }
+  .main-content { flex-grow: 1; min-width: 0; }
+  .tab-content { display: none; animation: fadeIn 0.3s; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  h1 { color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-top: 0; }
+  h2 { color: var(--text-muted); margin-top: 0; margin-bottom: 20px; }
   h3 { color: var(--text-main); }
   
   .hero { background: var(--hero-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 32px; margin-bottom: 28px; text-align: center; box-shadow: var(--card-shadow); }
@@ -184,6 +194,26 @@ _JS_SCRIPT = """
   }
   setInterval(updateClock, 1000);
   updateClock();
+
+  // Tab switching logic
+  function openTab(evt, tabName) {
+    const tabContents = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < tabContents.length; i++) {
+      tabContents[i].classList.remove("active");
+    }
+    const tabLinks = document.getElementsByClassName("tab-link");
+    for (let i = 0; i < tabLinks.length; i++) {
+      tabLinks[i].classList.remove("active");
+    }
+    document.getElementById(tabName).classList.add("active");
+    if (evt) {
+      evt.currentTarget.classList.add("active");
+    }
+    // Re-render charts so canvas picks up new dimensions when unhidden
+    if (typeof renderCharts === 'function') {
+      setTimeout(renderCharts, 50);
+    }
+  }
 
   // Theme Toggle
   const themeBtn = document.getElementById('theme-btn');
@@ -636,30 +666,66 @@ def build_html_report(
 </head>
 <body>
   {navbar}
-  <div class="container">
-    <h1 style="margin-top:10px;">📊 {t('VN-Index Comprehensive Quantitative Scoring Model', 'Hệ thống Chấm điểm Định lượng VN-Index Toàn diện')}
-      <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">{quarter} Report</span>
-    </h1>
+  <div class="page-wrapper">
+    <div class="sidebar">
+      <ul>
+        <li class="tab-link active" onclick="openTab(event, 'tab-overview')">
+           🏠 {t('Overview', 'Tổng Quan')}
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-pillars')">
+           🧩 {t('Pillars Analysis', 'Phân Rã Điểm Số')}
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-models')">
+           📐 {t('Econometric Models', 'Mô hình Kinh tế lượng')}
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-history')">
+           📈 {t('Score History', 'Lịch sử Điểm số')}
+        </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-methodology')">
+           🧠 {t('Methodology', 'Phương pháp luận')}
+        </li>
+      </ul>
+    </div>
+    
+    <div class="main-content">
+      <h1>📊 {t('VN-Index Quantitative Scoring Model', 'Hệ thống Chấm điểm Định lượng VN-Index')}
+        <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">{quarter} Report</span>
+      </h1>
+      {chart_js_data}
+      
+      <div id="tab-overview" class="tab-content active">
+        {hero_html}
+        {cards_html}
+        {rec_html}
+      </div>
+      
+      <div id="tab-pillars" class="tab-content">
+        {layout_html}
+      </div>
+      
+      <div id="tab-models" class="tab-content">
+        {mlr_html}
+      </div>
+      
+      <div id="tab-history" class="tab-content">
+        {history_html}
+      </div>
+      
+      <div id="tab-methodology" class="tab-content">
+        {interpretation_html}
+      </div>
 
-    {hero_html}
-    {cards_html}
-    {chart_js_data}
-    {layout_html}
-    {mlr_html}
-    {history_html}
-    {rec_html}
-    {interpretation_html}
-
-    <div class="disclaimer">
-      <strong>Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.')}<br>
-      Generated at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.')}<br>
+        Generated at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+      </div>
     </div>
   </div>
   {_JS_SCRIPT}
   <script>
     // Trigger charts on load
     document.addEventListener("DOMContentLoaded", () => {{
-      renderCharts();
+      if (typeof renderCharts === 'function') renderCharts();
     }});
   </script>
 </body>
