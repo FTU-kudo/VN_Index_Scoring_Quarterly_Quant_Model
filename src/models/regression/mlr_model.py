@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Tên biến cho mô hình MLR lõi
 CORE_FEATURES = [
-    "delta_omo_rate",          # β₁: Δ Lãi suất OMO
+    "delta_vn1y_yield",        # β₁: Δ Lợi suất TPCP 1Y
     "delta_dxy",               # β₂: Δ DXY
     "net_foreign_flow_b_vnd",  # β₃: Net Foreign Flow
     "pe_zscore",               # β₄: Z-score P/E
@@ -43,7 +43,7 @@ CORE_FEATURES = [
 
 # Dấu kỳ vọng theo lý thuyết kinh tế
 EXPECTED_SIGNS = {
-    "delta_omo_rate":           -1,   # β₁ < 0: tăng lãi suất → VNI giảm
+    "delta_vn1y_yield":         -1,   # β₁ < 0: tăng lãi suất → VNI giảm
     "delta_dxy":                -1,   # β₂ < 0: USD mạnh → VNI giảm
     "net_foreign_flow_b_vnd":  +1,   # β₃ > 0: ngoại mua → VNI tăng
     "pe_zscore":                -1,   # β₄ < 0: định giá đắt → mean reversion ↓

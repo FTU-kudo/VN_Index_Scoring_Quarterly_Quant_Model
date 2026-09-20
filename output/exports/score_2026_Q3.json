@@ -1,13 +1,13 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-20T14:54:11.327492",
+    "generated_at": "2026-09-20T15:08:04.529811",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "date_computed": "2026-09-20 14:54",
+    "date_computed": "2026-09-20 15:08",
     "total_score": 53.24,
     "label": "HOLD",
     "emoji": "🟡",
@@ -41,7 +41,7 @@
     },
     "group_details": {
       "macro_monetary": {
-        "omo_overnight_rate": "N/A → default 50",
+        "vn1y_yield": "N/A → default 50",
         "usd_vnd": "Z-score = -1.26 → score 69"
       },
       "global_intermarket": {

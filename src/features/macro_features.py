@@ -85,60 +85,7 @@ def create_rolling_features(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 2. Interest Rate Features
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def build_interest_rate_features(df_macro: pd.DataFrame) -> pd.DataFrame:
-    """
-    Tạo features từ lãi suất.
-
-    Biến tạo ra:
-      - delta_omo_rate      : Δ Lãi suất OMO (bps), first-difference
-      - delta_deposit_12m   : Δ Lãi suất huy động 12T (bps)
-      - ir_policy_shift     : Phân loại +1 (tăng), 0 (giữ), -1 (giảm)
-      - rate_level_regime   : low (<5%), normal (5-7%), high (>7%)
-      - delta_omo_lag5      : Lag 1 tuần (5 phiên)
-      - delta_omo_lag10     : Lag 2 tuần
-      - delta_omo_lag20     : Lag 1 tháng
-
-    Lý luận kinh tế:
-      - Khi SBV tăng OMO rate → chi phí vốn ngân hàng ↑ → tín dụng thu hẹp
-        → margin call pressure ↑ → VNI downside pressure (β₁ < 0)
-      - Độ trễ truyền dẫn: 4–8 tuần theo nghiên cứu Phạm Thế Anh (2014)
-    """
-    df = df_macro.copy()
-    needed = ["omo_overnight_rate", "deposit_12m_rate"]
-    missing = [c for c in needed if c not in df.columns]
-    if missing:
-        logger.warning(f"[IR] Thiếu cột: {missing} — bỏ qua interest rate features")
-        return df
-
-    # First difference (delta, tính bằng bps nếu cần)
-    df["delta_omo_rate"]    = df["omo_overnight_rate"].diff()
-    df["delta_deposit_12m"] = df["deposit_12m_rate"].diff()
-
-    # Phân loại chính sách tiền tệ
-    df["ir_policy_shift"] = df["delta_omo_rate"].apply(
-        lambda x: 1 if x > 0.05 else (-1 if x < -0.05 else 0)
-    )
-
-    # Regime lãi suất
-    df["rate_level_regime"] = df["omo_overnight_rate"].apply(
-        lambda r: "low" if r < 5.0 else ("high" if r > 7.0 else "normal")
-    )
-
-    # Lag features
-    df = create_lag_features(df, ["delta_omo_rate", "delta_deposit_12m"],
-                             lags=[5, 10, 20])
-
-    # Cumulative rate change 3 tháng (proxy monetary policy momentum)
-    df["omo_rate_3m_cumchange"] = df["delta_omo_rate"].rolling(60, min_periods=20).sum()
-
-    return df
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. FX Features
+# 2. FX Features
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def build_fx_features(df_fx: pd.DataFrame) -> pd.DataFrame:
@@ -234,16 +181,33 @@ def build_vietnam_bond_features(df_bonds: pd.DataFrame) -> pd.DataFrame:
     Tạo features từ lợi suất trái phiếu chính phủ Việt Nam.
 
     Biến tạo ra:
-      - vn_yield_spread : Độ dốc đường cong lợi suất (10Y - 2Y)
-      - vn10y_zscore    : Z-score 60 ngày của VN10Y
+      - delta_vn1y_yield      : Δ Lợi suất 1Y (proxy cho chính sách ngắn hạn / OMO)
+      - vn1y_policy_shift     : +1 (tăng > 0.15%), -1 (giảm < -0.15%), 0 (giữ nguyên)
+      - vn1y_rate_level_regime: low (<2%), normal (2-5%), high (>5%)
+      - vn1y_rate_3m_cumchange: Tích lũy thay đổi lợi suất VN1Y trong 3 tháng
+      - vn_yield_spread       : Độ dốc đường cong lợi suất (10Y - 2Y)
+      - vn10y_zscore          : Z-score 60 ngày của VN10Y
     """
     df = df_bonds.copy()
-    if df.empty or "vn10y_yield" not in df.columns or "vn2y_yield" not in df.columns:
+    if df.empty or "vn10y_yield" not in df.columns or "vn1y_yield" not in df.columns:
         logger.warning("[BONDS] DataFrame rỗng hoặc thiếu cột — bỏ qua")
         return df
 
+    # Short-term policy rate proxy (VN1Y)
+    df["delta_vn1y_yield"] = df["vn1y_yield"].diff()
+    df["vn1y_policy_shift"] = df["delta_vn1y_yield"].apply(
+        lambda x: 1 if x > 0.15 else (-1 if x < -0.15 else 0)
+    )
+    df["vn1y_rate_level_regime"] = df["vn1y_yield"].apply(
+        lambda r: "low" if r < 2.0 else ("high" if r > 5.0 else "normal")
+    )
+    df["vn1y_rate_3m_cumchange"] = df["delta_vn1y_yield"].rolling(60, min_periods=20).sum()
+
     # Độ dốc đường cong lợi suất
-    df["vn_yield_spread"] = df["vn10y_yield"] - df["vn2y_yield"]
+    if "vn2y_yield" in df.columns:
+        df["vn_yield_spread"] = df["vn10y_yield"] - df["vn2y_yield"]
+    else:
+        df["vn_yield_spread"] = df["vn10y_yield"] - df["vn1y_yield"]
 
     # Z-score 60 ngày cho VN10Y (đo lường sự bất thường)
     roll_mean = df["vn10y_yield"].rolling(60, min_periods=20).mean()
@@ -251,7 +215,7 @@ def build_vietnam_bond_features(df_bonds: pd.DataFrame) -> pd.DataFrame:
     df["vn10y_zscore"] = (df["vn10y_yield"] - roll_mean) / roll_std.replace(0, np.nan)
 
     # Lag features
-    df = create_lag_features(df, ["vn10y_yield", "vn_yield_spread", "vn10y_zscore"],
+    df = create_lag_features(df, ["delta_vn1y_yield", "vn10y_yield", "vn_yield_spread", "vn10y_zscore"],
                              lags=[5, 10, 20])
     return df
 
@@ -285,11 +249,7 @@ def build_macro_features(
     result = df_vni_dates[["date"]].copy()
     result["date"] = pd.to_datetime(result["date"])
 
-    # 1. Interest Rate features
-    if not df_macro_sbv.empty:
-        df_ir = build_interest_rate_features(df_macro_sbv)
-        result = result.merge(df_ir, on="date", how="left")
-
+    # 1. Interest Rate features (Bỏ qua OMO thủ công do đã thay bằng VN1Y Bond Yield)
     # 2. FX features
     if not df_fx.empty:
         df_fx_feat = build_fx_features(df_fx)

@@ -30,7 +30,7 @@ Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa 
 
 | # | Trụ cột | Trọng số | Các chỉ báo chính | Ghi chú |
 |---|---------|:--------:|---------------------|---------|
-| 1 | **Macro & Monetary** | **25%** | OMO rate, ΔIR, USD/VND Z-score, M2 YoY, VN10Y Yield, Yield Spread | Môi trường lãi suất & tiền tệ |
+| 1 | **Macro & Monetary** | **25%** | VN1Y Yield, ΔIR, USD/VND Z-score, M2 YoY, VN10Y Yield, Yield Spread | Môi trường lãi suất & tiền tệ |
 | 2 | **Global & Intermarket** | **20%** | DXY Z-score, US10Y Yield, Net Foreign Flow Z-score | Áp lực toàn cầu & dòng vốn ngoại |
 | 3 | **Valuation & Leverage** | **20%** | P/E Z-score 5Y, P/B Z-score 5Y, Margin Risk, Earnings Yield Gap | Định giá tương đối & rủi ro đòn bẩy |
 | 4 | **Quant Model (MLR + VAR)** | **15%** | MLR predicted return, VAR T+5 forecast, Adj-R², Granger leaders | Tín hiệu từ mô hình kinh tế lượng |
@@ -38,7 +38,7 @@ Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa 
 | 6 | **Market Structure & FTSE** | **10%** | FTSE upgrade status, rebalancing proximity, ADTV change | Cấu trúc vi mô & nâng hạng |
 
 > **⚠️ Lưu ý về phương pháp luận (Methodology Notes):**
-> - **Hệ số quy đổi**: Các hàm chuyển đổi raw → score 0-100 (ví dụ: `omo_score = 100 - omo*12.5`, `mlr_score = 50 + pred*3000`) là heuristics được calibrate theo expert judgment. Hướng cải tiến: chuyển sang percentile rank thực tế trên cửa sổ expanding/rolling.
+> - **Hệ số quy đổi**: Các hàm chuyển đổi raw → score 0-100 (ví dụ: `vn1y_score = 100 - (vn1y-1.0)*14.0`, `mlr_score = 50 + pred*3000`) là heuristics được calibrate theo expert judgment. Hướng cải tiến: chuyển sang percentile rank thực tế trên cửa sổ expanding/rolling.
 > - **Chỉ báo kỹ thuật ngắn hạn**: Một số indicators (RSI-14, MACD daily) có chu kỳ ngắn hơn đáng kể so với tần suất ra quyết định hàng quý (3 tháng). Hệ thống sử dụng giá trị snapshot tại thời điểm chấm điểm — đây là trade-off có chủ đích giữa tính kịp thời (timeliness) và tính ổn định (stability).
 > - **Most Divergent Pillar**: Trường `most_divergent_pillar` trong output là nhóm có raw score lệch xa 50 nhất — đây là heuristic đơn giản, KHÔNG phải kết quả từ Granger Causality test. Granger tests được dùng riêng trong mô hình VAR để xếp hạng biến giải thích.
 
@@ -50,13 +50,13 @@ Hệ thống kết hợp ba tầng mô hình phân tích định lượng:
 
 ### 1. Mô hình Hồi quy Đa biến (Multi-Linear Regression - MLR)
 Thiết lập phương trình dự báo lợi suất VN-Index chu kỳ tiếp theo $R_{t+h}$:
-$$R_{t+h} = \alpha + \beta_1 \Delta \text{OMO}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE\_Zscore}_t + \beta_6 \Delta \text{Margin}_t + \epsilon_t$$
+$$R_{t+h} = \alpha + \beta_1 \Delta \text{VN1Y}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE\_Zscore}_t + \beta_6 \Delta \text{Margin}_t + \epsilon_t$$
 - **Newey-West HAC Standard Errors**: Tự động hiệu chỉnh sai số nhằm giải quyết hiện tượng phương sai thay đổi (Heteroskedasticity) và tự tương quan (Autocorrelation).
 - **Phân tích độ nhạy**: Đánh giá chính xác $p$-value và hệ số $\beta$ chuẩn hóa để xếp hạng mức độ ảnh hưởng của từng biến số.
 
 ### 2. Mô hình Tự Hồi quy Vectơ (Vector Autoregression - VAR)
 - **Lag selection**: Tự động lựa chọn độ trễ tối ưu dựa trên tiêu chuẩn thông tin Akaike (AIC) và Schwarz-Bayesian (BIC).
-- **Granger Causality Test**: Kiểm tra kiểm định nhân quả theo thời gian để xác định xem sự thay đổi của biến số vĩ mô (ví dụ: DXY, Lãi suất OMO) dẫn dắt VN-Index trước bao nhiêu tuần.
+- **Granger Causality Test**: Kiểm tra kiểm định nhân quả theo thời gian để xác định xem sự thay đổi của biến số vĩ mô (ví dụ: DXY, Lợi suất VN1Y) dẫn dắt VN-Index trước bao nhiêu tuần.
 - **Impulse Response Functions (IRF)**: Mô phỏng cú sốc (1 độ lệch chuẩn) từ US10Y hoặc DXY tác động lên quỹ đạo VN-Index trong 12 kỳ tiếp theo.
 
 ### 3. Mô hình Học máy & Kiểm định Trượt (XGBoost + Walk-Forward Validation)
@@ -102,7 +102,7 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q3
-     Generated: 2026-09-20T14:54:11.327492
+     Generated: 2026-09-20T15:08:04.529811
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A

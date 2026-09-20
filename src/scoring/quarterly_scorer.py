@@ -68,25 +68,25 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
     scores = {}
     details = {}
 
-    # ── Lãi suất OMO ────────────────────────────────────────────────────────
-    omo = df_latest.get("omo_overnight_rate", np.nan)
-    if pd.notna(omo):
-        # Thang điểm: 0% = 100, 8% = 0 (tuyến tính)
-        omo_score = _clamp_score(100 - omo * 12.5)
-        scores["omo_rate_score"] = omo_score
-        details["omo_overnight_rate"] = f"{omo:.2f}% → score {omo_score:.0f}"
+    # ── Chính sách tiền tệ ngắn hạn (Lợi suất TPCP 1Y proxy) ───────────────
+    vn1y = df_latest.get("vn1y_yield", np.nan)
+    if pd.notna(vn1y):
+        # Thang điểm: 1% = 100, 8% = 0 (tuyến tính, tương tự OMO)
+        vn1y_score = _clamp_score(100 - (vn1y - 1.0) * 14.0)
+        scores["vn1y_rate_score"] = vn1y_score
+        details["vn1y_yield"] = f"{vn1y:.2f}% → score {vn1y_score:.0f}"
     else:
-        omo_score = 50.0
-        details["omo_overnight_rate"] = "N/A → default 50"
+        vn1y_score = 50.0
+        details["vn1y_yield"] = "N/A → default 50"
 
-    # ── Xu hướng lãi suất (Δ OMO) ────────────────────────────────────────────
-    d_omo = df_latest.get("delta_omo_rate", np.nan)
-    if pd.notna(d_omo):
+    # ── Xu hướng lãi suất (Δ VN1Y Yield) ────────────────────────────────────────────
+    d_vn1y = df_latest.get("delta_vn1y_yield", np.nan)
+    if pd.notna(d_vn1y):
         # Giảm lãi suất → +10, tăng → -10
-        trend_bonus = _clamp_score(50 - d_omo * 1000)
+        trend_bonus = _clamp_score(50 - d_vn1y * 100)
         scores["ir_trend_score"] = trend_bonus
-        dir_str = "↓ Cut" if d_omo < -0.05 else ("↑ Hike" if d_omo > 0.05 else "→ Hold")
-        details["ir_trend"] = f"Δ OMO = {d_omo:.4f} ({dir_str}) → score {trend_bonus:.0f}"
+        dir_str = "↓ Cut" if d_vn1y < -0.15 else ("↑ Hike" if d_vn1y > 0.15 else "→ Hold")
+        details["ir_trend"] = f"Δ VN1Y = {d_vn1y:.4f} ({dir_str}) → score {trend_bonus:.0f}"
     else:
         trend_bonus = 50.0
 
@@ -126,7 +126,7 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         bond_score = 50.0
 
     # ── Tổng điểm nhóm Macro ─────────────────────────────────────────────────
-    raw = np.mean([omo_score, trend_bonus, fx_score, m2_score, bond_score])
+    raw = np.mean([vn1y_score, trend_bonus, fx_score, m2_score, bond_score])
     raw = _clamp_score(raw)
 
     return {
@@ -136,16 +136,16 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         "weighted_score": round(raw * SCORING_WEIGHTS["macro_monetary"], 2),
         "sub_scores":    scores,
         "details":       details,
-        "rationale":     _macro_rationale(omo, d_omo, fx_z, m2, raw, df_latest)
+        "rationale":     _macro_rationale(vn1y, d_vn1y, fx_z, m2, raw, df_latest)
     }
 
 
-def _macro_rationale(omo, d_omo, fx_z, m2, score, df_latest) -> str:
+def _macro_rationale(vn1y, d_vn1y, fx_z, m2, score, df_latest) -> str:
     parts = []
-    if pd.notna(omo):
-        parts.append(f"OMO rate {omo:.2f}% ({'low/favorable' if omo < 5 else 'elevated'})")
-    if pd.notna(d_omo) and abs(d_omo) > 0.05:
-        parts.append(f"SBV {'hikes' if d_omo > 0 else 'cuts'} OMO rate (Δ={d_omo:.2f}%)")
+    if pd.notna(vn1y):
+        parts.append(f"VN1Y rate {vn1y:.2f}% ({'low/favorable' if vn1y < 4.0 else 'elevated'})")
+    if pd.notna(d_vn1y) and abs(d_vn1y) > 0.15:
+        parts.append(f"SBV proxy {'hikes' if d_vn1y > 0 else 'cuts'} short-term rate (Δ={d_vn1y:.2f}%)")
     if pd.notna(fx_z):
         parts.append(f"USD/VND z={fx_z:.1f} ({'pressure' if fx_z > 1 else 'stable'})")
     if pd.notna(m2):

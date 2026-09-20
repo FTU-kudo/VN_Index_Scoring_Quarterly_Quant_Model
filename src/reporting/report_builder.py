@@ -254,10 +254,13 @@ _JS_SCRIPT = """
       "months to rebalancing": "tháng tới kỳ cơ cấu",
       "bonus": "điểm thưởng",
       "unavailable": "không có",
-      "neutral": "trung lập"
+      "neutral": "trung lập",
+      "Vn1Y Yield": "Lợi suất TPCP VN1Y",
+      "Vn10Y Yield": "Lợi suất TPCP VN10Y",
+      "Vn Yield Spread": "Độ dốc (Spread) 10Y-2Y/1Y"
     };
     
-    const els = document.querySelectorAll('td:nth-child(2), .rationale');
+    const els = document.querySelectorAll('td:nth-child(1), td:nth-child(2), .rationale');
     els.forEach(el => {
       if (!el.dataset.orig) el.dataset.orig = el.innerHTML;
       let text = el.dataset.orig;
@@ -634,7 +637,7 @@ def build_html_report(
 
       <h3 style="margin-top: 16px; color: var(--color-blue);">{t('2. Econometric Models', '2. Mô hình Kinh tế lượng')}</h3>
       <ul style="font-size: 14px; line-height: 1.6; color: var(--text-muted); padding-left: 20px;">
-        <li><strong>{t('Multiple Linear Regression (MLR)', 'Hồi quy Đa biến (MLR)')}:</strong> {t('Predicts the next quarter return by regressing it against macro variables (DXY, US10Y, OMO, etc.). We use Newey-West HAC robust standard errors to correct for heteroskedasticity and autocorrelation, ensuring reliable Beta coefficients.', 'Dự báo lợi suất quý tiếp theo dựa trên các biến vĩ mô (DXY, US10Y, OMO...). Mô hình sử dụng sai số chuẩn mạnh Newey-West HAC để khắc phục hiện tượng phương sai thay đổi và tự tương quan, đảm bảo hệ số Beta đáng tin cậy.')}</li>
+        <li><strong>{t('Multiple Linear Regression (MLR)', 'Hồi quy Đa biến (MLR)')}:</strong> {t('Predicts the next quarter return by regressing it against macro variables (DXY, US10Y, VN1Y Yield, etc.). We use Newey-West HAC robust standard errors to correct for heteroskedasticity and autocorrelation, ensuring reliable Beta coefficients.', 'Dự báo lợi suất quý tiếp theo dựa trên các biến vĩ mô (DXY, US10Y, Lợi suất VN1Y...). Mô hình sử dụng sai số chuẩn mạnh Newey-West HAC để khắc phục hiện tượng phương sai thay đổi và tự tương quan, đảm bảo hệ số Beta đáng tin cậy.')}</li>
         <li><strong>{t('Vector Autoregression (VAR)', 'Tự hồi quy Vectơ (VAR)')}:</strong> {t("Analyzes the dynamic impact of macro shocks over time. It utilizes Granger Causality Tests to determine if variables like DXY lead the VN-Index, and Impulse Response Functions (IRF) to simulate the market reaction to external shocks.", "Phân tích tác động động lượng của các cú sốc vĩ mô qua thời gian. Mô hình dùng Kiểm định Nhân quả Granger để xác định xem các biến như DXY có dẫn dắt VN-Index hay không, và Hàm phản ứng xung (IRF) để mô phỏng phản ứng của thị trường trước cú sốc bên ngoài.")}</li>
       </ul>
 

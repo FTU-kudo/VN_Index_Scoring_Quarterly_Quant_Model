@@ -407,7 +407,7 @@ def fetch_vietnam_bonds() -> pd.DataFrame:
     
     if not bond_path.exists():
         logger.warning(f"[BONDS] Không tìm thấy dữ liệu trái phiếu tại {bond_path}")
-        return pd.DataFrame(columns=["date", "vn2y_yield", "vn10y_yield"])
+        return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
         
     logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ {bond_path}...")
     try:
@@ -416,16 +416,18 @@ def fetch_vietnam_bonds() -> pd.DataFrame:
             
         df = pd.DataFrame(data)
         if df.empty:
-            return pd.DataFrame(columns=["date", "vn2y_yield", "vn10y_yield"])
+            return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
             
         df["date"] = pd.to_datetime(df["date"])
         
-        # Lấy kỳ hạn 2 năm và 10 năm
+        # Lấy kỳ hạn 1 năm, 2 năm và 10 năm
+        df_1y = df[df["tenor_yr"] == 1.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn1y_yield"})
         df_2y = df[df["tenor_yr"] == 2.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn2y_yield"})
         df_10y = df[df["tenor_yr"] == 10.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn10y_yield"})
         
         # Merge lại theo date
         merged = pd.merge(df_10y, df_2y, on="date", how="outer")
+        merged = pd.merge(merged, df_1y, on="date", how="outer")
         merged = merged.sort_values("date").reset_index(drop=True)
         logger.info(f"[BONDS] Tải thành công {len(merged)} ngày dữ liệu trái phiếu")
         return merged

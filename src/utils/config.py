@@ -138,7 +138,7 @@ MLR_TRAIN_RATIO = 0.75            # 75% train / 25% test
 VAR_MAX_LAGS    = 8               # AIC/BIC lựa chọn lag tối ưu trong [1, 8]
 VAR_VARIABLES   = [
     "vni_return",         # Biến phụ thuộc: tỷ suất sinh lợi VNI
-    "delta_omo_rate",     # Δ Lãi suất OMO overnight
+    "delta_vn1y_yield",   # Δ Lợi suất TPCP 1Y (proxy OMO)
     "delta_dxy",          # Δ Chỉ số DXY
     "net_foreign_flow",   # Dòng tiền khối ngoại (tỷ VND)
     "delta_us10y",        # Δ Lợi suất TPCP Mỹ 10Y
