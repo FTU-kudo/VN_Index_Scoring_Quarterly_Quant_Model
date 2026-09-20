@@ -77,7 +77,7 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         details["vn1y_yield"] = f"{vn1y:.2f}% → score {vn1y_score:.0f}"
     else:
         vn1y_score = 50.0
-        details["vn1y_yield"] = "N/A → default 50"
+        details["vn1y_yield"] = "<MISSING> N/A → default 50"
 
     # ── Xu hướng lãi suất (Δ VN1Y Yield) ────────────────────────────────────────────
     d_vn1y = df_latest.get("delta_vn1y_yield", np.nan)
@@ -89,6 +89,7 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         details["ir_trend"] = f"Δ VN1Y = {d_vn1y:.4f} ({dir_str}) → score {trend_bonus:.0f}"
     else:
         trend_bonus = 50.0
+        details["ir_trend"] = "<MISSING> N/A → default 50"
 
     # ── Tỷ giá USD/VND ────────────────────────────────────────────────────────
     fx_z = df_latest.get("usd_vnd_zscore", np.nan)
@@ -99,7 +100,7 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         details["usd_vnd"] = f"Z-score = {fx_z:.2f} → score {fx_score:.0f}"
     else:
         fx_score = 50.0
-        details["usd_vnd"] = "N/A → default 50"
+        details["usd_vnd"] = "<MISSING> N/A → default 50"
 
     # ── M2 Growth ──────────────────────────────────────────────────────────────
     m2 = df_latest.get("m2_yoy_pct", np.nan)
@@ -110,6 +111,7 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         details["m2_yoy_growth"] = f"{m2:.1f}% YoY → score {m2_score:.0f}"
     else:
         m2_score = 50.0
+        details["m2_yoy_growth"] = "<MISSING> N/A → default 50"
 
     # ── VN Bonds (10Y Yield & Spread) ──────────────────────────────────────────
     vn10y = df_latest.get("vn10y_yield", np.nan)
@@ -124,6 +126,7 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         details["vn_bonds"] = f"VN10Y {vn10y:.2f}% | Spread {vn_spread:.2f}% → score {bond_score:.0f}"
     else:
         bond_score = 50.0
+        details["vn_bonds"] = "<MISSING> N/A → default 50"
 
     # ── Tổng điểm nhóm Macro ─────────────────────────────────────────────────
     raw = np.mean([vn1y_score, trend_bonus, fx_score, m2_score, bond_score])
@@ -138,7 +141,6 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         "details":       details,
         "rationale":     _macro_rationale(vn1y, d_vn1y, fx_z, m2, raw, df_latest)
     }
-
 
 def _macro_rationale(vn1y, d_vn1y, fx_z, m2, score, df_latest) -> str:
     parts = []
@@ -184,6 +186,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         details["dxy"] = f"Z = {dxy_z:.2f} → score {dxy_score:.0f}"
     else:
         dxy_score = 50.0
+        details["dxy"] = "<MISSING> N/A → default 50"
 
     # ── US10Y ────────────────────────────────────────────────────────────────
     us10y = df_latest.get("us10y_yield", np.nan)
@@ -195,6 +198,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         details["us10y"] = f"{us10y:.2f}% → score {us10y_score:.0f}"
     else:
         us10y_score = 50.0
+        details["us10y"] = "<MISSING> N/A → default 50"
 
     # ── Net Foreign Flow ──────────────────────────────────────────────────────
     nff_z = df_latest.get("nff_zscore_60d", np.nan)
@@ -208,6 +212,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
             details["nff_5d_rolling"] = f"{nff_5d:.0f} bil VND (weekly)"
     else:
         nff_score = 50.0
+        details["nff"] = "<MISSING> N/A → default 50"
 
     # ── JPY Carry Trade ───────────────────────────────────────────────────────
     jpy_z = df_latest.get("usdjpy_zscore_60d", np.nan)
@@ -220,6 +225,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
     else:
         jpy_score = 50.0
         jpy_z = np.nan
+        details["jpy_carry"] = "<MISSING> N/A → default 50"
 
     raw = np.mean([dxy_score, us10y_score, nff_score, jpy_score])
     
@@ -259,15 +265,25 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
     scores = {}
     details = {}
 
+    # Lấy các giá trị P/E, P/B gốc (nếu có)
+    headline_pe = df_latest.get("headline_pe", np.nan)
+    median_pe = df_latest.get("median_pe", np.nan)
+    headline_pb = df_latest.get("headline_pb", np.nan)
+    median_pb = df_latest.get("median_pb", np.nan)
+
+    pe_str = f"P/E Headline: {headline_pe:.2f} | Median: {median_pe:.2f}" if pd.notna(headline_pe) and pd.notna(median_pe) else ""
+    pb_str = f"P/B Headline: {headline_pb:.2f} | Median: {median_pb:.2f}" if pd.notna(headline_pb) and pd.notna(median_pb) else ""
+
     # ── P/E Z-score ───────────────────────────────────────────────────────────
     pe_z = df_latest.get("pe_zscore", np.nan)
     if pd.notna(pe_z):
         pe_score = _clamp_score(50 - pe_z * 25)   # Z âm → rẻ → score cao
         scores["pe_score"] = pe_score
         zone = "OVERVALUED" if pe_z > PE_ZSCORE_OVERBOUGHT else ("UNDERVALUED" if pe_z < PE_ZSCORE_OVERSOLD else "FAIR VALUE")
-        details["pe_zscore"] = f"Z = {pe_z:.2f} ({zone}) → score {pe_score:.0f}"
+        details["pe_zscore"] = f"{pe_str}<br>Z = {pe_z:.2f} ({zone}) → score {pe_score:.0f}" if pe_str else f"Z = {pe_z:.2f} ({zone}) → score {pe_score:.0f}"
     else:
         pe_score = 50.0
+        details["pe_zscore"] = "<MISSING> N/A → default 50"
 
     # ── P/B Z-score ───────────────────────────────────────────────────────────
     pb_z = df_latest.get("pb_zscore", np.nan)
@@ -359,7 +375,7 @@ def score_quant_model(
         details["mlr_forecast"] = f"Forecast log-return = {mlr_pred:.4f} → score {mlr_score:.0f}"
     else:
         mlr_score = 50.0
-        details["mlr_forecast"] = "No MLR forecast"
+        details["mlr_forecast"] = "<MISSING> No MLR forecast"
 
     # ── VAR Forecast ─────────────────────────────────────────────────────────
     if var_forecast is not None and pd.notna(var_forecast):
@@ -368,6 +384,7 @@ def score_quant_model(
         details["var_forecast"] = f"VAR T+5 return = {var_forecast:.4f} → score {var_score:.0f}"
     else:
         var_score = 50.0
+        details["var_forecast"] = "<MISSING> No VAR forecast"
 
     # ── Model Quality Bonus ───────────────────────────────────────────────────
     if mlr_adj_r2 is not None and pd.notna(mlr_adj_r2):
@@ -376,6 +393,7 @@ def score_quant_model(
         details["mlr_adj_r2"] = f"Adj-R² = {mlr_adj_r2:.4f} → confidence bonus {quality_bonus:.1f}"
     else:
         quality_bonus = 0
+        details["mlr_adj_r2"] = "<MISSING> N/A"
 
     # ── Granger Leader Count ──────────────────────────────────────────────────
     if granger_leaders is not None:
@@ -385,6 +403,7 @@ def score_quant_model(
         granger_bonus = min(granger_leaders * 3, 15)
     else:
         granger_bonus = 0
+        details["granger_leaders"] = "<MISSING> N/A"
 
     raw = (mlr_score * 0.5 + var_score * 0.5) + quality_bonus + granger_bonus
     raw = _clamp_score(raw)
@@ -426,6 +445,8 @@ def score_ml_forecast(
         qual_score = _clamp_score((ml_accuracy + ml_f1) / 2 * 100)
         details["model_quality"] = (f"Accuracy={ml_accuracy:.1%} "
                                     f"F1={ml_f1:.3f} → quality {qual_score:.0f}")
+    else:
+        details["model_quality"] = "<MISSING> N/A"
     scores["ml_quality_score"] = qual_score
 
     # ── Directional Signal ────────────────────────────────────────────────────
@@ -443,7 +464,7 @@ def score_ml_forecast(
             signal_score = 50.0
             details["ml_signal"] = "Forecast: NEUTRAL"
     else:
-        details["ml_signal"] = "ML prediction not run"
+        details["ml_signal"] = "<MISSING> ML prediction not run"
 
     scores["ml_signal_score"] = signal_score
 
@@ -462,7 +483,7 @@ def score_ml_forecast(
         "weighted_score": round(raw * SCORING_WEIGHTS["ml_forecast"], 2),
         "sub_scores":     scores,
         "details":        details,
-        "rationale":      f"ML: {details.get('ml_signal', 'N/A')} | Quality={qual_score:.0f}"
+        "rationale":      f"ML: {details.get('ml_signal', 'N/A').replace('<MISSING> ', '')} | Quality={qual_score:.0f}"
     }
 
 
@@ -533,7 +554,7 @@ def score_market_structure(
         details["adtv"] = f"ADTV change {adtv_change_pct:+.1%} QoQ → score {adtv_score:.0f}"
     else:
         adtv_score = 50.0   # Neutral when data unavailable
-        details["adtv"] = "ADTV data unavailable → neutral score 50"
+        details["adtv"] = "<MISSING> ADTV data unavailable → neutral score 50"
 
     raw = _clamp_score(ftse_score + rebal_bonus + (adtv_score - 50) * 0.3)
 

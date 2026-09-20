@@ -550,7 +550,12 @@ def build_html_report(
             ]
             for old, new in acronyms:
                 k_display = k_display.replace(old, new)
-            rows_html += f"<tr><td class=\"var-col\">{t(k_display)}</td><td>{str(v)}</td></tr>"
+                
+            if str(v).startswith("<MISSING>"):
+                val_text = str(v).replace("<MISSING>", "").strip()
+                rows_html += f"<tr><td class=\"var-col\">{t(k_display)}</td><td><span class=\"badge badge-fail\" style=\"background:#94a3b8; color:#fff;\">N/A</span> {val_text}</td></tr>"
+            else:
+                rows_html += f"<tr><td class=\"var-col\">{t(k_display)}</td><td>{str(v)}</td></tr>"
 
         details_html += f"""
         <div class="section" style="padding:16px;">
@@ -594,6 +599,33 @@ def build_html_report(
               <th>{t('Sign Expected')}</th><th>{t('Sign Actual')}</th><th>{t('Sign OK')}</th>
             </tr></thead>
             <tbody>{mlr_rows}</tbody>
+          </table>
+        </div>"""
+
+    # VAR Granger Causality
+    var_granger_html = ""
+    if granger_df is not None and not granger_df.empty:
+        var_rows = ""
+        for _, row in granger_df.iterrows():
+            var_rows += f"""<tr>
+              <td>{row['causing_variable']}</td>
+              <td style="font-weight:700;">{row['test_statistic']}</td>
+              <td style="color:{'var(--color-green)' if row['granger_causes_vni'] else 'var(--text-muted)'};">{row['p_value']} {row.get('significance', '')}</td>
+              <td><span class="badge {'badge-ok' if row['granger_causes_vni'] else 'badge-fail'}">{"✅ Yes" if row['granger_causes_vni'] else "❌ No"}</span></td>
+            </tr>"""
+            
+        var_granger_html = f"""
+        <div class="section">
+          <h2>🔮 {t('VAR Granger Causality Tests', 'Kiểm định VAR Granger Causality')}</h2>
+          <p style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">
+            {t('H₀: Variable does not Granger-cause VNI_Return. If p-value < 0.05, we reject H₀ (i.e. the variable leads the VN-Index).', 'H₀: Biến số không tác động nhân quả (Granger) lên lợi suất VNI. Nếu p-value < 0.05, bác bỏ H₀ (tức là biến có tính dẫn dắt VN-Index).')}
+          </p>
+          <table>
+            <thead><tr>
+              <th>{t('Variable', 'Biến số')}</th><th>{t('F-Statistic', 'Thống kê F')}</th><th>P-value</th>
+              <th>{t('Causes VNI?', 'Dẫn dắt VNI?')}</th>
+            </tr></thead>
+            <tbody>{var_rows}</tbody>
           </table>
         </div>"""
 
@@ -763,6 +795,7 @@ def build_html_report(
       
       <div id="tab-models" class="tab-content">
         {mlr_html}
+        {var_granger_html}
       </div>
       
       <div id="tab-history" class="tab-content">

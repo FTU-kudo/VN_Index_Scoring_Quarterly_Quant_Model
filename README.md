@@ -24,6 +24,14 @@ Hệ thống được thiết kế đáp ứng trọn vẹn **5 Tiêu chuẩn V�
 
 ---
 
+## ✨ CÁC TÍNH NĂNG NỔI BẬT GẦN ĐÂY (LATEST UPDATES)
+- **Minh bạch hóa Dữ liệu (No Hallucination)**: Các biến số định lượng khi thiếu hụt dữ liệu (VD: OMO, ADTV) sẽ được gắn cờ đỏ `<MISSING>` trong báo cáo HTML thay vì âm thầm sử dụng giá trị default, đảm bảo quỹ đầu tư nhận diện chính xác chất lượng tín hiệu.
+- **Báo cáo VAR Granger Causality Mở rộng**: Tích hợp p-value chi tiết của từng biến vĩ mô dẫn dắt VN-Index, cung cấp góc nhìn kinh tế lượng sâu sắc.
+- **Khắc phục Data Leakage (Nhân bản dữ liệu P/E Median)**: Chuyển đổi kiến trúc tính toán sang `ticker_history.parquet`, hiển thị cả *Headline P/E* và *Median P/E* nhằm nhận diện chính xác các nhịp kéo trụ Mega-Cap (ví dụ: nhóm VIC).
+- **Từ điển Biến số (Glossary & Rationale)**: Đã tích hợp Tab từ điển riêng trong UI báo cáo, giải thích chi tiết logic kinh tế của từng thông số (Δ VN1Y, Δ DXY, USD/VND...).
+
+---
+
 ## 📐 SÁU TRỤ CỘT ĐỊNH LƯỢNG (6 PILLARS & COMPOSITE SCORING)
 
 Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa **100 điểm**, phân bổ trọng số theo 6 nhóm biến số. Đây là bộ trọng số **duy nhất** (Single Source of Truth), được định nghĩa tại [`src/utils/config.py`](src/utils/config.py):
@@ -102,7 +110,7 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q4
-     Generated: 2026-09-21T03:44:34.413715
+     Generated: 2026-09-21T04:20:12.118305
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
@@ -115,20 +123,20 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
   • R-squared              : N/A (R-adj = N/A)
 
 [MACHINE LEARNING: WALK-FORWARD VALIDATION]
-  • XGBoost Accuracy       : 0.9919
+  • XGBoost Accuracy       : 0.4822
   • N Folds (WFV)          : 8
   • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score            : 46.07 / 100
+  • Total Score            : 50.35 / 100
   • Classification         : 🟡 HOLD — Neutral — Await confirming signals
 
 [GROUP BREAKDOWN]
   • macro_monetary                : raw=  54.5  weight=13.62
   • global_intermarket            : raw=  32.4  weight=6.48
-  • valuation_leverage            : raw=  24.2  weight=4.85
-  • quant_model                   : raw=  53.2  weight=7.98
-  • ml_forecast                   : raw=  56.4  weight=5.64
+  • valuation_leverage            : raw=  55.1  weight=11.02
+  • quant_model                   : raw=  59.6  weight=8.94
+  • ml_forecast                   : raw=  27.9  weight=2.79
   • market_structure              : raw=  75.0  weight=7.5
 ======================================================================
 ```
