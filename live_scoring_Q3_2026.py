@@ -657,320 +657,120 @@ def run_backtest_simple_signals(df):
 
 def compute_live_score(df_vni, df_global, df_bonds, mlr_res, wfv_res):
     """
-    Tính điểm Q3/2026 dựa trên DỮ LIỆU THỰC TẾ.
-    Chỉ chấm điểm những nhóm có data thực, còn lại báo rõ MISSING.
-    """
-    log.info("[6/6] Tính Quarterly Score dựa trên dữ liệu thực...")
+    Wrapper that delegates scoring to the CANONICAL pipeline scorer.
+    This ensures a single source of truth for scoring weights (defined in config.py).
 
-    latest_vni    = df_vni.iloc[-1]
+    Previously, this function had its own hardcoded weights (technical_price=30%,
+    global=25%, mlr_signal=20%, ml_direction=15%, macro=10%, valuation_pepb=0%)
+    that diverged from the official pipeline. That duplicate logic has been removed.
+    """
+    log.info("[6/6] Delegating to canonical scorer (src/scoring/quarterly_scorer.py)...")
+
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from src.scoring.quarterly_scorer import compute_quarterly_score
+
+    # Build the df_latest Series expected by compute_quarterly_score()
+    latest_vni = df_vni.iloc[-1].copy()
     latest_global = df_global.dropna(subset=["dxy", "us10y"]).iloc[-1] if not df_global.empty else pd.Series()
 
-    scores = {}
-    details = {}
+    # Merge VNI + global indicators into a single Series
+    for col in ["dxy_zscore", "us10y", "delta_us10y", "nff_zscore_60d", "nff_rolling5d"]:
+        if col in latest_global.index:
+            latest_vni[col] = latest_global[col]
+    # Map z-scores: dxy_zscore → dxy_zscore_60d for compatibility
+    if "dxy_zscore" in latest_global.index:
+        latest_vni["dxy_zscore_60d"] = latest_global["dxy_zscore"]
+    if "us10y" in latest_global.index:
+        latest_vni["us10y_yield"] = latest_global["us10y"]
 
-    # ── Nhóm A: Technical & Price (100% từ dữ liệu thực) ─────────────────────
-    ta_score = 50.0  # Default
-    ta_details = {}
-
-    if "rsi_14" in latest_vni and pd.notna(latest_vni["rsi_14"]):
-        rsi = latest_vni["rsi_14"]
-        ta_details["rsi_14"] = rsi
-        # RSI 30–50: mua, 50–70: trung tính/giữ, >70: bán, <30: rất rẻ
-        if rsi < 30:
-            rsi_s = 85
-        elif rsi < 40:
-            rsi_s = 70
-        elif rsi < 55:
-            rsi_s = 60
-        elif rsi < 70:
-            rsi_s = 45
-        else:
-            rsi_s = 25
-        ta_details["rsi_score"] = rsi_s
-
-    if "price_vs_ma200" in latest_vni and pd.notna(latest_vni["price_vs_ma200"]):
-        p_vs_ma200 = latest_vni["price_vs_ma200"]
-        ta_details["price_vs_ma200_pct"] = round(p_vs_ma200 * 100, 2)
-        # Dưới MA200 → rẻ hơn, trên MA200 nhiều → overbought
-        if p_vs_ma200 < -0.10:
-            ma_s = 80
-        elif p_vs_ma200 < 0:
-            ma_s = 65
-        elif p_vs_ma200 < 0.05:
-            ma_s = 60
-        elif p_vs_ma200 < 0.15:
-            ma_s = 50
-        else:
-            ma_s = 35
-        ta_details["ma200_score"] = ma_s
-
-    if "drawdown_60d" in latest_vni and pd.notna(latest_vni["drawdown_60d"]):
-        dd = latest_vni["drawdown_60d"]
-        ta_details["drawdown_from_peak_60d_pct"] = round(dd * 100, 2)
-        # Deep drawdown → cơ hội nhưng cũng risk
-        if dd < -0.15:
-            dd_s = 70
-        elif dd < -0.08:
-            dd_s = 60
-        elif dd < -0.03:
-            dd_s = 55
-        else:
-            dd_s = 50
-
-    if "bb_pct" in latest_vni and pd.notna(latest_vni["bb_pct"]):
-        bb = latest_vni["bb_pct"]
-        ta_details["bb_position_pct"] = round(bb * 100, 2)
-        bb_s = max(0, min(100, (1 - bb) * 80 + 10))
-    else:
-        bb_s = 50
-
-    ta_score = np.nanmean([
-        ta_details.get("rsi_score", 50),
-        ta_details.get("ma200_score", 50),
-        bb_s
-    ])
-    scores["technical_price"] = {"raw": round(ta_score, 2), "weight": 0.30,
-                                  "data_source": "vnstock OHLCV (THỰC TẾ)"}
-    details["technical_price"] = ta_details
-
-    # ── Nhóm B: Global Intermarket (yfinance — THỰC TẾ) ──────────────────────
-    global_score = 50.0
-    global_details = {}
-
-    if pd.notna(latest_global.get("dxy_zscore", np.nan)):
-        dxy_z = latest_global["dxy_zscore"]
-        global_details["dxy"]        = round(latest_global.get("dxy", 0), 2)
-        global_details["dxy_zscore"] = round(dxy_z, 3)
-        dxy_s = max(0, min(100, 50 - dxy_z * 20))
-    else:
-        dxy_s = 50.0
-
-    if pd.notna(latest_global.get("us10y", np.nan)):
-        us10y = latest_global["us10y"]
-        global_details["us10y_yield"] = round(us10y, 3)
-        # US10Y: 4-4.5% = neutral, >5% = bất lợi, <3% = thuận lợi
-        us10y_s = max(0, min(100, 100 - us10y * 18))
-        global_details["us10y_score"] = round(us10y_s, 1)
-    else:
-        us10y_s = 50.0
-
-    if pd.notna(latest_global.get("vix_zscore", np.nan)):
-        vix_z = latest_global["vix_zscore"]
-        global_details["vix_zscore"] = round(vix_z, 3)
-        vix_s = max(0, min(100, 50 - vix_z * 15))
-    else:
-        vix_s = 50.0
-
-    if pd.notna(latest_global.get("spx_ret_5d", np.nan)):
-        spx_r = latest_global["spx_ret_5d"]
-        global_details["spx_5d_return_pct"] = round(spx_r * 100, 2)
-        spx_s = max(0, min(100, 50 + spx_r * 500))
-    else:
-        spx_s = 50.0
-
-    global_score = np.nanmean([dxy_s, us10y_s, vix_s, spx_s])
-    scores["global_intermarket"] = {"raw": round(global_score, 2), "weight": 0.25,
-                                     "data_source": "yfinance DXY+US10Y+VIX+SPX (THỰC TẾ)"}
-    details["global_intermarket"] = global_details
-
-    # ── Nhóm C: MLR Signal (tính từ dữ liệu thực) ────────────────────────────
-    mlr_score = 50.0
-    mlr_details = {}
-
-    if mlr_res and "adj_r2" in mlr_res:
-        mlr_details["adj_r2"]  = round(mlr_res["adj_r2"], 4)
-        mlr_details["r2"]      = round(mlr_res["r2"], 4)
-        mlr_details["dw"]      = round(mlr_res["dw"], 3)
-        mlr_details["n_obs"]   = mlr_res["n_obs"]
-
-        if mlr_res.get("latest_pred_ret") is not None:
-            pred = mlr_res["latest_pred_ret"]
-            mlr_details["predicted_return"] = round(pred, 6)
-            mlr_score = max(0, min(100, 50 + pred * 3000))
-
-        # Thưởng chất lượng model
-        adj_r2_bonus = mlr_res.get("adj_r2", 0) * 10
-        mlr_score = min(100, mlr_score + adj_r2_bonus)
-
-    scores["mlr_signal"] = {"raw": round(mlr_score, 2), "weight": 0.20,
-                             "data_source": "OLS trên VNI+DXY+US10Y+RSI (THỰC TẾ)"}
-    details["mlr_signal"] = mlr_details
-
-    # ── Nhóm D: ML Directional Signal ─────────────────────────────────────────
-    ml_score = 50.0
-    ml_details = {}
-
-    if wfv_res and "mean_accuracy" in wfv_res:
-        ml_details["model"]          = wfv_res["model"]
-        ml_details["mean_accuracy"]  = round(wfv_res["mean_accuracy"], 4)
-        ml_details["std_accuracy"]   = round(wfv_res["std_accuracy"], 4)
-        ml_details["mean_f1"]        = round(wfv_res["mean_f1"], 4)
-        ml_details["n_folds_wfv"]    = wfv_res["n_folds"]
-
-        if "latest_prediction" in wfv_res:
-            pred_dir = wfv_res["latest_prediction"]
-            ml_details["direction_forecast"] = pred_dir
-            conf = wfv_res.get("latest_confidence", 0.5)
-            ml_details["confidence"] = conf
-
-            if pred_dir == "UP":
-                ml_score = 65 + conf * 20
-            elif pred_dir == "DOWN":
-                ml_score = 35 - conf * 20
-            else:
-                ml_score = 50
-
-            # Điều chỉnh theo accuracy
-            acc_adj = (wfv_res["mean_accuracy"] - 0.5) * 20
-            ml_score = max(0, min(100, ml_score + acc_adj))
-
-    scores["ml_direction"] = {"raw": round(ml_score, 2), "weight": 0.15,
-                               "data_source": f"XGBoost/LR WFV {wfv_res.get('n_folds', 0)} folds (THỰC TẾ)"}
-    details["ml_direction"] = ml_details
-
-    # ── Nhóm E: Macro & Tiền tệ — Có thêm Bond Data ─────────────────────────
-    macro_score = None
-    macro_details = {}
-
-    vn10y = np.nan
+    # Bond data for macro scoring
     if df_bonds is not None and not df_bonds.empty:
         df_bonds["date"] = pd.to_datetime(df_bonds["date"])
         latest_bond = df_bonds.iloc[-1]
-        vn10y = latest_bond.get("vn10y_yield", np.nan)
-        vn2y = latest_bond.get("vn2y_yield", np.nan)
-        
-        if pd.notna(vn10y) and pd.notna(vn2y):
-            vn_spread = vn10y - vn2y
-            macro_details["vn10y_yield"] = round(vn10y, 2)
-            macro_details["vn_spread"] = round(vn_spread, 2)
-            
-            vn10y_s = max(0, min(100, 100 - (vn10y - 2.5) * 28.5))
-            spread_s = max(0, min(100, (vn_spread + 0.2) * 58))
-            macro_score = (vn10y_s + spread_s) / 2
-            
-            macro_details["bond_score"] = round(macro_score, 1)
-            macro_details["status"] = "Partial Data (Bonds only)"
-        else:
-            macro_details["status"] = "MISSING SBV Data"
-    else:
-        macro_details["status"] = "MISSING"
+        if "vn10y_yield" in latest_bond.index:
+            latest_vni["vn10y_yield"] = latest_bond["vn10y_yield"]
+        if "vn2y_yield" in latest_bond.index:
+            vn_spread = latest_bond.get("vn10y_yield", 0) - latest_bond.get("vn2y_yield", 0)
+            latest_vni["vn_yield_spread"] = vn_spread
 
-    if macro_score is not None:
-        scores["macro_monetary"] = {
-            "raw": round(macro_score, 2),
-            "weight": 0.10,
-            "data_source": "Vietnam_Bonds JSON (THỰC TẾ)"
-        }
-    else:
-        scores["macro_monetary"] = {
-            "raw": None,
-            "weight": 0.10,
-            "data_source": "⚠️ THIẾU DATA"
-        }
-    details["macro_monetary"] = macro_details
+    # MLR results
+    mlr_pred = None
+    mlr_adj_r2 = None
+    if mlr_res:
+        mlr_pred = mlr_res.get("latest_pred_ret")
+        mlr_adj_r2 = mlr_res.get("adj_r2")
 
-    # ── Nhóm F: Định giá P/E, P/B — Tích hợp từ VN_PE_PB_analysis nếu có ──
-    pepb_score = None
-    pepb_details = {}
+    # WFV results
+    ml_accuracy = wfv_res.get("mean_accuracy") if wfv_res else None
+    ml_f1 = wfv_res.get("mean_f1") if wfv_res else None
+    ml_pred_class = None
+    ml_confidence = None
+    if wfv_res and "latest_prediction" in wfv_res:
+        pred_map = {"UP": 1, "DOWN": -1, "NEUTRAL": 0}
+        ml_pred_class = pred_map.get(wfv_res["latest_prediction"], 0)
+        ml_confidence = wfv_res.get("latest_confidence", 0.5)
 
-    pepb_path = Path(__file__).parent.parent / "VN_PE_PB_analysis" / "data" / "sector_history.parquet"
-    if pepb_path.exists():
-        try:
-            df_pepb = pd.read_parquet(pepb_path)
-            df_pepb["date"] = pd.to_datetime(df_pepb["date"])
-            if "median_pe" in df_pepb.columns:
-                market_pe = df_pepb.groupby("date")["median_pe"].median()
-                zscore_pe = (
-                    (market_pe - market_pe.rolling(252*5, min_periods=252).mean()) /
-                    market_pe.rolling(252*5, min_periods=252).std()
-                )
-                
-                # Combine with bonds to compute EYG if available
-                eyg_score = 50.0
-                if df_bonds is not None and not df_bonds.empty:
-                    df_pepb_merged = df_pepb.merge(df_bonds, on="date", how="left")
-                    df_pepb_merged["vn10y_yield"] = df_pepb_merged["vn10y_yield"].ffill()
-                    df_pepb_merged["eyg"] = (1 / df_pepb_merged["median_pe"]) * 100 - df_pepb_merged["vn10y_yield"]
-                    zscore_eyg = (
-                        (df_pepb_merged["eyg"] - df_pepb_merged["eyg"].rolling(252*5, min_periods=252).mean()) /
-                        df_pepb_merged["eyg"].rolling(252*5, min_periods=252).std()
-                    )
-                    if not zscore_eyg.empty and pd.notna(zscore_eyg.iloc[-1]):
-                        z_eyg = zscore_eyg.iloc[-1]
-                        pepb_details["eyg_zscore_5y"] = round(z_eyg, 3)
-                        pepb_details["eyg"] = round(df_pepb_merged["eyg"].iloc[-1], 2)
-                        eyg_score = max(0, min(100, 50 + z_eyg * 25))
+    # Calculate months to next FTSE rebalancing (schedule: Mar, Jun, Sep, Dec)
+    from datetime import datetime
+    now = datetime.now()
+    rebal_months = [3, 6, 9, 12]
+    months_to_rebal = min(
+        ((m - now.month) % 12) or 12 for m in rebal_months
+    )
+    # If we're in a rebalancing month, set to 0
+    if now.month in rebal_months:
+        months_to_rebal = 0
 
-                if not zscore_pe.empty and pd.notna(zscore_pe.iloc[-1]):
-                    z = zscore_pe.iloc[-1]
-                    pepb_details["pe_zscore_5y"] = round(z, 3)
-                    pepb_details["median_pe_market"] = round(market_pe.iloc[-1], 2)
-                    
-                    pe_s = max(0, min(100, 50 - z * 25))
-                    pepb_score = (pe_s + eyg_score) / 2 if eyg_score != 50.0 else pe_s
-                    pepb_details["source"] = "VN_PE_PB_analysis + Vietnam_Bonds (THỰC TẾ)"
-        except Exception as e:
-            pepb_details["error"] = str(e)
-
-    if pepb_score is None:
-        pepb_details["status"] = "MISSING — VN_PE_PB_analysis pipeline chưa chạy"
-        pepb_details["solution"] = "Chạy: python scripts/daily_compute.py trong VN_PE_PB_analysis"
-
-    scores["valuation_pepb"] = {
-        "raw": pepb_score,
-        "weight": 0.0,  # Không tính nếu không có data
-        "data_source": "VN_PE_PB_analysis" if pepb_score else "⚠️ MISSING"
-    }
-    details["valuation_pepb"] = pepb_details
-
-    # ── Tổng hợp điểm (chỉ tính nhóm có data) ────────────────────────────────
-    available_groups = {k: v for k, v in scores.items() if v["raw"] is not None}
-    if not available_groups:
-        log.error("Không có nhóm nào có dữ liệu!")
-        return {}
-
-    # Re-normalize weights
-    total_weight = sum(v["weight"] for v in available_groups.values())
-    weighted_total = sum(
-        v["raw"] * v["weight"] / total_weight
-        for v in available_groups.values()
-        if v["weight"] > 0
+    score_record = compute_quarterly_score(
+        quarter=QUARTER,
+        df_latest=latest_vni,
+        mlr_pred=mlr_pred,
+        mlr_adj_r2=mlr_adj_r2,
+        ml_accuracy=ml_accuracy,
+        ml_f1=ml_f1,
+        ml_pred_class=ml_pred_class,
+        ml_confidence=ml_confidence,
+        ftse_upgrade_status="confirmed",
+        adtv_change_pct=None,  # Will default to neutral (50)
+        months_to_next_rebalancing=months_to_rebal,
     )
 
-    # Phân loại
-    def classify(s):
-        if s >= 80: return "BUY", "🟢", "Môi trường rất thuận lợi"
-        if s >= 65: return "ACCUMULATE", "🔵", "Tích lũy dần"
-        if s >= 50: return "HOLD", "🟡", "Trung lập — chờ xác nhận"
-        if s >= 35: return "REDUCE", "🟠", "Giảm tỷ trọng"
-        return "SELL", "🔴", "Phòng thủ"
+    # Convert to the format expected by main() print logic
+    # Map group_scores to "groups" dict with raw/weight/data_source
+    from src.utils.config import SCORING_WEIGHTS
+    groups_formatted = {}
+    for grp_name, grp_data in score_record.get("group_scores", {}).items():
+        groups_formatted[grp_name] = {
+            "raw": grp_data.get("raw_score"),
+            "weight": SCORING_WEIGHTS.get(grp_name, 0),
+            "data_source": f"Canonical pipeline ({grp_name})"
+        }
 
-    label, emoji, desc = classify(weighted_total)
-
-    final = {
-        "quarter":          QUARTER,
-        "computed_at":      datetime.now().strftime("%Y-%m-%d %H:%M ICT"),
-        "total_score":      round(weighted_total, 2),
-        "label":            label,
-        "emoji":            emoji,
-        "description":      desc,
-        "groups":           scores,
-        "group_details":    details,
+    result = {
+        "quarter":       QUARTER,
+        "computed_at":   score_record.get("date_computed", ""),
+        "total_score":   score_record.get("total_score", 0),
+        "label":         score_record.get("label", "HOLD"),
+        "emoji":         score_record.get("emoji", "🟡"),
+        "description":   score_record.get("label_description", ""),
+        "groups":        groups_formatted,
+        "group_details": score_record.get("group_details", {}),
         "latest_vni": {
             "date":       str(latest_vni.get("date", "")),
             "close":      round(float(latest_vni.get("close", 0)), 2),
-            "log_return": round(float(latest_vni.get("log_return", 0)), 6),
-            "rsi_14":     round(float(latest_vni.get("rsi_14", 0)), 2) if pd.notna(latest_vni.get("rsi_14", np.nan)) else None,
+            "log_return":round(float(latest_vni.get("log_return", 0)), 6),
+            "rsi_14":    round(float(latest_vni.get("rsi_14", 0)), 2) if pd.notna(latest_vni.get("rsi_14", np.nan)) else None,
         },
-        "data_gaps": [k for k, v in scores.items() if v["raw"] is None],
+        "data_gaps": [],
     }
 
     log.info(f"\n{'='*60}")
-    log.info(f"QUARTERLY SCORE {QUARTER}: {emoji} {label} — {weighted_total:.1f}/100")
-    log.info(f"(Tính từ {len(available_groups)}/{len(scores)} nhóm có data)")
+    log.info(f"QUARTERLY SCORE {QUARTER}: {result['emoji']} {result['label']} — {result['total_score']:.1f}/100")
+    log.info(f"(Using canonical pipeline weights from config.py)")
     log.info(f"{'='*60}")
 
-    return final
+    return result
 
 
 # ══════════════════════════════════════════════════════════════════════════════

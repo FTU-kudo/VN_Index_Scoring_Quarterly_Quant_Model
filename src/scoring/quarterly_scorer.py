@@ -454,72 +454,68 @@ def score_ml_forecast(
 
 def score_market_structure(
     ftse_upgrade_status: str = "pending",  # 'pending', 'confirmed', 'completed'
-    months_to_next_rebalancing: Optional[int] = None,
+    months_to_next_rebalancing: int = None,
     adtv_change_pct: Optional[float] = None,   # % change ADTV QoQ
 ) -> Dict[str, Any]:
     """
-    Chấm điểm nhóm Cấu trúc Thị trường & Nâng hạng FTSE (trọng số 10%).
-
-    Context Q3/2026:
-      - FTSE Russell đã xác nhận VN-Index vào danh sách Secondary Emerging Market
-      - Rebalancing schedule: tháng 3, 6, 9, 12 → gần nhất: tháng 9/2026
-      - Dòng vốn passive ETF ước tính $6.4 tỷ USD phân bổ vào VN
-      - Effect tâm lý (sentiment premium) lên VN30 trước kỳ rebalancing
+    Score Market Structure & FTSE Upgrade pillar (weight 10%).
 
     Parameters
     ----------
     ftse_upgrade_status : 'pending', 'confirmed', 'completed'
-    months_to_next_rebalancing : Số tháng đến kỳ rebalancing tiếp theo
-    adtv_change_pct : % change ADTV so với quý trước (positive = tốt)
+    months_to_next_rebalancing : Months until next FTSE rebalancing (REQUIRED).
+        Rebalancing schedule: March, June, September, December.
+        Raises ValueError if not provided — prevents silent Q-specific assumptions.
+    adtv_change_pct : % change in ADTV vs previous quarter (positive = good).
+        If None, defaults to neutral score (50).
     """
+    if months_to_next_rebalancing is None:
+        raise ValueError(
+            "months_to_next_rebalancing is required. "
+            "Calculate from current date and FTSE rebalancing months [3,6,9,12]. "
+            "Do NOT rely on hardcoded quarter-specific defaults."
+        )
+
     scores = {}
     details = {}
 
     # ── FTSE Status Score ─────────────────────────────────────────────────────
     ftse_score_map = {
-        "completed":  85,   # Đã hoàn thành → dòng vốn đang vào → rất tốt
-        "confirmed":  75,   # Đã xác nhận → kỳ vọng cao → tốt
-        "pending":    55,   # Đang chờ → kỳ vọng không chắc chắn → trung bình
+        "completed":  85,   # Completed → inflows active → very good
+        "confirmed":  75,   # Confirmed → high expectations → good
+        "pending":    55,   # Pending → uncertain → neutral
         "unknown":    50,
     }
     ftse_score = ftse_score_map.get(ftse_upgrade_status, 50)
     scores["ftse_status_score"] = ftse_score
 
-    # Q3/2026 context: FTSE đã confirmed vào March 2025, rebalancing nhiều đợt
-    # Thêm điểm cụ thể cho Q3/2026
     details["ftse_upgrade"] = (
         f"Status: {ftse_upgrade_status} → score {ftse_score}\n"
         f"  Est passive inflow: ${FTSE_PASSIVE_INFLOW_BASE_USD/1e9:.1f}B USD\n"
-        f"  Effect: Sentiment premium VN30 +15-25% trong giai đoạn rebalancing"
+        f"  Effect: Sentiment premium VN30 +15-25% during rebalancing"
     )
 
     # ── Rebalancing Proximity Bonus ───────────────────────────────────────────
-    if months_to_next_rebalancing is not None:
-        # Gần rebalancing → sentiment premium cao → điểm cao
-        if months_to_next_rebalancing <= 1:
-            rebal_bonus = 20     # Đang trong tháng rebalancing
-        elif months_to_next_rebalancing <= 2:
-            rebal_bonus = 12     # 2 tháng trước
-        elif months_to_next_rebalancing <= 3:
-            rebal_bonus = 6      # 1 quý trước
-        else:
-            rebal_bonus = 0
-        details["rebalancing"] = (
-            f"{months_to_next_rebalancing} months to rebalancing → bonus +{rebal_bonus}"
-        )
+    if months_to_next_rebalancing <= 1:
+        rebal_bonus = 20     # Within rebalancing month
+    elif months_to_next_rebalancing <= 2:
+        rebal_bonus = 12     # 2 months before
+    elif months_to_next_rebalancing <= 3:
+        rebal_bonus = 6      # 1 quarter before
     else:
-        rebal_bonus = 5   # Q3/2026: đang trong tháng 9 rebalancing
-        details["rebalancing"] = "Tháng 9/2026 là kỳ FTSE rebalancing → bonus +5"
+        rebal_bonus = 0
+    details["rebalancing"] = (
+        f"{months_to_next_rebalancing} months to rebalancing → bonus +{rebal_bonus}"
+    )
 
     # ── ADTV Improvement ─────────────────────────────────────────────────────
     if adtv_change_pct is not None and pd.notna(adtv_change_pct):
-        # ADTV tăng → thanh khoản tốt hơn → điểm cao
         adtv_score = _clamp_score(50 + adtv_change_pct * 100)
         scores["adtv_score"] = adtv_score
         details["adtv"] = f"ADTV change {adtv_change_pct:+.1%} QoQ → score {adtv_score:.0f}"
     else:
-        adtv_score = 60.0   # Q3/2026: ADTV tăng do upgrade
-        details["adtv"] = "ADTV Q3/2026: Est increase ~30% due to foreign flow"
+        adtv_score = 50.0   # Neutral when data unavailable
+        details["adtv"] = "ADTV data unavailable → neutral score 50"
 
     raw = _clamp_score(ftse_score + rebal_bonus + (adtv_score - 50) * 0.3)
 
@@ -555,6 +551,7 @@ def compute_quarterly_score(
     ml_pred_class:        Optional[int]   = None,
     ml_confidence:        Optional[float] = None,
     ftse_upgrade_status:  str = "confirmed",
+    months_to_next_rebalancing: Optional[int] = None,
     adtv_change_pct:      Optional[float] = None,
 ) -> Dict[str, Any]:
     """
@@ -578,10 +575,17 @@ def compute_quarterly_score(
     g4 = score_quant_model(mlr_pred, var_forecast, mlr_adj_r2, granger_leaders)
     g5 = score_ml_forecast(ml_accuracy, ml_f1, ml_pred_class, ml_confidence)
 
-    # FTSE rebalancing tháng 9/2026 = months_to_next_rebalancing = 0
+    # Get from parameter, fallback to calculating it if missing to prevent failure
+    if months_to_next_rebalancing is None:
+        now = datetime.now()
+        rebal_months = [3, 6, 9, 12]
+        months_to_next_rebalancing = min(((m - now.month) % 12) or 12 for m in rebal_months)
+        if now.month in rebal_months:
+            months_to_next_rebalancing = 0
+            
     g6 = score_market_structure(
         ftse_upgrade_status=ftse_upgrade_status,
-        months_to_next_rebalancing=0,   # Q3/2026: đang trong tháng 9
+        months_to_next_rebalancing=months_to_next_rebalancing,
         adtv_change_pct=adtv_change_pct
     )
 
@@ -598,9 +602,12 @@ def compute_quarterly_score(
             label, emoji, label_desc = lbl, em, desc
             break
 
-    # ── Xác định Leading Indicator mạnh nhất ─────────────────────────────────
+    # ── Most Divergent Pillar ──────────────────────────────────────────────────
+    # NOTE: This is a simple heuristic — the pillar whose raw score deviates
+    # most from neutral (50). This is NOT based on Granger causality or IRF.
+    # Granger tests are used separately in the VAR model for variable ranking.
     group_raw = {g["group"]: g["raw_score"] for g in groups}
-    leading_indicator = max(group_raw, key=lambda k: abs(group_raw[k] - 50))
+    most_divergent_pillar = max(group_raw, key=lambda k: abs(group_raw[k] - 50))
 
     # ── Lưu lịch sử ──────────────────────────────────────────────────────────
     score_record = {
@@ -610,7 +617,7 @@ def compute_quarterly_score(
         "label":                 label,
         "emoji":                 emoji,
         "label_description":     label_desc,
-        "leading_indicator":     leading_indicator,
+        "most_divergent_pillar": most_divergent_pillar,
         "group_scores": {
             g["group"]: {
                 "raw_score":      g["raw_score"],
@@ -645,6 +652,6 @@ def compute_quarterly_score(
 
     logger.info(
         f"[SCORER] {quarter}: {emoji} {label} — {total_weighted:.1f}/100\n"
-        f"  Leading indicator: {leading_indicator} ({group_raw[leading_indicator]:.1f})"
+        f"  Most divergent pillar: {most_divergent_pillar} ({group_raw[most_divergent_pillar]:.1f})"
     )
     return score_record

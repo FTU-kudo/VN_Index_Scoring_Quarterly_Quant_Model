@@ -306,7 +306,7 @@ def build_html_report(
     label = score_record.get("label", "HOLD")
     emoji = score_record.get("emoji", "🟡")
     desc  = score_record.get("label_description", "")
-    leading = score_record.get("leading_indicator", "")
+    leading = score_record.get("most_divergent_pillar", score_record.get("leading_indicator", ""))
     date_computed = score_record.get("date_computed", "")
 
     score_color = _color_for_score(total)

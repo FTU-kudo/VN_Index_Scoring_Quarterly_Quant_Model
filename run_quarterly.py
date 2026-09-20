@@ -283,10 +283,21 @@ def run_pipeline(args: argparse.Namespace) -> None:
     logger.info(f"Tổng điểm   : {score_record['total_score']:.1f}/100")
     logger.info(f"Phân loại   : {score_record['emoji']} {score_record['label']}")
     logger.info(f"Khuyến nghị : {score_record['label_description']}")
-    logger.info(f"Leading     : {score_record['leading_indicator']}")
+    logger.info(f"Leading     : {score_record.get('most_divergent_pillar', score_record.get('leading_indicator', 'N/A'))}")
     logger.info(f"HTML report : {html_path}")
     logger.info(f"JSON export : {json_path}")
     logger.info(f"{'='*60}")
+
+    # ── Auto-update README with latest results ─────────────────────────────
+    try:
+        import subprocess
+        subprocess.run(
+            [sys.executable, str(PROJECT_ROOT / "scripts" / "update_readme_results.py")],
+            cwd=str(PROJECT_ROOT), check=True
+        )
+        logger.info("[README] Auto-updated results section")
+    except Exception as e:
+        logger.warning(f"[README] Could not auto-update: {e}")
 
 
 if __name__ == "__main__":

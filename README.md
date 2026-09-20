@@ -24,41 +24,23 @@ Hệ thống được thiết kế đáp ứng trọn vẹn **5 Tiêu chuẩn V�
 
 ---
 
-## 📐 BỐN TRỤ CỘT ĐỊNH LƯỢNG (4 PILLARS & COMPOSITE SCORING)
+## 📐 SÁU TRỤ CỘT ĐỊNH LƯỢNG (6 PILLARS & COMPOSITE SCORING)
 
-Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa **100 điểm**, phân bổ trọng số theo mức độ ảnh hưởng kinh tế lượng:
+Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa **100 điểm**, phân bổ trọng số theo 6 nhóm biến số. Đây là bộ trọng số **duy nhất** (Single Source of Truth), được định nghĩa tại [`src/utils/config.py`](src/utils/config.py):
 
-```
-                  ┌───────────────────────────────────────────────┐
-                  │   VN-INDEX COMPOSITE ATTRACTIVENESS SCORE     │
-                  │                 (0 - 100)                     │
-                  └───────────────────────┬───────────────────────┘
-                                          │
-        ┌──────────────────┬──────────────┴─────┬──────────────────┐
-        │ 35%              │ 25%                │ 25%              │ 15%
-        ▼                  ▼                    ▼                  ▼
-┌──────────────┐   ┌──────────────┐     ┌──────────────┐   ┌──────────────┐
-│  TRỤ CỘT 1   │   │  TRỤ CỘT 2   │     │  TRỤ CỘT 3   │   │  TRỤ CỘT 4   │
-│  Vĩ mô &     │   │  Định giá    │     │  Dòng tiền & │   │  Động lượng  │
-│  Tiền tệ     │   │  Thị trường  │     │  Cấu trúc    │   │  Kỹ thuật    │
-└──────┬───────┘   └──────┬───────┘     └──────┬───────┘   └──────┬───────┘
-       │                  │                    │                  │
-   - Lãi suất OMO     - P/E Trailing       - Net Foreign      - RSI 14D
-   - US10Y Yield        Z-score (5Y)         Flows (VN30)     - MACD Histogram
-   - Chỉ số DXY       - P/B Z-score        - Dư nợ Margin     - Bollinger Bands
-   - M2 & Tín dụng    - Equity Risk          toàn TT          - Realized Vol (20D)
-   - Tỷ giá USD/VND     Premium (ERP)      - Margin / Market  - Khoảng cách tới
-                                             Cap ratio          MA50 / MA200
-```
+| # | Trụ cột | Trọng số | Các chỉ báo chính | Ghi chú |
+|---|---------|:--------:|---------------------|---------|
+| 1 | **Macro & Monetary** | **25%** | OMO rate, ΔIR, USD/VND Z-score, M2 YoY, VN10Y Yield, Yield Spread | Môi trường lãi suất & tiền tệ |
+| 2 | **Global & Intermarket** | **20%** | DXY Z-score, US10Y Yield, Net Foreign Flow Z-score | Áp lực toàn cầu & dòng vốn ngoại |
+| 3 | **Valuation & Leverage** | **20%** | P/E Z-score 5Y, P/B Z-score 5Y, Margin Risk, Earnings Yield Gap | Định giá tương đối & rủi ro đòn bẩy |
+| 4 | **Quant Model (MLR + VAR)** | **15%** | MLR predicted return, VAR T+5 forecast, Adj-R², Granger leaders | Tín hiệu từ mô hình kinh tế lượng |
+| 5 | **ML Forecast** | **10%** | XGBoost WFV accuracy, F1-score, directional prediction | Tín hiệu Machine Learning |
+| 6 | **Market Structure & FTSE** | **10%** | FTSE upgrade status, rebalancing proximity, ADTV change | Cấu trúc vi mô & nâng hạng |
 
-### Chi tiết Phân rã 4 Trụ cột
-
-| Trụ cột | Trọng số | Các chỉ báo thành phần (Metrics) | Cơ chế tác động & Hàm ý |
-|---|:---:|---|---|
-| **1. Vĩ mô & Chính sách Tiền tệ** | **35%** | • Lãi suất OMO / Liên ngân hàng<br>• Lợi suất TPCP Mỹ 10Y (US10Y)<br>• Chỉ số sức mạnh đồng USD (DXY)<br>• Tỷ giá USD/VND<br>• Tăng trưởng cung tiền M2 & Tín dụng | • Lãi suất là "trọng lực" của thị trường định giá tài sản.<br>• US10Y và DXY tăng làm gia tăng áp lực rút ròng ngoại tệ và áp lực tỷ giá lên NHNN. |
-| **2. Định giá Thị trường** | **25%** | • P/E Z-score (Rolling 5 năm)<br>• P/B Z-score (Rolling 5 năm)<br>• Equity Risk Premium (ERP = $1/\text{P/E} - \text{Bond Yield}$) | • Định vị VN-Index đang ở vùng rẻ (P/E Z-score < -1.0) hay đắt (P/E Z-score > +1.0) so với lịch sử 5 năm.<br>• ERP cao biểu thị phần bù rủi ro cổ phiếu vượt trội so với gửi tiết kiệm/trái phiếu. |
-| **3. Dòng tiền & Cấu trúc Vi mô** | **25%** | • Net Foreign Flow (Dòng tiền khối ngoại rổ VN30 động)<br>• Dư nợ vay Margin toàn thị trường<br>• Tỷ lệ Dư nợ Margin / Vốn hóa thị trường<br>• Khối lượng giao dịch bình quân 20 phiên | • Đo lường sức mạnh cung cầu thực tế.<br>• Cảnh báo rủi ro đòn bẩy khi tỷ lệ margin tiệm cận vùng đỉnh lịch sử hoặc khi khối ngoại bán ròng kéo dài. |
-| **4. Động lượng & Biến động Kỹ thuật** | **15%** | • RSI (14D) & MACD Histogram<br>• Khoảng cách giá tới SMA50 / SMA200<br>• Độ lệch dải Bollinger Bands (%B)<br>• Độ biến động thực tế 20 phiên (Realized Volatility) | • Xác định quán tính xu hướng và rủi ro quá mua/quá bán ngắn hạn.<br>• Toàn bộ chỉ báo được tính bằng thuật toán vector hóa thuần **NumPy / Pandas** (Tương thích hoàn toàn Python 3.14). |
+> **⚠️ Lưu ý về phương pháp luận (Methodology Notes):**
+> - **Hệ số quy đổi**: Các hàm chuyển đổi raw → score 0-100 (ví dụ: `omo_score = 100 - omo*12.5`, `mlr_score = 50 + pred*3000`) là heuristics được calibrate theo expert judgment. Hướng cải tiến: chuyển sang percentile rank thực tế trên cửa sổ expanding/rolling.
+> - **Chỉ báo kỹ thuật ngắn hạn**: Một số indicators (RSI-14, MACD daily) có chu kỳ ngắn hơn đáng kể so với tần suất ra quyết định hàng quý (3 tháng). Hệ thống sử dụng giá trị snapshot tại thời điểm chấm điểm — đây là trade-off có chủ đích giữa tính kịp thời (timeliness) và tính ổn định (stability).
+> - **Most Divergent Pillar**: Trường `most_divergent_pillar` trong output là nhóm có raw score lệch xa 50 nhất — đây là heuristic đơn giản, KHÔNG phải kết quả từ Granger Causality test. Granger tests được dùng riêng trong mô hình VAR để xếp hạng biến giải thích.
 
 ---
 
@@ -111,39 +93,46 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 
 ---
 
-## 📊 KẾT QUẢ THỰC NGHIỆM MẪU (LIVE RUN: 18/09/2026)
+<!-- AUTO_RESULTS_START -->
+## 📊 KẾT QUẢ THỰC NGHIỆM MẪU (AUTO-GENERATED)
 
-Hệ thống đã thực thi toàn bộ pipeline kiểm định trực tiếp với dữ liệu thực tế từ thị trường:
+> **⚠️ Section này được tạo TỰ ĐỘNG bởi `scripts/update_readme_results.py` từ dữ liệu output thực tế.**
+> **Không chỉnh sửa thủ công — sẽ bị ghi đè khi chạy pipeline.**
 
 ```text
 ======================================================================
-     VN-INDEX QUANTITATIVE SCORING PIPELINE — LIVE EXECUTION RESULT
+     VN-INDEX QUANTITATIVE SCORING — 2026-Q3
+     Generated: 2026-09-20T13:05:23.918522
 ======================================================================
 [MARKET DATA]
-  • VN-Index Close         : 1,815.66 điểm (+1.37σ so với trung bình 5 năm)
-  • US 10Y Yield           : 5.00% (+2.66σ — Rủi ro vĩ mô lớn nhất)
-  • DXY Index              : 100.22 (-0.66σ — Áp lực tỷ giá dịu bớt)
-  • RSI (14D)              : 59.90 (Tích lũy tăng trưởng, chưa quá mua)
-  • MACD Histogram         : +1.77 (Động lượng ngắn hạn dương)
-  • 20D Realized Volatility: 21.0%
+  • VN-Index Close         : N/A
+  • US 10Y Yield           : N/A%
+  • DXY Index              : N/A
+  • RSI (14D)              : N/A
 
 [ECONOMETRICS: MLR MODEL]
-  • R-squared              : 0.536 (R-adj = 0.518)
-  • Biến tác động mạnh nhất: Δ DXY (beta = -0.421, p < 0.01)
-  • Biến tác động định giá : P/E Z-score (beta = -0.312, p < 0.05)
-  • Biến áp lực chiết khấu : Δ US10Y (beta = -0.284, p < 0.05)
+  • N observations         : N/A
+  • R-squared              : N/A (R-adj = N/A)
 
 [MACHINE LEARNING: WALK-FORWARD VALIDATION]
-  • Tổng số chu kỳ WFV    : 320 chu kỳ trượt Out-Of-Sample
-  • XGBoost Accuracy       : 56.2% (Vượt mức ngẫu nhiên 33.3%)
-  • Dự báo chu kỳ gần nhất : DOWN (Cẩn trọng điều chỉnh do US10Y neo tại 5.0%)
+  • XGBoost Accuracy       : N/A
+  • N Folds (WFV)          : N/A
+  • Latest Prediction      : N/A
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Điểm tổng hợp          : 52.5 / 100 điểm
-  • Xếp hạng khuyến nghị   : TRUNG LẬP / THẬN TRỌNG (NEUTRAL)
-  • Phân bổ danh mục tối ưu: 50% - 60% Cổ phiếu / 40% - 50% Tiền mặt
+  • Total Score            : 53.54 / 100
+  • Classification         : 🟡 HOLD — Trung lập — Chờ tín hiệu xác nhận
+
+[GROUP BREAKDOWN]
+  • macro_monetary                : raw=  53.8  weight=13.45
+  • global_intermarket            : raw=  32.8  weight=6.56
+  • valuation_leverage            : raw=  56.2  weight=11.23
+  • quant_model                   : raw=  50.0  weight=7.5
+  • ml_forecast                   : raw=  50.0  weight=5.0
+  • market_structure              : raw=  98.0  weight=9.8
 ======================================================================
 ```
+<!-- AUTO_RESULTS_END -->
 
 ---
 

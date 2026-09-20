@@ -1,7 +1,7 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-20T01:28:30.764102",
+    "generated_at": "2026-09-20T13:43:28.890767",
     "data_range": "2021-01-01 → 2026-09-19",
     "disclaimer": "Kết quả từ dữ liệu thực tế. Nguồn thiếu được báo rõ."
   },
@@ -87,88 +87,66 @@
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "computed_at": "2026-09-20 01:28 ICT",
-    "total_score": 44.16,
-    "label": "REDUCE",
-    "emoji": "🟠",
-    "description": "Giảm tỷ trọng",
+    "computed_at": "2026-09-20 13:43",
+    "total_score": 47.85,
+    "label": "HOLD",
+    "emoji": "🟡",
+    "description": "Trung lập — Chờ tín hiệu xác nhận",
     "groups": {
-      "technical_price": {
-        "raw": 54.76,
-        "weight": 0.3,
-        "data_source": "vnstock OHLCV (THỰC TẾ)"
+      "macro_monetary": {
+        "raw": 48.29,
+        "weight": 0.25,
+        "data_source": "Canonical pipeline (macro_monetary)"
       },
       "global_intermarket": {
-        "raw": 38.72,
-        "weight": 0.25,
-        "data_source": "yfinance DXY+US10Y+VIX+SPX (THỰC TẾ)"
-      },
-      "mlr_signal": {
-        "raw": 51.6,
+        "raw": 26.68,
         "weight": 0.2,
-        "data_source": "OLS trên VNI+DXY+US10Y+RSI (THỰC TẾ)"
+        "data_source": "Canonical pipeline (global_intermarket)"
       },
-      "ml_direction": {
-        "raw": 23.93,
+      "valuation_leverage": {
+        "raw": 50.0,
+        "weight": 0.2,
+        "data_source": "Canonical pipeline (valuation_leverage)"
+      },
+      "quant_model": {
+        "raw": 51.99,
         "weight": 0.15,
-        "data_source": "XGBoost/LR WFV 6 folds (THỰC TẾ)"
+        "data_source": "Canonical pipeline (quant_model)"
       },
-      "macro_monetary": {
-        "raw": 41.45,
+      "ml_forecast": {
+        "raw": 31.36,
         "weight": 0.1,
-        "data_source": "Vietnam_Bonds JSON (THỰC TẾ)"
+        "data_source": "Canonical pipeline (ml_forecast)"
       },
-      "valuation_pepb": {
-        "raw": 30.395986378647073,
-        "weight": 0.0,
-        "data_source": "VN_PE_PB_analysis"
+      "market_structure": {
+        "raw": 95.0,
+        "weight": 0.1,
+        "data_source": "Canonical pipeline (market_structure)"
       }
     },
     "group_details": {
-      "technical_price": {
-        "rsi_14": 54.3557608648533,
-        "rsi_score": 60,
-        "price_vs_ma200_pct": 1.29,
-        "ma200_score": 60,
-        "drawdown_from_peak_60d_pct": -3.32,
-        "bb_position_pct": 57.13
+      "macro_monetary": {
+        "omo_overnight_rate": "N/A → default 50",
+        "usd_vnd": "N/A → default 50",
+        "vn_bonds": "VN10Y 4.41% | Spread 0.45% → score 41"
       },
       "global_intermarket": {
-        "dxy": 100.22,
-        "dxy_zscore": 1.0,
-        "us10y_yield": 4.998,
-        "us10y_score": 10.0,
-        "vix_zscore": -1.019,
-        "spx_5d_return_pct": -0.08
+        "dxy": "Z = 1.00 → score 30",
+        "us10y": "5.00% → score 0"
       },
-      "mlr_signal": {
-        "adj_r2": 0.2372,
-        "r2": 0.2444,
-        "dw": 1.666,
-        "n_obs": 1273,
-        "predicted_return": -0.000256
+      "valuation_leverage": {},
+      "quant_model": {
+        "mlr_forecast": "Forecast log-return = -0.0003 → score 49",
+        "mlr_adj_r2": "Adj-R² = 0.2372 → confidence bonus 2.4"
       },
-      "ml_direction": {
-        "model": "XGBoost",
-        "mean_accuracy": 0.5623,
-        "std_accuracy": 0.0772,
-        "mean_f1": 0.5574,
-        "n_folds_wfv": 6,
-        "direction_forecast": "DOWN",
-        "confidence": 0.616
+      "ml_forecast": {
+        "model_quality": "Accuracy=56.2% F1=0.557 → quality 56",
+        "ml_signal": "Dự báo: DOWN (conf=62%)"
       },
-      "macro_monetary": {
-        "vn10y_yield": 4.41,
-        "vn_spread": 0.45,
-        "bond_score": 41.5,
-        "status": "Partial Data (Bonds only)"
-      },
-      "valuation_pepb": {
-        "eyg_zscore_5y": -1.896,
-        "eyg": -2.89,
-        "pe_zscore_5y": -0.328,
-        "median_pe_market": 10.32,
-        "source": "VN_PE_PB_analysis + Vietnam_Bonds (THỰC TẾ)"
+      "market_structure": {
+        "ftse_upgrade": "Status: confirmed → score 75\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
+        "rebalancing": "0 months to rebalancing → bonus +20",
+        "adtv": "ADTV data unavailable → neutral score 50"
       }
     },
     "latest_vni": {
