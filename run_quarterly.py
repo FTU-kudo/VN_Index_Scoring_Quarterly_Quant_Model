@@ -111,6 +111,24 @@ def run_pipeline(args: argparse.Namespace) -> None:
         df_all = df_all.merge(
             df_feat[["date"] + feat_cols], on="date", how="left"
         )
+
+    # Lọc bỏ các dòng quá cũ
+    if "date" in df_all.columns:
+        df_all = df_all[df_all["date"] >= "2012-01-01"].reset_index(drop=True)
+
+    # Lọc dữ liệu đến hết quý đang chạy (Tránh Data Leakage)
+    try:
+        y_str, q_str = quarter.split("-Q")
+        m_end = int(q_str) * 3
+        # Lấy ngày cuối cùng của tháng cuối quý
+        end_date = pd.to_datetime(f"{y_str}-{m_end:02d}-01") + pd.offsets.MonthEnd(1)
+        df_all = df_all[df_all["date"] <= end_date].reset_index(drop=True)
+        logger.info(f"[DATA] Lọc dữ liệu đến {end_date.date()} (Cuối {quarter})")
+    except Exception as e:
+        logger.warning(f"[DATA] Không thể parse quarter {quarter}, dùng toàn bộ dữ liệu. Lỗi: {e}")
+
+    df_all = df_all.dropna(subset=["log_return"]).reset_index(drop=True)
+
     logger.info(f"[FE] Master dataset: {len(df_all)} rows × {len(df_all.columns)} cols")
 
     # ── Step 3: MLR Model ─────────────────────────────────────────────────────

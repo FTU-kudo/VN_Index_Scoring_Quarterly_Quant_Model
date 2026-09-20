@@ -1,30 +1,30 @@
 {
   "metadata": {
     "quarter": "2023-Q4",
-    "generated_at": "2026-09-20T15:19:44.271286",
+    "generated_at": "2026-09-20T15:40:20.963310",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2023-Q4",
-    "date_computed": "2026-09-20 15:19",
-    "total_score": 53.16,
+    "date_computed": "2026-09-20 15:40",
+    "total_score": 53.73,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "market_structure",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 53.78,
-        "weighted_score": 13.45
+        "raw_score": 65.25,
+        "weighted_score": 16.31
       },
       "global_intermarket": {
-        "raw_score": 32.38,
-        "weighted_score": 6.48
+        "raw_score": 20.0,
+        "weighted_score": 4.0
       },
       "valuation_leverage": {
-        "raw_score": 56.17,
-        "weighted_score": 11.23
+        "raw_score": 57.08,
+        "weighted_score": 11.42
       },
       "quant_model": {
         "raw_score": 50.0,
@@ -41,16 +41,18 @@
     },
     "group_details": {
       "macro_monetary": {
-        "vn1y_yield": "N/A → default 50",
-        "usd_vnd": "Z-score = -1.26 → score 69"
+        "vn1y_yield": "1.61% → score 91",
+        "ir_trend": "Δ VN1Y = 0.0104 (→ Hold) → score 49",
+        "usd_vnd": "Z-score = -0.96 → score 64",
+        "vn_bonds": "VN10Y 2.22% | Spread 0.54% → score 71"
       },
       "global_intermarket": {
-        "dxy": "Z = 0.14 → score 47",
-        "us10y": "5.00% → score 0",
-        "jpy_carry": "Z = -1.18 (neutral) → score 32"
+        "dxy": "Z = -1.73 → score 85",
+        "us10y": "3.87% → score 23",
+        "jpy_carry": "Z = -2.03 (high_risk) → score 19"
       },
       "valuation_leverage": {
-        "margin_risk": "Risk = 15/100 (SAFE) → score 85"
+        "margin_risk": "Risk = 10/100 (SAFE) → score 90"
       },
       "quant_model": {
         "mlr_forecast": "No MLR forecast"
@@ -65,7 +67,7 @@
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — USD/VND z=-1.3 (stable)",
+      "macro_monetary": "Macro: FAVORABLE — VN1Y rate 1.61% (low/favorable) | USD/VND z=-1.0 (stable) | VN10Y 2.22% (Spread 0.54%)",
       "global_intermarket": "Global: Incomplete data — need DXY, US10Y, NFF, JPY",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=50 | VAR=50 | R²=N/A | Granger=N/A",
@@ -138,17 +140,17 @@
       "rank": 12
     },
     {
-      "feature": "dxy_close",
+      "feature": "vn10y_yield",
       "importance": 0.0,
       "rank": 13
     },
     {
-      "feature": "us10y_yield",
+      "feature": "vn2y_yield",
       "importance": 0.0,
       "rank": 14
     },
     {
-      "feature": "usdjpy_close",
+      "feature": "vn1y_yield",
       "importance": 0.0,
       "rank": 15
     }
