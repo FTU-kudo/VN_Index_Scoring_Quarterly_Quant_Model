@@ -1,7 +1,7 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-20T13:43:28.890767",
+    "generated_at": "2026-09-20T14:09:44.418350",
     "data_range": "2021-01-01 → 2026-09-19",
     "disclaimer": "Kết quả từ dữ liệu thực tế. Nguồn thiếu được báo rõ."
   },
@@ -87,11 +87,11 @@
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "computed_at": "2026-09-20 13:43",
+    "computed_at": "2026-09-20 14:09",
     "total_score": 47.85,
     "label": "HOLD",
     "emoji": "🟡",
-    "description": "Trung lập — Chờ tín hiệu xác nhận",
+    "description": "Neutral — Await confirming signals",
     "groups": {
       "macro_monetary": {
         "raw": 48.29,
@@ -141,7 +141,7 @@
       },
       "ml_forecast": {
         "model_quality": "Accuracy=56.2% F1=0.557 → quality 56",
-        "ml_signal": "Dự báo: DOWN (conf=62%)"
+        "ml_signal": "Forecast: DOWN (conf=62%)"
       },
       "market_structure": {
         "ftse_upgrade": "Status: confirmed → score 75\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",

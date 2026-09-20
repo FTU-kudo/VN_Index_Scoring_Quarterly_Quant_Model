@@ -145,11 +145,11 @@ def _macro_rationale(omo, d_omo, fx_z, m2, score, df_latest) -> str:
     if pd.notna(omo):
         parts.append(f"OMO rate {omo:.2f}% ({'low/favorable' if omo < 5 else 'elevated'})")
     if pd.notna(d_omo) and abs(d_omo) > 0.05:
-        parts.append(f"SBV {'tăng' if d_omo > 0 else 'cắt giảm'} OMO rate (Δ={d_omo:.2f}%)")
+        parts.append(f"SBV {'hikes' if d_omo > 0 else 'cuts'} OMO rate (Δ={d_omo:.2f}%)")
     if pd.notna(fx_z):
         parts.append(f"USD/VND z={fx_z:.1f} ({'pressure' if fx_z > 1 else 'stable'})")
     if pd.notna(m2):
-        parts.append(f"M2 tăng {m2:.1f}% YoY ({'mạnh' if m2 > 15 else ('yếu' if m2 < 8 else 'bình thường')})")
+        parts.append(f"M2 growth {m2:.1f}% YoY ({'strong' if m2 > 15 else ('weak' if m2 < 8 else 'normal')})")
     
     vn10y = df_latest.get("vn10y_yield", np.nan)
     vn_spread = df_latest.get("vn_yield_spread", np.nan)
@@ -205,7 +205,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         dir_str = "NET BUY" if nff_z > 0.5 else ("NET SELL" if nff_z < -0.5 else "Neutral")
         details["nff"] = f"Z = {nff_z:.2f} ({dir_str}) → score {nff_score:.0f}"
         if pd.notna(nff_5d):
-            details["nff_5d_rolling"] = f"{nff_5d:.0f} tỷ VND (tuần)"
+            details["nff_5d_rolling"] = f"{nff_5d:.0f} bil VND (weekly)"
     else:
         nff_score = 50.0
 
@@ -221,7 +221,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         "details":        details,
         "rationale":      f"Global: DXY={dxy_z:.1f}σ | US10Y={us10y:.2f}% | NFF-Z={nff_z:.1f}σ"
             if all(pd.notna(v) for v in [dxy_z, us10y, nff_z])
-            else "Global: Dữ liệu không đầy đủ — cần DXY, US10Y, NFF"
+            else "Global: Incomplete data — need DXY, US10Y, NFF"
     }
 
 
@@ -301,7 +301,7 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
         "details":        details,
         "rationale":      (f"PE Z={pe_z:.2f} | EYG Z={eyg_z:.2f} | Margin risk={mrisk:.0f}")
             if all(pd.notna(v) for v in [pe_z, eyg_z, mrisk])
-            else "Valuation: Dữ liệu P/E, P/B, EYG hoặc margin không đầy đủ"
+            else "Valuation: Incomplete P/E, P/B, EYG, or margin data"
     }
 
 
@@ -416,14 +416,14 @@ def score_ml_forecast(
         if ml_pred_class == 1:    # UP
             signal_score = 80.0
             conf_str = f" (conf={ml_confidence:.0%})" if ml_confidence else ""
-            details["ml_signal"] = f"Dự báo: UP{conf_str}"
+            details["ml_signal"] = f"Forecast: UP{conf_str}"
         elif ml_pred_class == -1: # DOWN
             signal_score = 20.0
             conf_str = f" (conf={ml_confidence:.0%})" if ml_confidence else ""
-            details["ml_signal"] = f"Dự báo: DOWN{conf_str}"
+            details["ml_signal"] = f"Forecast: DOWN{conf_str}"
         else:                     # NEUTRAL
             signal_score = 50.0
-            details["ml_signal"] = "Dự báo: NEUTRAL"
+            details["ml_signal"] = "Forecast: NEUTRAL"
     else:
         details["ml_signal"] = "ML prediction not run"
 

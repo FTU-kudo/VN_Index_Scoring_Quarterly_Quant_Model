@@ -283,7 +283,12 @@ VI_TRANS = {
     "Causing Variable": "Biến gây nhân quả",
     "Rank": "Xếp hạng",
     "Feature": "Đặc trưng",
-    "Importance": "Mức quan trọng"
+    "Importance": "Mức quan trọng",
+    "Highly favorable environment — Increase exposure aggressively": "Môi trường rất thuận lợi — Tăng tỷ trọng mạnh",
+    "Gradually accumulate — Controllable risks": "Tích lũy dần — Rủi ro kiểm soát được",
+    "Neutral — Await confirming signals": "Trung lập — Chờ tín hiệu xác nhận",
+    "Reduce exposure — Increasing pressure": "Giảm tỷ trọng — Áp lực tăng",
+    "Defensive — Unfavorable environment": "Phòng thủ — Môi trường bất lợi"
 }
 
 def t(en_text: str, custom_vi: str = None) -> str:
@@ -339,7 +344,7 @@ def build_html_report(
       </div>
       <div class="score-big" style="color: {score_color};">{total:.1f}</div>
       <div class="score-label" style="color: {score_color};">{emoji} {label}</div>
-      <div class="score-desc">{desc}</div>
+      <div class="score-desc">{t(desc)}</div>
       <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
         <div class="progress-bar">
           <div class="progress-fill" style="width:{total}%; background:{score_color};"></div>

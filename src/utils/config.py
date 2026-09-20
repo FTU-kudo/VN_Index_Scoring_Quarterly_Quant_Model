@@ -165,11 +165,11 @@ assert abs(sum(SCORING_WEIGHTS.values()) - 1.0) < 1e-9, "Tổng trọng số ph�
 
 # Thang điểm phân loại tổng hợp
 SCORE_LABELS = {
-    (80, 100): ("BUY",        "🟢", "Môi trường rất thuận lợi — Tăng tỷ trọng mạnh"),
-    (60,  79): ("ACCUMULATE", "🔵", "Tích lũy dần — Rủi ro kiểm soát được"),
-    (40,  59): ("HOLD",       "🟡", "Trung lập — Chờ tín hiệu xác nhận"),
-    (20,  39): ("REDUCE",     "🟠", "Giảm tỷ trọng — Áp lực tăng"),
-    ( 0,  19): ("SELL",       "🔴", "Phòng thủ — Môi trường bất lợi"),
+    (80, 100): ("BUY",        "🟢", "Highly favorable environment — Increase exposure aggressively"),
+    (60,  79): ("ACCUMULATE", "🔵", "Gradually accumulate — Controllable risks"),
+    (40,  59): ("HOLD",       "🟡", "Neutral — Await confirming signals"),
+    (20,  39): ("REDUCE",     "🟠", "Reduce exposure — Increasing pressure"),
+    ( 0,  19): ("SELL",       "🔴", "Defensive — Unfavorable environment"),
 }
 
 # ── Ngưỡng cảnh báo margin call ───────────────────────────────────────────────
