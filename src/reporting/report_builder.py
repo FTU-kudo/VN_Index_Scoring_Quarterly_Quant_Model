@@ -239,6 +239,8 @@ _JS_SCRIPT = """
       "weak": "yếu",
       "normal": "bình thường",
       "pressure": "áp lực",
+      "high_risk": "rủi ro cao",
+      "neutral": "trung tính",
       "hikes": "tăng",
       "cuts": "cắt giảm",
       "growth": "tăng trưởng",
@@ -569,7 +571,7 @@ def build_html_report(
         <div class="section">
           <h2>📐 {t('Multiple Linear Regression (MLR) Results', 'Kết quả Hồi quy Đa biến (MLR)')}</h2>
           <p style="color:var(--text-muted); font-size:13px; font-family:monospace; background:var(--bg-primary); padding:10px; border-radius:6px;">
-            R_VNI = α + β₁·ΔIR + β₂·ΔDXY + β₃·NFF + β₄·Z(PE) + β₅·ΔMrg + β₆·ΔUS10Y + ε
+            R_VNI = α + β₁·ΔVN1Y + β₂·ΔDXY + β₃·NFF + β₄·Z(PE) + β₅·ΔMrg + β₆·ΔUS10Y + β₇·ΔUSD/JPY + ε
           </p>
           <table>
             <thead><tr>

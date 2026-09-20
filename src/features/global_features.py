@@ -122,6 +122,42 @@ def build_us10y_features(df_global: pd.DataFrame) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 2.5. USD/JPY Features (Yen Carry Trade proxy)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def build_jpy_features(df_global: pd.DataFrame) -> pd.DataFrame:
+    """
+    Tạo features từ USD/JPY để đánh giá rủi ro Yen Carry Trade unwinding.
+
+    Biến tạo ra:
+      - delta_usdjpy      : Δ USD/JPY hàng ngày (pct_change)
+      - usdjpy_zscore_60d : Z-score 60 ngày để phát hiện Yen mạnh lên bất thường.
+      - jpy_carry_risk    : high / low (Yen mạnh lên tức USD/JPY giảm sâu).
+    """
+    df = df_global.copy()
+    if "usdjpy_close" not in df.columns:
+        logger.warning("[JPY] Không có cột usdjpy_close — bỏ qua")
+        return df
+
+    # Pct change
+    df["delta_usdjpy"] = df["usdjpy_close"].pct_change()
+
+    # Z-score 60 ngày
+    roll_mean = df["usdjpy_close"].rolling(60, min_periods=20).mean()
+    roll_std  = df["usdjpy_close"].rolling(60, min_periods=20).std()
+    df["usdjpy_zscore_60d"] = ((df["usdjpy_close"] - roll_mean) /
+                                roll_std.replace(0, np.nan))
+
+    # Regime (Yen mạnh lên tương đương USD/JPY giảm mạnh)
+    df["jpy_carry_risk"] = df["usdjpy_zscore_60d"].apply(
+        lambda z: "high_risk" if (pd.notna(z) and z < -1.5)
+                  else "neutral"
+    )
+
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 3. Net Foreign Flow Features
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -276,6 +312,17 @@ def build_global_features(
             if col not in result.columns and col in df_us10y.columns:
                 result = result.merge(
                     df_us10y[["date", col]], on="date", how="left"
+                )
+
+    # 2.5 JPY features
+    if not df_global.empty and "usdjpy_close" in df_global.columns:
+        df_jpy = build_jpy_features(df_global)
+        jpy_cols = [c for c in df_jpy.columns
+                      if "jpy" in c or "delta_usdjpy" in c]
+        for col in jpy_cols:
+            if col not in result.columns and col in df_jpy.columns:
+                result = result.merge(
+                    df_jpy[["date", col]], on="date", how="left"
                 )
 
     # 3. Net Foreign Flow features

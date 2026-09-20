@@ -140,6 +140,7 @@ VAR_VARIABLES   = [
     "vni_return",         # Biến phụ thuộc: tỷ suất sinh lợi VNI
     "delta_vn1y_yield",   # Δ Lợi suất TPCP 1Y (proxy OMO)
     "delta_dxy",          # Δ Chỉ số DXY
+    "delta_usdjpy",       # Δ Tỷ giá USD/JPY (Yen Carry Trade)
     "net_foreign_flow",   # Dòng tiền khối ngoại (tỷ VND)
     "delta_us10y",        # Δ Lợi suất TPCP Mỹ 10Y
     "pe_zscore",          # Z-score P/E VN-Index so 5Y history

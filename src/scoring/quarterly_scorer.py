@@ -209,7 +209,24 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
     else:
         nff_score = 50.0
 
-    raw = np.mean([dxy_score, us10y_score, nff_score])
+    # ── JPY Carry Trade ───────────────────────────────────────────────────────
+    jpy_z = df_latest.get("usdjpy_zscore_60d", np.nan)
+    jpy_risk = df_latest.get("jpy_carry_risk", "neutral")
+    if pd.notna(jpy_z):
+        # Yen mạnh lên (Z âm) → Rủi ro Carry Trade Unwind → Điểm thấp
+        jpy_score = _clamp_score(50 + jpy_z * 15)
+        scores["jpy_score"] = jpy_score
+        details["jpy_carry"] = f"Z = {jpy_z:.2f} ({jpy_risk}) → score {jpy_score:.0f}"
+    else:
+        jpy_score = 50.0
+        jpy_z = np.nan
+
+    raw = np.mean([dxy_score, us10y_score, nff_score, jpy_score])
+    
+    # Áp dụng ngưỡng cảnh báo (cap) nếu JPY giảm sốc (Carry Trade Unwind)
+    if pd.notna(jpy_z) and jpy_z < -2.0:
+        raw = min(raw, 20.0)  # Rủi ro cao, cap điểm ở mức 20
+
     raw = _clamp_score(raw)
 
     return {
@@ -219,10 +236,11 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         "weighted_score": round(raw * SCORING_WEIGHTS["global_intermarket"], 2),
         "sub_scores":     scores,
         "details":        details,
-        "rationale":      f"Global: DXY={dxy_z:.1f}σ | US10Y={us10y:.2f}% | NFF-Z={nff_z:.1f}σ"
-            if all(pd.notna(v) for v in [dxy_z, us10y, nff_z])
-            else "Global: Incomplete data — need DXY, US10Y, NFF"
+        "rationale":      f"Global: DXY={dxy_z:.1f}σ | US10Y={us10y:.2f}% | NFF-Z={nff_z:.1f}σ | JPY-Z={jpy_z:.1f}σ"
+            if all(pd.notna(v) for v in [dxy_z, us10y, nff_z, jpy_z])
+            else "Global: Incomplete data — need DXY, US10Y, NFF, JPY"
     }
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -50,14 +50,14 @@ Hệ thống kết hợp ba tầng mô hình phân tích định lượng:
 
 ### 1. Mô hình Hồi quy Đa biến (Multi-Linear Regression - MLR)
 Thiết lập phương trình dự báo lợi suất VN-Index chu kỳ tiếp theo $R_{t+h}$:
-$$R_{t+h} = \alpha + \beta_1 \Delta \text{VN1Y}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE\_Zscore}_t + \beta_6 \Delta \text{Margin}_t + \epsilon_t$$
+$$R_{t+h} = \alpha + \beta_1 \Delta \text{VN1Y}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE\_Zscore}_t + \beta_6 \Delta \text{Margin}_t + \beta_7 \Delta \text{USD/JPY}_t + \epsilon_t$$
 - **Newey-West HAC Standard Errors**: Tự động hiệu chỉnh sai số nhằm giải quyết hiện tượng phương sai thay đổi (Heteroskedasticity) và tự tương quan (Autocorrelation).
 - **Phân tích độ nhạy**: Đánh giá chính xác $p$-value và hệ số $\beta$ chuẩn hóa để xếp hạng mức độ ảnh hưởng của từng biến số.
 
 ### 2. Mô hình Tự Hồi quy Vectơ (Vector Autoregression - VAR)
 - **Lag selection**: Tự động lựa chọn độ trễ tối ưu dựa trên tiêu chuẩn thông tin Akaike (AIC) và Schwarz-Bayesian (BIC).
-- **Granger Causality Test**: Kiểm tra kiểm định nhân quả theo thời gian để xác định xem sự thay đổi của biến số vĩ mô (ví dụ: DXY, Lợi suất VN1Y) dẫn dắt VN-Index trước bao nhiêu tuần.
-- **Impulse Response Functions (IRF)**: Mô phỏng cú sốc (1 độ lệch chuẩn) từ US10Y hoặc DXY tác động lên quỹ đạo VN-Index trong 12 kỳ tiếp theo.
+- **Granger Causality Test**: Kiểm tra kiểm định nhân quả theo thời gian để xác định xem sự thay đổi của biến số vĩ mô (ví dụ: DXY, Lợi suất VN1Y, Tỷ giá USD/JPY) dẫn dắt VN-Index trước bao nhiêu tuần.
+- **Impulse Response Functions (IRF)**: Mô phỏng cú sốc (1 độ lệch chuẩn) từ US10Y, DXY, hoặc USD/JPY (hiệu ứng Yen Carry Trade unwind) tác động lên quỹ đạo VN-Index trong 12 kỳ tiếp theo.
 
 ### 3. Mô hình Học máy & Kiểm định Trượt (XGBoost + Walk-Forward Validation)
 - **Cấu trúc bộ phân loại**: Phân loại xu hướng 3 trạng thái thị trường: `UP` (+1), `SIDEWAY` (0), `DOWN` (-1).
@@ -102,7 +102,7 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q3
-     Generated: 2026-09-20T15:08:04.529811
+     Generated: 2026-09-20T15:26:27.347695
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
@@ -120,12 +120,12 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
   • Latest Prediction      : N/A
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score            : 53.24 / 100
+  • Total Score            : 53.33 / 100
   • Classification         : 🟡 HOLD — Neutral — Await confirming signals
 
 [GROUP BREAKDOWN]
-  • macro_monetary                : raw=  53.8  weight=13.45
-  • global_intermarket            : raw=  32.8  weight=6.56
+  • macro_monetary                : raw=  54.5  weight=13.62
+  • global_intermarket            : raw=  32.4  weight=6.48
   • valuation_leverage            : raw=  56.2  weight=11.23
   • quant_model                   : raw=  50.0  weight=7.5
   • ml_forecast                   : raw=  50.0  weight=5.0

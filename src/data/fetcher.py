@@ -269,15 +269,16 @@ def fetch_global_indicators(
     use_cache: bool = True
 ) -> pd.DataFrame:
     """
-    Tải DXY và US10Y Yield từ yfinance.
+    Tải DXY, US10Y Yield, và USD/JPY từ yfinance.
 
     Mã yfinance:
       - DX-Y.NYB : US Dollar Index (proxy cho DXY)
       - ^TNX     : CBOE Interest Rate 10-Year T-Note (US10Y)
+      - JPY=X    : Tỷ giá USD/JPY (Yen Carry Trade proxy)
 
     Returns
     -------
-    DataFrame: date, dxy_close, dxy_pct_change, us10y_yield, us10y_delta
+    DataFrame: date, dxy_close, dxy_pct_change, us10y_yield, us10y_delta, usdjpy_close
     """
     cache_path = RAW_DIR / "global_indicators.parquet"
     if use_cache and cache_path.exists():
@@ -285,7 +286,7 @@ def fetch_global_indicators(
         logger.info(f"[GLOBAL] Dùng cache global indicators ({len(df)} rows)")
         return df
 
-    logger.info("[GLOBAL] Đang tải DXY + US10Y từ yfinance...")
+    logger.info("[GLOBAL] Đang tải DXY, US10Y, USD/JPY từ yfinance...")
     try:
         import yfinance as yf
         # Tải DXY
@@ -295,31 +296,38 @@ def fetch_global_indicators(
         us10y_raw = yf.download("^TNX", start=start, end=end, interval="1d",
                                 progress=False, auto_adjust=True)
 
-        if dxy_raw.empty or us10y_raw.empty:
-            raise ValueError("yfinance trả về dữ liệu trống cho DXY hoặc US10Y")
+        # Tải USD/JPY
+        jpy_raw = yf.download("JPY=X", start=start, end=end, interval="1d",
+                              progress=False, auto_adjust=True)
+
+        if dxy_raw.empty or us10y_raw.empty or jpy_raw.empty:
+            raise ValueError("yfinance trả về dữ liệu trống cho DXY, US10Y hoặc JPY")
 
         dxy = dxy_raw[["Close"]].rename(columns={"Close": "dxy_close"})
         dxy.index = pd.to_datetime(dxy.index).tz_localize(None)
 
         us10y = us10y_raw[["Close"]].rename(columns={"Close": "us10y_yield"})
         us10y.index = pd.to_datetime(us10y.index).tz_localize(None)
+        
+        jpy = jpy_raw[["Close"]].rename(columns={"Close": "usdjpy_close"})
+        jpy.index = pd.to_datetime(jpy.index).tz_localize(None)
 
-        df = dxy.join(us10y, how="outer").ffill().reset_index()
-        df.columns = ["date", "dxy_close", "us10y_yield"]
+        df = dxy.join(us10y, how="outer").join(jpy, how="outer").ffill().reset_index()
+        df.columns = ["date", "dxy_close", "us10y_yield", "usdjpy_close"]
         df["dxy_pct_change"] = df["dxy_close"].pct_change()
         df["us10y_delta"]    = df["us10y_yield"].diff()
         df = df.sort_values("date").reset_index(drop=True)
         df.to_parquet(cache_path, index=False)
-        logger.info(f"[GLOBAL] Đã tải {len(df)} ngày DXY + US10Y")
+        logger.info(f"[GLOBAL] Đã tải {len(df)} ngày DXY + US10Y + USD/JPY")
 
     except ImportError:
         logger.warning("[GLOBAL] yfinance chưa cài đặt")
         df = pd.DataFrame(columns=["date", "dxy_close", "dxy_pct_change",
-                                   "us10y_yield", "us10y_delta"])
+                                   "us10y_yield", "us10y_delta", "usdjpy_close"])
     except Exception as e:
         logger.error(f"[GLOBAL] Lỗi: {e}")
         df = pd.DataFrame(columns=["date", "dxy_close", "dxy_pct_change",
-                                   "us10y_yield", "us10y_delta"])
+                                   "us10y_yield", "us10y_delta", "usdjpy_close"])
 
     return df
 

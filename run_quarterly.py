@@ -79,7 +79,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
         fetch_vnindex_ohlcv, compute_vni_returns,
         fetch_foreign_flows, fetch_macro_sbv_manual,
         fetch_usdvnd_proxy, fetch_global_indicators,
-        fetch_margin_debt_manual, fetch_m2_credit_manual
+        fetch_margin_debt_manual, fetch_m2_credit_manual,
+        fetch_vietnam_bonds
     )
 
     df_vni     = fetch_vnindex_ohlcv(use_cache=use_cache)
@@ -90,6 +91,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     df_global  = fetch_global_indicators(use_cache=use_cache)
     df_margin  = fetch_margin_debt_manual()
     df_m2      = fetch_m2_credit_manual()
+    df_bonds   = fetch_vietnam_bonds()
 
     # ── Step 2: Feature Engineering ───────────────────────────────────────────
     logger.info("[2/7] Feature engineering...")
@@ -97,7 +99,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     from src.features.global_features import build_global_features
     from src.features.valuation_features import build_valuation_leverage_features
 
-    df_macro_feat = build_macro_features(df_vni, df_macro, df_fx, df_m2)
+    df_macro_feat = build_macro_features(df_vni, df_macro, df_fx, df_m2, df_bonds=df_bonds)
     df_global_feat = build_global_features(df_vni, df_global, df_ff)
     df_val_feat = build_valuation_leverage_features(df_vni, df_margin)
 

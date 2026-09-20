@@ -39,6 +39,7 @@ CORE_FEATURES = [
     "pe_zscore",               # β₄: Z-score P/E
     "delta_margin_debt_pct",   # β₅: Δ Dư nợ margin (%)
     "delta_us10y",             # β₆: Δ US10Y yield
+    "delta_usdjpy",            # β₇: Δ USD/JPY (Yen Carry Trade)
 ]
 
 # Dấu kỳ vọng theo lý thuyết kinh tế
@@ -49,6 +50,7 @@ EXPECTED_SIGNS = {
     "pe_zscore":                -1,   # β₄ < 0: định giá đắt → mean reversion ↓
     "delta_margin_debt_pct":   -1,   # β₅ < 0: margin tăng nhanh → rủi ro call
     "delta_us10y":             -1,   # β₆ < 0: LS Mỹ tăng → vốn rút khỏi EM
+    "delta_usdjpy":            +1,   # β₇ > 0: USD/JPY giảm (Yen mạnh) → VNI giảm
 }
 
 
