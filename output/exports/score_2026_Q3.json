@@ -1,13 +1,13 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-20T01:40:45.911139",
+    "generated_at": "2026-09-20T13:05:23.918522",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "date_computed": "2026-09-20 01:40",
+    "date_computed": "2026-09-20 13:05",
     "total_score": 53.54,
     "label": "HOLD",
     "emoji": "🟡",
@@ -49,26 +49,26 @@
         "us10y": "5.00% → score 0"
       },
       "valuation_leverage": {
-        "margin_risk": "Risk = 15/100 (AN TOÀN) → score 85"
+        "margin_risk": "Risk = 15/100 (SAFE) → score 85"
       },
       "quant_model": {
-        "mlr_forecast": "Chưa có dự báo MLR"
+        "mlr_forecast": "No MLR forecast"
       },
       "ml_forecast": {
-        "ml_signal": "Chưa chạy ML prediction"
+        "ml_signal": "ML prediction not run"
       },
       "market_structure": {
-        "ftse_upgrade": "Status: confirmed → score 75\n  Ước tính dòng vốn passive: $6.4B USD\n  Hiệu ứng: Sentiment premium VN30 +15-25% trong giai đoạn rebalancing",
-        "rebalancing": "0 tháng đến rebalancing → bonus +20",
-        "adtv": "ADTV Q3/2026: Ước tính tăng ~30% do dòng vốn ngoại"
+        "ftse_upgrade": "Status: confirmed → score 75\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% trong giai đoạn rebalancing",
+        "rebalancing": "0 months to rebalancing → bonus +20",
+        "adtv": "ADTV Q3/2026: Est increase ~30% due to foreign flow"
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: TRUNG TÍNH — USD/VND z=-1.3 (stable)",
+      "macro_monetary": "Macro: NEUTRAL — USD/VND z=-1.3 (stable)",
       "global_intermarket": "Global: Dữ liệu không đầy đủ — cần DXY, US10Y, NFF",
       "valuation_leverage": "Valuation: Dữ liệu P/E, P/B, EYG hoặc margin không đầy đủ",
       "quant_model": "MLR=50 | VAR=50 | R²=N/A | Granger=N/A",
-      "ml_forecast": "ML: Chưa chạy ML prediction | Quality=50",
+      "ml_forecast": "ML: ML prediction not run | Quality=50",
       "market_structure": "FTSE Secondary EM upgrade đang tạo structural tailwind cho VN-Index"
     }
   },

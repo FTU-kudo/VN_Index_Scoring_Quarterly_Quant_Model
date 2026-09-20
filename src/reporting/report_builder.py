@@ -1,15 +1,5 @@
 """
-report_builder.py — Tạo Báo cáo Phân tích Định lượng HTML / JSON / Markdown
-=============================================================================
-Báo cáo bao gồm:
-  1. Executive Summary (điểm tổng hợp, phân loại, khuyến nghị)
-  2. Bảng biến số định lượng (6 nhóm × chi tiết từng biến)
-  3. Kết quả MLR (bảng beta, p-value, sign check)
-  4. Granger Causality Rankings
-  5. ML Forecast Summary
-  6. FTSE Upgrade Analysis
-  7. Lịch sử điểm số theo quý (trend chart)
-  8. Khuyến nghị đầu tư (data-driven)
+report_builder.py — Cấu hình Báo cáo HTML/JSON Định lượng
 """
 
 import json
@@ -21,47 +11,22 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from src.utils.config import REPORTS_DIR, CHARTS_DIR, EXPORTS_DIR
+from src.utils.config import REPORTS_DIR, EXPORTS_DIR
 
 logger = logging.getLogger(__name__)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Helper utilities
-# ══════════════════════════════════════════════════════════════════════════════
-
 def _score_bar(score: float, width: int = 30) -> str:
-    """Tạo thanh tiến trình ASCII: [████████░░░░░░░░] 70/100"""
     filled = int(round(score / 100 * width))
     empty  = width - filled
     bar    = "█" * filled + "░" * empty
     return f"[{bar}] {score:.1f}/100"
 
-
 def _color_for_score(score: float) -> str:
-    """Trả về CSS color class cho score."""
-    if score >= 80: return "#22c55e"   # green
-    if score >= 60: return "#3b82f6"   # blue
-    if score >= 40: return "#f59e0b"   # amber
-    if score >= 20: return "#f97316"   # orange
-    return "#ef4444"                   # red
-
-
-def _format_pct(v: Optional[float], decimals: int = 2) -> str:
-    if v is None or (isinstance(v, float) and np.isnan(v)):
-        return "N/A"
-    return f"{v*100:+.{decimals}f}%"
-
-
-def _format_num(v: Optional[float], decimals: int = 2) -> str:
-    if v is None or (isinstance(v, float) and np.isnan(v)):
-        return "N/A"
-    return f"{v:.{decimals}f}"
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 1. JSON Export
-# ══════════════════════════════════════════════════════════════════════════════
+    if score >= 80: return "var(--color-green)"
+    if score >= 60: return "var(--color-blue)"
+    if score >= 40: return "var(--color-amber)"
+    if score >= 20: return "var(--color-orange)"
+    return "var(--color-red)"
 
 def export_score_json(
     score_record: Dict[str, Any],
@@ -71,13 +36,6 @@ def export_score_json(
     wfv_summary: Optional[Dict] = None,
     fi_df:       Optional[pd.DataFrame] = None,
 ) -> Path:
-    """
-    Xuất toàn bộ kết quả phân tích sang JSON.
-
-    Returns
-    -------
-    Path tới file JSON đã lưu
-    """
     payload = {
         "metadata": {
             "quarter":        quarter,
@@ -101,7 +59,6 @@ def export_score_json(
         ),
     }
 
-    # Xử lý numpy types
     def _convert(obj):
         if isinstance(obj, (np.integer,)):  return int(obj)
         if isinstance(obj, (np.floating,)): return float(obj)
@@ -112,62 +69,227 @@ def export_score_json(
     out_path = EXPORTS_DIR / f"score_{quarter.replace('-','_')}.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2, default=_convert)
-    logger.info(f"[REPORT] Đã xuất JSON → {out_path}")
+    logger.info(f"[REPORT] JSON exported → {out_path}")
     return out_path
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 2. HTML Report Builder
-# ══════════════════════════════════════════════════════════════════════════════
-
 _HTML_STYLE = """
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a;
-         color: #e2e8f0; margin: 0; padding: 20px; }
-  .container { max-width: 1100px; margin: 0 auto; }
-  h1 { color: #f1f5f9; border-bottom: 2px solid #334155; padding-bottom: 12px; }
-  h2 { color: #94a3b8; margin-top: 36px; }
-  h3 { color: #cbd5e1; }
-  .hero { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-          border: 1px solid #334155; border-radius: 12px; padding: 28px;
-          margin-bottom: 28px; text-align: center; }
-  .score-big { font-size: 72px; font-weight: 900; line-height: 1; }
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --hero-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    
+    --color-green: #16a34a;
+    --color-blue: #2563eb;
+    --color-amber: #d97706;
+    --color-orange: #ea580c;
+    --color-red: #dc2626;
+    --badge-ok-bg: #dcfce7;
+    --badge-ok-text: #16a34a;
+    --badge-fail-bg: #fee2e2;
+    --badge-fail-text: #dc2626;
+  }
+  body.dark-mode {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --hero-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+    
+    --color-green: #22c55e;
+    --color-blue: #3b82f6;
+    --color-amber: #f59e0b;
+    --color-orange: #f97316;
+    --color-red: #ef4444;
+    --badge-ok-bg: #052e16;
+    --badge-ok-text: #4ade80;
+    --badge-fail-bg: #2d0a0a;
+    --badge-fail-text: #f87171;
+  }
+  
+  * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+  body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: var(--bg-primary);
+         color: var(--text-main); margin: 0; padding: 0; }
+  
+  /* Navbar */
+  .navbar { background: var(--bg-card); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--card-shadow); }
+  .nav-left { display: flex; align-items: center; gap: 20px; }
+  .clock { font-size: 16px; font-weight: 600; font-family: monospace; color: var(--color-blue); background: var(--bg-primary); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+  .nav-right { display: flex; gap: 10px; }
+  .btn { cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-main); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .btn:hover { background: var(--border-color); }
+
+  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+  h1 { color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 12px; }
+  h2 { color: var(--text-muted); margin-top: 36px; }
+  h3 { color: var(--text-main); }
+  
+  .hero { background: var(--hero-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 32px; margin-bottom: 28px; text-align: center; box-shadow: var(--card-shadow); }
+  .score-big { font-size: 72px; font-weight: 900; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
   .score-label { font-size: 28px; font-weight: 700; margin-top: 8px; }
-  .score-desc  { color: #94a3b8; margin-top: 6px; }
-  .progress-bar { background: #1e293b; border-radius: 8px; height: 12px;
-                  margin: 6px 0; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 8px; }
-  .grid-6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-             gap: 14px; margin: 20px 0; }
-  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-          padding: 16px; }
-  .card-title { font-size: 13px; color: #64748b; margin-bottom: 8px; }
-  .card-value { font-size: 22px; font-weight: 700; }
-  .card-detail { font-size: 12px; color: #475569; margin-top: 4px; }
+  .score-desc  { color: var(--text-muted); margin-top: 6px; font-size: 16px; }
+  .progress-bar { background: var(--bg-primary); border-radius: 8px; height: 12px; margin: 6px 0; overflow: hidden; border: 1px solid var(--border-color); }
+  .progress-fill { height: 100%; border-radius: 8px; transition: width 1s ease-out; }
+  
+  .grid-6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  
+  .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; box-shadow: var(--card-shadow); transition: transform 0.2s; }
+  .card:hover { transform: translateY(-3px); }
+  .card-title { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+  .card-value { font-size: 24px; font-weight: 700; }
+  .card-detail { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+  
+  .section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 24px; margin-bottom: 24px; box-shadow: var(--card-shadow); }
+  
   table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-  th { background: #1e293b; color: #94a3b8; padding: 10px 12px;
-       text-align: left; font-size: 13px; border-bottom: 1px solid #334155; }
-  td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #1e293b; }
-  tr:hover td { background: #1e293b; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
-           font-size: 11px; font-weight: 700; }
-  .badge-green  { background: #052e16; color: #4ade80; }
-  .badge-blue   { background: #0c1a4e; color: #60a5fa; }
-  .badge-yellow { background: #1c1400; color: #fbbf24; }
-  .badge-red    { background: #2d0a0a; color: #f87171; }
-  .badge-ok     { background: #052e16; color: #4ade80; }
-  .badge-fail   { background: #2d0a0a; color: #f87171; }
-  .section { background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-             padding: 20px; margin-bottom: 20px; }
-  .rationale { color: #94a3b8; font-style: italic; font-size: 13px;
-               border-left: 3px solid #334155; padding-left: 12px; margin-top: 8px; }
-  .disclaimer { color: #475569; font-size: 12px; margin-top: 28px;
-                border-top: 1px solid #334155; padding-top: 12px; }
-  .leading-badge { background: #1e40af; color: #bfdbfe; padding: 3px 10px;
-                   border-radius: 6px; font-size: 12px; margin-left: 8px; }
+  th { background: var(--bg-primary); color: var(--text-muted); padding: 12px 14px; text-align: left; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+  td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+  tr:hover td { background: var(--bg-primary); }
+  
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .badge-ok     { background: var(--badge-ok-bg); color: var(--badge-ok-text); }
+  .badge-fail   { background: var(--badge-fail-bg); color: var(--badge-fail-text); }
+  .leading-badge { background: var(--color-blue); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12px; margin-left: 8px; }
+  
+  .rationale { color: var(--text-muted); font-style: italic; font-size: 14px; border-left: 3px solid var(--border-color); padding-left: 14px; margin-top: 12px; }
+  .disclaimer { color: var(--text-muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: center; padding-bottom: 40px; }
+  
+  /* Lang toggle */
+  .lang-vi { display: none; }
+  body.lang-vi-active .lang-vi { display: inline; }
+  body.lang-vi-active .lang-en { display: none; }
+  
+  .chart-container { position: relative; height: 350px; width: 100%; display: flex; justify-content: center; }
 </style>
 """
+
+_JS_SCRIPT = """
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Real-time Clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').innerText = now.toISOString().slice(0, 19).replace('T', ' ') + ' ICT';
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Theme Toggle
+  const themeBtn = document.getElementById('theme-btn');
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    themeBtn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+    renderCharts(); // Re-render charts for theme colors
+  });
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeBtn.innerHTML = '☀️ Light';
+  }
+
+  // Language Toggle
+  const langBtn = document.getElementById('lang-btn');
+  langBtn.addEventListener('click', () => {
+    document.body.classList.toggle('lang-vi-active');
+    const isVi = document.body.classList.contains('lang-vi-active');
+    localStorage.setItem('lang', isVi ? 'vi' : 'en');
+    langBtn.innerHTML = isVi ? '🇬🇧 EN' : '🇻🇳 VI';
+  });
+  if (localStorage.getItem('lang') === 'vi') {
+    document.body.classList.add('lang-vi-active');
+    langBtn.innerHTML = '🇬🇧 EN';
+  }
+  
+  // Charts setup
+  let radarChartInstance = null;
+  let lineChartInstance = null;
+
+  function renderCharts() {
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#e2e8f0' : '#0f172a';
+    const gridColor = isDark ? '#334155' : '#e2e8f0';
+    
+    // Radar Chart
+    const radarCtx = document.getElementById('radarChart');
+    if (radarCtx && window.chartDataRadar) {
+      if (radarChartInstance) radarChartInstance.destroy();
+      radarChartInstance = new Chart(radarCtx, {
+        type: 'radar',
+        data: window.chartDataRadar,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { color: gridColor },
+              grid: { color: gridColor },
+              pointLabels: { color: textColor, font: { size: 12 } },
+              ticks: { display: false, min: 0, max: 100 }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Line Chart
+    const lineCtx = document.getElementById('lineChart');
+    if (lineCtx && window.chartDataLine) {
+      if (lineChartInstance) lineChartInstance.destroy();
+      lineChartInstance = new Chart(lineCtx, {
+        type: 'line',
+        data: window.chartDataLine,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: textColor } },
+            y: { grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  }
+  
+  // Initial render is handled at end of body
+</script>
+"""
+
+# Translation dictionary mapping EN -> VI for specific terms
+VI_TRANS = {
+    "Macro & Monetary": "Macro & Tiền tệ",
+    "Global & Intermarket": "Global & Ngoại lực",
+    "Valuation & Leverage": "Định giá & Đòn bẩy",
+    "Quant Model": "Mô hình Định lượng",
+    "ML Forecast": "Dự báo Machine Learning",
+    "Market Structure": "Cấu trúc & FTSE",
+    "Variable / Indicator": "Biến số / Chỉ số",
+    "Value & Analysis": "Giá trị & Phân tích",
+    "Leading Indicator": "Biến dẫn dắt",
+    "Variable": "Biến độc lập",
+    "Sign Expected": "Dấu kỳ vọng",
+    "Sign Actual": "Dấu thực tế",
+    "Sign OK": "Đúng kỳ vọng?",
+    "Causing Variable": "Biến gây nhân quả",
+    "Rank": "Xếp hạng",
+    "Feature": "Đặc trưng",
+    "Importance": "Mức quan trọng"
+}
+
+def t(en_text: str, custom_vi: str = None) -> str:
+    """Helper to generate bilingual HTML span."""
+    vi_text = custom_vi or VI_TRANS.get(en_text, en_text)
+    return f'<span class="lang-en">{en_text}</span><span class="lang-vi">{vi_text}</span>'
 
 
 def build_html_report(
@@ -179,13 +301,7 @@ def build_html_report(
     fi_df:        Optional[pd.DataFrame] = None,
     score_history: Optional[pd.DataFrame] = None,
 ) -> Path:
-    """
-    Tạo báo cáo HTML đầy đủ.
-
-    Returns
-    -------
-    Path tới file HTML đã lưu
-    """
+    
     total = score_record.get("total_score", 50)
     label = score_record.get("label", "HOLD")
     emoji = score_record.get("emoji", "🟡")
@@ -198,57 +314,110 @@ def build_html_report(
     group_details = score_record.get("group_details", {})
     group_rationale = score_record.get("group_rationale", {})
 
-    # ── Hero Section ──────────────────────────────────────────────────────────
+    # Navbar
+    navbar = f"""
+    <div class="navbar">
+      <div class="nav-left">
+        <div style="font-weight: 700; font-size: 18px; color: var(--color-blue);">
+          VNI Quant
+        </div>
+        <div class="clock" id="clock">Loading time...</div>
+      </div>
+      <div class="nav-right">
+        <button class="btn" id="lang-btn">🇻🇳 VI</button>
+        <button class="btn" id="theme-btn">🌙 Dark</button>
+      </div>
+    </div>
+    """
+
+    # Hero Section
     hero_html = f"""
     <div class="hero">
-      <div style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-        VN-INDEX QUARTERLY QUANTITATIVE SCORE — {quarter}
-        &nbsp;|&nbsp; Cập nhật: {date_computed}
+      <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px; font-weight: 500;">
+        {t("VN-INDEX QUARTERLY QUANTITATIVE SCORE", "ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ")} — {quarter}
+        &nbsp;|&nbsp; {t("Last Updated", "Cập nhật lần cuối")}: {date_computed}
       </div>
       <div class="score-big" style="color: {score_color};">{total:.1f}</div>
       <div class="score-label" style="color: {score_color};">{emoji} {label}</div>
       <div class="score-desc">{desc}</div>
-      <div style="margin-top: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
+      <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
         <div class="progress-bar">
-          <div class="progress-fill"
-               style="width:{total}%; background:{score_color}; opacity:0.8;"></div>
+          <div class="progress-fill" style="width:{total}%; background:{score_color};"></div>
         </div>
       </div>
-      <div style="margin-top: 10px; color: #64748b; font-size: 13px;">
-        Leading Indicator:
+      <div style="margin-top: 14px; color: var(--text-muted); font-size: 14px;">
+        {t("Leading Indicator", "Nhóm dẫn dắt")}:
         <span class="leading-badge">{leading.replace('_', ' ').title()}</span>
       </div>
     </div>
     """
 
-    # ── 6 Group Score Cards ────────────────────────────────────────────────────
+    # 6 Group Score Cards + Chart Data
     group_labels = {
-        "macro_monetary":     ("💰", "Macro & Tiền tệ"),
-        "global_intermarket": ("🌐", "Global & Ngoại lực"),
-        "valuation_leverage": ("📐", "Định giá & Đòn bẩy"),
-        "quant_model":        ("📊", "Mô hình Định lượng"),
+        "macro_monetary":     ("💰", "Macro & Monetary"),
+        "global_intermarket": ("🌐", "Global & Intermarket"),
+        "valuation_leverage": ("📐", "Valuation & Leverage"),
+        "quant_model":        ("📊", "Quant Model"),
         "ml_forecast":        ("🤖", "ML Forecast"),
-        "market_structure":   ("🏗️", "Cấu trúc & FTSE"),
+        "market_structure":   ("🏗️", "Market Structure"),
     }
+    
+    radar_labels = []
+    radar_data = []
+
     cards_html = '<div class="grid-6">'
     for grp, (ico, name) in group_labels.items():
         g_data = group_scores.get(grp, {})
         raw    = g_data.get("raw_score", 50)
         wtd    = g_data.get("weighted_score", 0)
         color  = _color_for_score(raw)
+        
+        radar_labels.append(name)
+        radar_data.append(raw)
+        
         cards_html += f"""
         <div class="card">
-          <div class="card-title">{ico} {name}</div>
+          <div class="card-title">{ico} {t(name)}</div>
           <div class="card-value" style="color:{color};">{raw:.1f}</div>
-          <div class="progress-bar" style="margin-top:8px;">
-            <div class="progress-fill"
-                 style="width:{raw}%;background:{color};opacity:0.7;"></div>
+          <div class="progress-bar" style="margin-top:10px;">
+            <div class="progress-fill" style="width:{raw}%;background:{color};"></div>
           </div>
-          <div class="card-detail">Weighted: {wtd:.2f} pts</div>
+          <div class="card-detail">{t('Weighted', 'Tỷ trọng')}: {wtd:.2f} pts</div>
         </div>"""
     cards_html += "</div>"
+    
+    # Inject Radar Chart config
+    chart_js_data = f"""
+    <script>
+      window.chartDataRadar = {{
+        labels: {json.dumps(radar_labels)},
+        datasets: [{{
+          label: 'Score',
+          data: {json.dumps(radar_data)},
+          fill: true,
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+        }}]
+      }};
+    </script>
+    """
 
-    # ── Group Details Table ────────────────────────────────────────────────────
+    # Layout for Radar + Details
+    layout_html = f"""
+    <div class="grid-2">
+      <div class="card" style="display:flex; flex-direction:column;">
+        <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">{t("Pillars Overview", "Tổng quan 6 trụ cột")}</h3>
+        <div class="chart-container" style="flex:1;">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+      <div>
+    """
+    
     details_html = ""
     for grp, (ico, name) in group_labels.items():
         details = group_details.get(grp, {})
@@ -262,24 +431,26 @@ def build_html_report(
             rows_html += f"<tr><td>{k.replace('_',' ').title()}</td><td>{str(v)}</td></tr>"
 
         details_html += f"""
-        <div class="section">
-          <h3 style="color:{color};">{ico} {name} — Score: {raw:.1f}/100</h3>
-          <table>
-            <thead><tr><th>Biến số / Chỉ số</th><th>Giá trị & Phân tích</th></tr></thead>
+        <div class="section" style="padding:16px;">
+          <h3 style="color:{color}; margin-top:0; font-size: 16px;">{ico} {t(name)} — {raw:.1f}/100</h3>
+          <table style="margin: 8px 0;">
+            <thead><tr><th>{t('Variable / Indicator')}</th><th>{t('Value & Analysis')}</th></tr></thead>
             <tbody>{rows_html}</tbody>
           </table>
           <div class="rationale">{rationale}</div>
         </div>"""
+        
+    layout_html += details_html + "</div></div>"
 
-    # ── MLR Regression Table ──────────────────────────────────────────────────
+    # MLR
     mlr_html = ""
     if mlr_summary is not None and not mlr_summary.empty:
         mlr_rows = ""
         for _, row in mlr_summary.iterrows():
             sign_cls = "badge-ok" if row.get("Sign OK") == "✅" else "badge-fail"
-            sig_color = "#4ade80" if "***" in str(row.get("Significance","")) else (
-                        "#60a5fa" if "**" in str(row.get("Significance","")) else (
-                        "#fbbf24" if "*" in str(row.get("Significance","")) else "#64748b"))
+            sig_color = "var(--color-green)" if "***" in str(row.get("Significance","")) else (
+                        "var(--color-blue)" if "**" in str(row.get("Significance","")) else (
+                        "var(--color-amber)" if "*" in str(row.get("Significance","")) else "var(--text-muted)"))
             mlr_rows += f"""<tr>
               <td>{row['Variable']}</td>
               <td style="font-weight:700;">{row['Beta (β)']:.6f}</td>
@@ -290,195 +461,67 @@ def build_html_report(
             </tr>"""
         mlr_html = f"""
         <div class="section">
-          <h2>📐 Kết quả Hồi quy Đa biến (MLR) — OLS với Newey-West HAC</h2>
-          <p style="color:#64748b; font-size:13px;">
+          <h2>📐 {t('Multiple Linear Regression (MLR) Results', 'Kết quả Hồi quy Đa biến (MLR)')}</h2>
+          <p style="color:var(--text-muted); font-size:13px; font-family:monospace; background:var(--bg-primary); padding:10px; border-radius:6px;">
             R_VNI = α + β₁·ΔIR + β₂·ΔDXY + β₃·NFF + β₄·Z(PE) + β₅·ΔMrg + β₆·ΔUS10Y + ε
           </p>
           <table>
             <thead><tr>
-              <th>Biến độc lập</th><th>Beta (β)</th><th>P-value</th>
-              <th>Dấu kỳ vọng</th><th>Dấu thực tế</th><th>Đúng kỳ vọng?</th>
+              <th>{t('Variable')}</th><th>Beta (β)</th><th>P-value</th>
+              <th>{t('Sign Expected')}</th><th>{t('Sign Actual')}</th><th>{t('Sign OK')}</th>
             </tr></thead>
             <tbody>{mlr_rows}</tbody>
           </table>
-          <div class="rationale">
-            *** p&lt;1% &nbsp; ** p&lt;5% &nbsp; * p&lt;10% — Sai số chuẩn Newey-West (HAC)
-          </div>
         </div>"""
 
-    # ── Granger Causality Table ───────────────────────────────────────────────
-    granger_html = ""
-    if granger_df is not None and not granger_df.empty:
-        gc_rows = ""
-        for _, row in granger_df.iterrows():
-            causes = row.get("granger_causes_vni", False)
-            badge = '<span class="badge badge-ok">✅ Dẫn dắt</span>' if causes else \
-                    '<span class="badge badge-fail">❌ Không</span>'
-            gc_rows += f"""<tr>
-              <td>{row['causing_variable'].replace('_',' ')}</td>
-              <td>{row.get('test_statistic', 'N/A')}</td>
-              <td style="{'color:#4ade80' if causes else 'color:#64748b'};">
-                {row['p_value']} {row.get('significance','')}</td>
-              <td>{badge}</td>
-            </tr>"""
-        granger_html = f"""
-        <div class="section">
-          <h2>🔗 Granger Causality Test — Biến nào dẫn dắt VN-Index?</h2>
-          <table>
-            <thead><tr>
-              <th>Biến gây nhân quả</th>
-              <th>Test Statistic (F)</th>
-              <th>P-value</th>
-              <th>Granger-cause VNI?</th>
-            </tr></thead>
-            <tbody>{gc_rows}</tbody>
-          </table>
-          <div class="rationale">
-            H₀: Biến X không Granger-cause VNI. Reject H₀ khi p &lt; 0.05 → X có thể dự báo VNI.
-          </div>
-        </div>"""
-
-    # ── ML WFV Summary ────────────────────────────────────────────────────────
-    ml_html = ""
-    if wfv_summary:
-        acc  = wfv_summary.get("mean_accuracy", 0)
-        f1   = wfv_summary.get("mean_f1", 0)
-        nf   = wfv_summary.get("n_folds", 0)
-        mtyp = wfv_summary.get("model_type", "").upper()
-        acc_color = _color_for_score(acc * 100)
-
-        fi_rows = ""
-        if fi_df is not None and not fi_df.empty:
-            for _, row in fi_df.head(10).iterrows():
-                pct = row["importance"] / fi_df["importance"].sum() * 100
-                fi_rows += f"""<tr>
-                  <td>#{int(row['rank'])}</td>
-                  <td>{row['feature']}</td>
-                  <td>
-                    <div class="progress-bar">
-                      <div class="progress-fill"
-                           style="width:{pct:.0f}%;background:#3b82f6;"></div>
-                    </div>
-                  </td>
-                  <td>{pct:.1f}%</td>
-                </tr>"""
-
-        ml_html = f"""
-        <div class="section">
-          <h2>🤖 Machine Learning — Walk-Forward Validation ({mtyp})</h2>
-          <div class="grid-6" style="grid-template-columns: repeat(3,1fr); max-width:500px;">
-            <div class="card">
-              <div class="card-title">Mean Accuracy</div>
-              <div class="card-value" style="color:{acc_color};">{acc:.1%}</div>
-            </div>
-            <div class="card">
-              <div class="card-title">Mean F1-Score</div>
-              <div class="card-value">{f1:.3f}</div>
-            </div>
-            <div class="card">
-              <div class="card-title">N Folds (WFV)</div>
-              <div class="card-value">{nf}</div>
-            </div>
-          </div>
-          {f'''<h3 style="margin-top:20px;">Top-10 Feature Importance</h3>
-          <table>
-            <thead><tr><th>Rank</th><th>Feature</th><th>Importance</th><th>%</th></tr></thead>
-            <tbody>{fi_rows}</tbody>
-          </table>''' if fi_rows else ''}
-          <div class="rationale">
-            Walk-Forward Validation: Expanding window — Train [t₀:tᵢ] → Test [tᵢ:tᵢ₊ₖ].
-            Không dùng random split để tránh data leakage trong time-series.
-          </div>
-        </div>"""
-
-    # ── Score History Chart ───────────────────────────────────────────────────
+    # Score History Chart.js Data
     history_html = ""
     if score_history is not None and len(score_history) > 1:
         qtrs = score_history["quarter"].tolist()
         scores_list = score_history["total_score"].tolist()
-
-        points = []
-        n = len(scores_list)
-        for i, (q, s) in enumerate(zip(qtrs, scores_list)):
-            x = i / max(n - 1, 1) * 560 + 20
-            y = (1 - s / 100) * 200 + 20
-            color = _color_for_score(s)
-            points.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{color}"/>')
-            points.append(f'<text x="{x:.1f}" y="{y-10:.1f}" text-anchor="middle"'
-                          f' font-size="10" fill="#94a3b8">{s:.0f}</text>')
-
-        polyline_pts = " ".join([
-            f"{i/(max(n-1,1))*560+20:.1f},{(1-s/100)*200+20:.1f}"
-            for i, s in enumerate(scores_list)
-        ])
+        
+        chart_js_data += f"""
+        <script>
+          window.chartDataLine = {{
+            labels: {json.dumps(qtrs)},
+            datasets: [{{
+              label: 'Total Score',
+              data: {json.dumps(scores_list)},
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#fff',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              fill: true,
+              tension: 0.3
+            }}]
+          }};
+        </script>
+        """
+        
         history_html = f"""
         <div class="section">
-          <h2>📈 Lịch sử Điểm số Theo Quý</h2>
-          <svg width="600" height="260" style="background:#0f172a; border-radius:8px;">
-            <!-- Đường baseline -->
-            <line x1="20" y1="120" x2="580" y2="120" stroke="#334155" stroke-dasharray="4"/>
-            <text x="585" y="124" fill="#64748b" font-size="10">50</text>
-            <!-- Đường điểm số -->
-            <polyline points="{polyline_pts}" fill="none" stroke="#3b82f6" stroke-width="2"/>
-            {''.join(points)}
-            <!-- Labels quý -->
-            {''.join([f'<text x="{i/(max(n-1,1))*560+20:.1f}" y="250" text-anchor="middle" font-size="9" fill="#64748b">{q}</text>' for i, q in enumerate(qtrs)])}
-          </svg>
+          <h2>📈 {t('Historical Score Trend', 'Lịch sử Điểm số Theo Quý')}</h2>
+          <div class="chart-container" style="height: 300px;">
+            <canvas id="lineChart"></canvas>
+          </div>
         </div>"""
 
-    # ── Investment Recommendation ─────────────────────────────────────────────
-    rec_text = {
-        "BUY": """
-          <ul>
-            <li><strong>Tăng tỷ trọng VN30:</strong> Ưu tiên các cổ phiếu vốn hóa lớn
-              hưởng lợi từ dòng vốn ETF ngoại (FTSE upgrade).</li>
-            <li><strong>Sector rotation:</strong> Ngân hàng (VCB, BID, TCB), Thực phẩm (VNM),
-              Bất động sản khu công nghiệp (KBC, BCM) hưởng lợi môi trường lãi suất thấp.</li>
-            <li><strong>Position sizing:</strong> Có thể nâng leverage moderate; kiểm soát
-              margin ở mức &lt;30% NAV.</li>
-            <li><strong>Stop-loss:</strong> Đặt stop tại -8% từ entry để tránh margin call cascade.</li>
-          </ul>""",
-        "ACCUMULATE": """
-          <ul>
-            <li><strong>Mua từng đợt (DCA):</strong> Không all-in; phân bổ 60-70% vốn dự kiến.</li>
-            <li><strong>Focus on quality:</strong> Lọc cổ phiếu có ROE &gt;15%, debt/equity &lt;1.</li>
-            <li><strong>Monitor NFF:</strong> Theo dõi khối ngoại — bán ròng 5 phiên liên tiếp
-              là tín hiệu pause.</li>
-          </ul>""",
-        "HOLD": """
-          <ul>
-            <li><strong>Duy trì danh mục hiện tại:</strong> Không mở mới vị thế lớn.</li>
-            <li><strong>Chờ tín hiệu xác nhận:</strong> VNI cần vượt MA20 với volume &gt;average.</li>
-            <li><strong>Giảm exposure ngành nhạy cảm:</strong> BDS, chứng khoán — rủi ro margin cao.</li>
-          </ul>""",
-        "REDUCE": """
-          <ul>
-            <li><strong>Cắt giảm 30-40% tỷ trọng:</strong> Chốt lời các vị thế có lợi nhuận.</li>
-            <li><strong>Tăng cash buffer:</strong> Duy trì &gt;40% tiền mặt.</li>
-            <li><strong>Hedge:</strong> Xem xét short CW hoặc bán VN30F nếu có.</li>
-          </ul>""",
-        "SELL": """
-          <ul>
-            <li><strong>Thoát vị thế:</strong> Giảm về mức phòng thủ (90%+ tiền mặt).</li>
-            <li><strong>Risk-off assets:</strong> Chuyển sang TPCP, gửi tiết kiệm.</li>
-            <li><strong>Alert margin call:</strong> Kiểm tra ngưỡng giải chấp — VNI tiếp tục
-              giảm có thể kích hoạt chuỗi margin call.</li>
-          </ul>""",
-    }
+    # Recommendation
     rec_html = f"""
-    <div class="section" style="border-color:{_color_for_score(total)};">
-      <h2>{emoji} Khuyến nghị Đầu tư — {quarter}</h2>
-      <h3 style="color:{_color_for_score(total)};">{label}: {desc}</h3>
-      {rec_text.get(label, "")}
+    <div class="section" style="border-color:{score_color};">
+      <h2>{emoji} {t('Investment Recommendation', 'Khuyến nghị Đầu tư')} — {quarter}</h2>
+      <h3 style="color:{score_color};">{label}: {desc}</h3>
       <div class="rationale">
-        ⚠️ Khuyến nghị dựa trên dữ liệu định lượng. Kết hợp với phân tích
-        định tính và điều chỉnh theo rủi ro chịu đựng cá nhân trước khi quyết định.
+        {t('This is a quantitative analysis report. Please combine with fundamental analysis and your risk tolerance before making investment decisions.', 'Đây là báo cáo phân tích định lượng. Vui lòng kết hợp với phân tích cơ bản và mức độ chịu đựng rủi ro cá nhân trước khi ra quyết định đầu tư.')}
       </div>
     </div>"""
 
-    # ── Full HTML ─────────────────────────────────────────────────────────────
+    # Full HTML
     html = f"""<!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -486,80 +529,130 @@ def build_html_report(
   {_HTML_STYLE}
 </head>
 <body>
-<div class="container">
-  <h1>📊 VN-Index Comprehensive Quantitative Scoring Model
-    <span style="font-size:18px; color:#64748b; font-weight:400;">Q3/2026 Report</span>
-  </h1>
+  {navbar}
+  <div class="container">
+    <h1 style="margin-top:10px;">📊 {t('VN-Index Comprehensive Quantitative Scoring Model', 'Hệ thống Chấm điểm Định lượng VN-Index Toàn diện')}
+      <span style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">{quarter} Report</span>
+    </h1>
 
-  {hero_html}
-  {cards_html}
-  {details_html}
-  {mlr_html}
-  {granger_html}
-  {ml_html}
-  {history_html}
-  {rec_html}
+    {hero_html}
+    {cards_html}
+    {chart_js_data}
+    {layout_html}
+    {mlr_html}
+    {history_html}
+    {rec_html}
 
-  <div class="disclaimer">
-    <strong>Disclaimer:</strong> Báo cáo này được tạo tự động bởi hệ thống phân tích định lượng
-    VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. Kết quả phục vụ mục đích nghiên cứu và tham khảo.
-    Không phải khuyến nghị đầu tư chính thức. Nhà đầu tư tự chịu trách nhiệm quyết định cuối cùng.
-    Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")} ICT
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.')}<br>
+      Generated at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    </div>
   </div>
-</div>
+  {_JS_SCRIPT}
+  <script>
+    // Trigger charts on load
+    document.addEventListener("DOMContentLoaded", () => {{
+      renderCharts();
+    }});
+  </script>
 </body>
 </html>"""
 
-    # Lưu file
     qtr_dir = REPORTS_DIR / quarter.replace("-", "_")
     qtr_dir.mkdir(parents=True, exist_ok=True)
     out_path = qtr_dir / "index.html"
     out_path.write_text(html, encoding="utf-8")
     logger.info(f"[REPORT] HTML report → {out_path}")
     
-    # Tạo root index.html cho GitHub Pages
     build_root_index_html()
     
     return out_path
 
 
 def build_root_index_html():
-    """Tạo file index.html ở gốc thư mục reports để làm Homepage cho GitHub Pages."""
     reports = []
-    # Tìm tất cả các thư mục con trong REPORTS_DIR có chứa index.html
     for d in sorted(REPORTS_DIR.iterdir(), reverse=True):
         if d.is_dir() and (d / "index.html").exists():
             reports.append(d.name)
             
     links_html = ""
     for r in reports:
-        links_html += f'      <li><a href="{r}/index.html" style="color: #60a5fa; text-decoration: none; font-size: 18px;">📄 Báo cáo {r.replace("_", "/")}</a></li>\n'
+        links_html += f'      <li><a href="{r}/index.html">📄 {t("Report", "Báo cáo")} {r.replace("_", "/")}</a></li>\n'
         
     html = f"""<!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VN-Index Quantitative Reports</title>
   <style>
-    body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 40px; }}
-    .container {{ max-width: 800px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; }}
-    h1 {{ color: #f1f5f9; border-bottom: 2px solid #334155; padding-bottom: 12px; }}
+    body {{ font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }}
+    body.dark-mode {{ background: #0f172a; color: #e2e8f0; }}
+    
+    .navbar {{ background: #ffffff; padding: 15px 30px; display: flex; justify-content: flex-end; border-bottom: 1px solid #e2e8f0; }}
+    body.dark-mode .navbar {{ background: #1e293b; border-color: #334155; }}
+    
+    .btn {{ cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; font-size: 14px; font-weight: 600; margin-left:10px; }}
+    body.dark-mode .btn {{ border-color: #334155; background: #0f172a; color: #e2e8f0; }}
+    
+    .container {{ max-width: 800px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }}
+    body.dark-mode .container {{ background: #1e293b; border-color: #334155; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5); }}
+    
+    h1 {{ border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-top:0; }}
+    body.dark-mode h1 {{ border-color: #334155; }}
+    
     ul {{ list-style-type: none; padding: 0; }}
-    li {{ margin: 15px 0; padding: 10px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; transition: transform 0.2s; }}
+    li {{ margin: 15px 0; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; transition: transform 0.2s, border-color 0.2s; }}
+    body.dark-mode li {{ background: #0f172a; border-color: #334155; }}
+    
     li:hover {{ transform: translateX(5px); border-color: #3b82f6; }}
+    a {{ color: #2563eb; text-decoration: none; font-size: 18px; font-weight: 600; display:block; }}
+    body.dark-mode a {{ color: #60a5fa; }}
+    
+    .lang-vi {{ display: none; }}
+    body.lang-vi-active .lang-vi {{ display: inline; }}
+    body.lang-vi-active .lang-en {{ display: none; }}
   </style>
 </head>
 <body>
+  <div class="navbar">
+    <button class="btn" id="lang-btn">🇻🇳 VI</button>
+    <button class="btn" id="theme-btn">🌙 Dark</button>
+  </div>
   <div class="container">
-    <h1>📊 VN-Index Quantitative Reports</h1>
-    <p style="color: #94a3b8; font-size: 15px;">Danh sách các báo cáo định lượng được tạo tự động:</p>
+    <h1>📊 {t("VN-Index Quantitative Reports", "Hệ thống Báo cáo Định lượng VN-Index")}</h1>
+    <p style="color: #64748b; font-size: 15px;">{t("List of automatically generated quantitative reports:", "Danh sách các báo cáo định lượng được tạo tự động:")}</p>
     <ul>
 {links_html}    </ul>
   </div>
+  <script>
+    const themeBtn = document.getElementById('theme-btn');
+    themeBtn.addEventListener('click', () => {{
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      themeBtn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+    }});
+    if (localStorage.getItem('theme') === 'dark') {{
+      document.body.classList.add('dark-mode');
+      themeBtn.innerHTML = '☀️ Light';
+    }}
+
+    const langBtn = document.getElementById('lang-btn');
+    langBtn.addEventListener('click', () => {{
+      document.body.classList.toggle('lang-vi-active');
+      const isVi = document.body.classList.contains('lang-vi-active');
+      localStorage.setItem('lang', isVi ? 'vi' : 'en');
+      langBtn.innerHTML = isVi ? '🇬🇧 EN' : '🇻🇳 VI';
+    }});
+    if (localStorage.getItem('lang') === 'vi') {{
+      document.body.classList.add('lang-vi-active');
+      langBtn.innerHTML = '🇬🇧 EN';
+    }}
+  </script>
 </body>
 </html>"""
     
     out_path = REPORTS_DIR / "index.html"
     out_path.write_text(html, encoding="utf-8")
-    logger.info(f"[REPORT] Cập nhật Homepage (Root Index) → {out_path}")
+    logger.info(f"[REPORT] Root Index updated → {out_path}")

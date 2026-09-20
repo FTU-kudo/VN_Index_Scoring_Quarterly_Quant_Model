@@ -85,7 +85,7 @@ def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
         # Giảm lãi suất → +10, tăng → -10
         trend_bonus = _clamp_score(50 - d_omo * 1000)
         scores["ir_trend_score"] = trend_bonus
-        dir_str = "↓ Cắt giảm" if d_omo < -0.05 else ("↑ Tăng" if d_omo > 0.05 else "→ Giữ nguyên")
+        dir_str = "↓ Cut" if d_omo < -0.05 else ("↑ Hike" if d_omo > 0.05 else "→ Hold")
         details["ir_trend"] = f"Δ OMO = {d_omo:.4f} ({dir_str}) → score {trend_bonus:.0f}"
     else:
         trend_bonus = 50.0
@@ -156,7 +156,7 @@ def _macro_rationale(omo, d_omo, fx_z, m2, score, df_latest) -> str:
     if pd.notna(vn10y) and pd.notna(vn_spread):
         parts.append(f"VN10Y {vn10y:.2f}% (Spread {vn_spread:.2f}%)")
         
-    label = "THUẬN LỢI" if score > 65 else ("TRUNG TÍNH" if score > 40 else "BẤT LỢI")
+    label = "FAVORABLE" if score > 65 else ("NEUTRAL" if score > 40 else "UNFAVORABLE")
     return f"Macro: {label} — " + " | ".join(parts) if parts else f"Macro: {label}"
 
 
@@ -202,7 +202,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
     if pd.notna(nff_z):
         nff_score = _clamp_score(50 + nff_z * 15)  # z > 0 → mua ròng → điểm cao
         scores["nff_score"] = nff_score
-        dir_str = "MUA RÒNG" if nff_z > 0.5 else ("BÁN RÒNG" if nff_z < -0.5 else "Trung tính")
+        dir_str = "NET BUY" if nff_z > 0.5 else ("NET SELL" if nff_z < -0.5 else "Neutral")
         details["nff"] = f"Z = {nff_z:.2f} ({dir_str}) → score {nff_score:.0f}"
         if pd.notna(nff_5d):
             details["nff_5d_rolling"] = f"{nff_5d:.0f} tỷ VND (tuần)"
@@ -246,7 +246,7 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
     if pd.notna(pe_z):
         pe_score = _clamp_score(50 - pe_z * 25)   # Z âm → rẻ → score cao
         scores["pe_score"] = pe_score
-        zone = "ĐẮT" if pe_z > PE_ZSCORE_OVERBOUGHT else ("RẺ" if pe_z < PE_ZSCORE_OVERSOLD else "HỢP LÝ")
+        zone = "OVERVALUED" if pe_z > PE_ZSCORE_OVERBOUGHT else ("UNDERVALUED" if pe_z < PE_ZSCORE_OVERSOLD else "FAIR VALUE")
         details["pe_zscore"] = f"Z = {pe_z:.2f} ({zone}) → score {pe_score:.0f}"
     else:
         pe_score = 50.0
@@ -256,7 +256,7 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
     if pd.notna(pb_z):
         pb_score = _clamp_score(50 - pb_z * 25)
         scores["pb_score"] = pb_score
-        zone = "ĐẮT" if pb_z > PB_ZSCORE_OVERBOUGHT else ("RẺ" if pb_z < PB_ZSCORE_OVERSOLD else "HỢP LÝ")
+        zone = "OVERVALUED" if pb_z > PB_ZSCORE_OVERBOUGHT else ("UNDERVALUED" if pb_z < PB_ZSCORE_OVERSOLD else "FAIR VALUE")
         details["pb_zscore"] = f"Z = {pb_z:.2f} ({zone}) → score {pb_score:.0f}"
     else:
         pb_score = 50.0
@@ -267,8 +267,8 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
         # Margin risk cao → nguy hiểm → điểm THẤP (đảo chiều)
         margin_score = _clamp_score(_invert(mrisk))
         scores["margin_risk_score"] = margin_score
-        risk_label = ("NGUY HIỂM" if mrisk > 60 else
-                      ("CẢNH BÁO" if mrisk > 30 else "AN TOÀN"))
+        risk_label = ("DANGER" if mrisk > 60 else
+                      ("WARNING" if mrisk > 30 else "SAFE"))
         details["margin_risk"] = f"Risk = {mrisk:.0f}/100 ({risk_label}) → score {margin_score:.0f}"
     else:
         margin_score = 50.0
@@ -313,7 +313,7 @@ def score_quant_model(
     mlr_pred:          Optional[float] = None,
     var_forecast:      Optional[float] = None,
     mlr_adj_r2:        Optional[float] = None,
-    granger_leaders:   Optional[int]   = None,   # Số biến Granger-cause VNI
+    granger_leaders:   Optional[int]   = None,   # Số vars Granger-cause VNI
 ) -> Dict[str, Any]:
     """
     Chấm điểm nhóm Mô hình Định lượng (MLR + VAR) (trọng số 15%).
@@ -338,10 +338,10 @@ def score_quant_model(
         # Chuẩn hóa: return +2% = điểm 80, -2% = điểm 20
         mlr_score = _clamp_score(50 + mlr_pred * 3000)
         scores["mlr_signal_score"] = mlr_score
-        details["mlr_forecast"] = f"Dự báo log-return = {mlr_pred:.4f} → score {mlr_score:.0f}"
+        details["mlr_forecast"] = f"Forecast log-return = {mlr_pred:.4f} → score {mlr_score:.0f}"
     else:
         mlr_score = 50.0
-        details["mlr_forecast"] = "Chưa có dự báo MLR"
+        details["mlr_forecast"] = "No MLR forecast"
 
     # ── VAR Forecast ─────────────────────────────────────────────────────────
     if var_forecast is not None and pd.notna(var_forecast):
@@ -362,7 +362,7 @@ def score_quant_model(
     # ── Granger Leader Count ──────────────────────────────────────────────────
     if granger_leaders is not None:
         details["granger_leaders"] = (
-            f"{granger_leaders} biến Granger-cause VNI (p<5%)"
+            f"{granger_leaders} vars Granger-cause VNI (p<5%)"
         )
         granger_bonus = min(granger_leaders * 3, 15)
     else:
@@ -425,7 +425,7 @@ def score_ml_forecast(
             signal_score = 50.0
             details["ml_signal"] = "Dự báo: NEUTRAL"
     else:
-        details["ml_signal"] = "Chưa chạy ML prediction"
+        details["ml_signal"] = "ML prediction not run"
 
     scores["ml_signal_score"] = signal_score
 
@@ -455,7 +455,7 @@ def score_ml_forecast(
 def score_market_structure(
     ftse_upgrade_status: str = "pending",  # 'pending', 'confirmed', 'completed'
     months_to_next_rebalancing: Optional[int] = None,
-    adtv_change_pct: Optional[float] = None,   # % thay đổi ADTV so quý trước
+    adtv_change_pct: Optional[float] = None,   # % change ADTV QoQ
 ) -> Dict[str, Any]:
     """
     Chấm điểm nhóm Cấu trúc Thị trường & Nâng hạng FTSE (trọng số 10%).
@@ -464,13 +464,13 @@ def score_market_structure(
       - FTSE Russell đã xác nhận VN-Index vào danh sách Secondary Emerging Market
       - Rebalancing schedule: tháng 3, 6, 9, 12 → gần nhất: tháng 9/2026
       - Dòng vốn passive ETF ước tính $6.4 tỷ USD phân bổ vào VN
-      - Hiệu ứng tâm lý (sentiment premium) lên VN30 trước kỳ rebalancing
+      - Effect tâm lý (sentiment premium) lên VN30 trước kỳ rebalancing
 
     Parameters
     ----------
     ftse_upgrade_status : 'pending', 'confirmed', 'completed'
     months_to_next_rebalancing : Số tháng đến kỳ rebalancing tiếp theo
-    adtv_change_pct : % thay đổi ADTV so với quý trước (positive = tốt)
+    adtv_change_pct : % change ADTV so với quý trước (positive = tốt)
     """
     scores = {}
     details = {}
@@ -489,8 +489,8 @@ def score_market_structure(
     # Thêm điểm cụ thể cho Q3/2026
     details["ftse_upgrade"] = (
         f"Status: {ftse_upgrade_status} → score {ftse_score}\n"
-        f"  Ước tính dòng vốn passive: ${FTSE_PASSIVE_INFLOW_BASE_USD/1e9:.1f}B USD\n"
-        f"  Hiệu ứng: Sentiment premium VN30 +15-25% trong giai đoạn rebalancing"
+        f"  Est passive inflow: ${FTSE_PASSIVE_INFLOW_BASE_USD/1e9:.1f}B USD\n"
+        f"  Effect: Sentiment premium VN30 +15-25% trong giai đoạn rebalancing"
     )
 
     # ── Rebalancing Proximity Bonus ───────────────────────────────────────────
@@ -505,7 +505,7 @@ def score_market_structure(
         else:
             rebal_bonus = 0
         details["rebalancing"] = (
-            f"{months_to_next_rebalancing} tháng đến rebalancing → bonus +{rebal_bonus}"
+            f"{months_to_next_rebalancing} months to rebalancing → bonus +{rebal_bonus}"
         )
     else:
         rebal_bonus = 5   # Q3/2026: đang trong tháng 9 rebalancing
@@ -516,10 +516,10 @@ def score_market_structure(
         # ADTV tăng → thanh khoản tốt hơn → điểm cao
         adtv_score = _clamp_score(50 + adtv_change_pct * 100)
         scores["adtv_score"] = adtv_score
-        details["adtv"] = f"ADTV thay đổi {adtv_change_pct:+.1%} so quý trước → score {adtv_score:.0f}"
+        details["adtv"] = f"ADTV change {adtv_change_pct:+.1%} QoQ → score {adtv_score:.0f}"
     else:
         adtv_score = 60.0   # Q3/2026: ADTV tăng do upgrade
-        details["adtv"] = "ADTV Q3/2026: Ước tính tăng ~30% do dòng vốn ngoại"
+        details["adtv"] = "ADTV Q3/2026: Est increase ~30% due to foreign flow"
 
     raw = _clamp_score(ftse_score + rebal_bonus + (adtv_score - 50) * 0.3)
 
