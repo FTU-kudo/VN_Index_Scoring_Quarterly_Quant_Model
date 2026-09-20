@@ -539,7 +539,17 @@ def build_html_report(
 
         rows_html = ""
         for k, v in details.items():
-            rows_html += f"<tr><td class=\"var-col\">{t(k.replace('_', ' ').title())}</td><td>{str(v)}</td></tr>"
+            k_display = k.replace('_', ' ').title()
+            acronyms = [
+                ("Vn1Y", "VN1Y"), ("Usd", "USD"), ("Vnd", "VND"), ("Dxy", "DXY"), 
+                ("Us10Y", "US10Y"), ("Jpy", "JPY"), ("Pe", "P/E"), ("Pb", "P/B"), 
+                ("Mlr", "MLR"), ("Var", "VAR"), ("R2", "R²"), ("Fdi", "FDI"), 
+                ("Ftse", "FTSE"), ("Adtv", "ADTV"), ("Eyg", "EYG"), ("Omo", "OMO"), 
+                ("Vni", "VNI"), ("Zscore", "Z-Score")
+            ]
+            for old, new in acronyms:
+                k_display = k_display.replace(old, new)
+            rows_html += f"<tr><td class=\"var-col\">{t(k_display)}</td><td>{str(v)}</td></tr>"
 
         details_html += f"""
         <div class="section" style="padding:16px;">
