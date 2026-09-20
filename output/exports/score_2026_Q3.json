@@ -1,13 +1,13 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-20T14:12:29.452257",
+    "generated_at": "2026-09-20T14:19:16.751482",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "date_computed": "2026-09-20 14:12",
+    "date_computed": "2026-09-20 14:19",
     "total_score": 53.24,
     "label": "HOLD",
     "emoji": "🟡",
@@ -69,7 +69,7 @@
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=50 | VAR=50 | R²=N/A | Granger=N/A",
       "ml_forecast": "ML: ML prediction not run | Quality=50",
-      "market_structure": "FTSE Secondary EM upgrade đang tạo structural tailwind cho VN-Index"
+      "market_structure": "FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index"
     }
   },
   "mlr_regression": null,

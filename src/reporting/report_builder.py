@@ -288,7 +288,8 @@ VI_TRANS = {
     "Gradually accumulate — Controllable risks": "Tích lũy dần — Rủi ro kiểm soát được",
     "Neutral — Await confirming signals": "Trung lập — Chờ tín hiệu xác nhận",
     "Reduce exposure — Increasing pressure": "Giảm tỷ trọng — Áp lực tăng",
-    "Defensive — Unfavorable environment": "Phòng thủ — Môi trường bất lợi"
+    "Defensive — Unfavorable environment": "Phòng thủ — Môi trường bất lợi",
+    "FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index": "FTSE Secondary EM upgrade đang tạo structural tailwind cho VN-Index"
 }
 
 def t(en_text: str, custom_vi: str = None) -> str:

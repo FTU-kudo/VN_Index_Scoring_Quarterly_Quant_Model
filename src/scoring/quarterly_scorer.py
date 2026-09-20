@@ -530,7 +530,7 @@ def score_market_structure(
             f"FTSE: {ftse_upgrade_status.upper()} | "
             f"Rebalancing bonus: +{rebal_bonus} | "
             f"ADTV: {adtv_change_pct:+.0%}" if adtv_change_pct else
-            "FTSE Secondary EM upgrade đang tạo structural tailwind cho VN-Index"
+            "FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index"
         )
     }
 
