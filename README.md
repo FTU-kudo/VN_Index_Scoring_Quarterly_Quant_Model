@@ -101,8 +101,8 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 
 ```text
 ======================================================================
-     VN-INDEX QUANTITATIVE SCORING — 2026-Q3
-     Generated: 2026-09-21T03:10:33.880345
+     VN-INDEX QUANTITATIVE SCORING — 2026-Q4
+     Generated: 2026-09-21T03:44:34.413715
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
