@@ -681,6 +681,8 @@ def compute_quarterly_score(
         combined = pd.concat([existing, new_row], ignore_index=True)
     else:
         combined = new_row
+        
+    combined = combined.sort_values("quarter").reset_index(drop=True)
     combined.to_parquet(history_path, index=False)
 
     logger.info(

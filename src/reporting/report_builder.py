@@ -588,6 +588,7 @@ def build_html_report(
     # Score History Chart.js Data
     history_html = ""
     if score_history is not None and len(score_history) > 1:
+        score_history = score_history.sort_values("quarter").reset_index(drop=True)
         qtrs = score_history["quarter"].tolist()
         scores_list = score_history["total_score"].tolist()
         
