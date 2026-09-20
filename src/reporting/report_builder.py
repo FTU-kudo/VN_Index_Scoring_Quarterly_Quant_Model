@@ -581,6 +581,21 @@ def build_html_report(
               <td>{row['Sign Actual']}</td>
               <td><span class="badge {sign_cls}">{row['Sign OK']}</span></td>
             </tr>"""
+            
+        mlr_glossary_rows = f"""
+        <tr><td style="font-weight:bold;">delta_vn1y_yield</td><td>-</td><td>{t('Change in VN1Y Yield. Higher yields increase borrowing costs, pressure equity valuations.', 'Thay đổi lợi suất trái phiếu chính phủ VN 1 năm. Lợi suất tăng làm tăng chi phí đi vay, gây áp lực lên định giá.')}</td></tr>
+        <tr><td style="font-weight:bold;">delta_dxy</td><td>-</td><td>{t('Change in US Dollar Index. A strong USD puts pressure on emerging market currencies and foreign flows.', 'Thay đổi chỉ số sức mạnh đồng USD. USD mạnh gây áp lực lên tỷ giá và dòng vốn ngoại.')}</td></tr>
+        <tr><td style="font-weight:bold;">delta_us10y</td><td>-</td><td>{t('Change in US 10-Year Treasury Yield. Global risk-free rate proxy; higher rates reduce global liquidity.', 'Thay đổi lợi suất TPCP Mỹ 10 năm. Đại diện lãi suất phi rủi ro toàn cầu, tăng sẽ hút thanh khoản.')}</td></tr>
+        <tr><td style="font-weight:bold;">delta_usdjpy</td><td>+</td><td>{t('Change in USD/JPY. Proxy for Yen carry trade. Higher pair implies risk-on global environment.', 'Thay đổi tỷ giá USD/JPY. Đại diện cho Yen carry trade. Cặp này tăng thường thể hiện khẩu vị rủi ro cao.')}</td></tr>
+        <tr><td style="font-weight:bold;">usd_vnd_pct_change</td><td>-</td><td>{t('Change in USD/VND exchange rate. FX pressure negatively impacts foreign capital and central bank policy.', 'Biến động tỷ giá USD/VND. Áp lực tỷ giá tác động tiêu cực đến dòng vốn ngoại và chính sách tiền tệ.')}</td></tr>
+        <tr><td style="font-weight:bold;">pe_zscore</td><td>-</td><td>{t('P/E Valuation Z-Score. High valuation implies lower forward returns (mean reversion).', 'Z-Score định giá P/E. Định giá quá cao (Z-score dương lớn) thường dẫn đến lợi suất tương lai thấp do mean reversion.')}</td></tr>
+        <tr><td style="font-weight:bold;">rsi_14, macd_hist, bb_pct</td><td>?</td><td>{t('Technical Indicators (Momentum). Captures short-term market momentum and overbought/oversold conditions.', 'Các chỉ báo kỹ thuật. Bắt nhịp đà tăng trưởng ngắn hạn và tình trạng quá mua/quá bán.')}</td></tr>
+        <tr><td style="font-weight:bold;">rvol_20d</td><td>?</td><td>{t('Relative Volatility (20-day). High volatility often precedes or accompanies market corrections.', 'Độ biến động tương đối 20 ngày. Biến động cao thường đi kèm với các nhịp điều chỉnh của thị trường.')}</td></tr>
+        <tr><td style="font-weight:bold;">drawdown_from_peak</td><td>?</td><td>{t('Drawdown from recent high. Measures the depth of current correction.', 'Mức sụt giảm từ đỉnh gần nhất. Đo lường mức độ sâu của nhịp điều chỉnh hiện tại.')}</td></tr>
+        <tr><td style="font-weight:bold;">price_vs_ma200</td><td>+</td><td>{t('Distance from 200-day Moving Average. Indicates long-term trend strength.', 'Khoảng cách giá so với đường MA200. Thể hiện sức mạnh xu hướng dài hạn.')}</td></tr>
+        <tr><td style="font-weight:bold;">log_return_lag1, lag5</td><td>?</td><td>{t('Historical lag returns. Captures autocorrelation and short-term mean reversion/momentum.', 'Lợi suất trễ trong quá khứ. Nắm bắt tính tự tương quan và quán tính/đảo chiều ngắn hạn.')}</td></tr>
+        """
+        
         mlr_html = f"""
         <div class="section">
           <h2>📐 {t('Multiple Linear Regression (MLR) Results', 'Kết quả Hồi quy Đa biến (MLR)')}</h2>
@@ -593,6 +608,18 @@ def build_html_report(
               <th>{t('Sign Expected')}</th><th>{t('Sign Actual')}</th><th>{t('Sign OK')}</th>
             </tr></thead>
             <tbody>{mlr_rows}</tbody>
+          </table>
+          
+          <h3 style="margin-top:30px; margin-bottom:10px; font-size:16px; color:var(--text-muted); border-bottom:1px solid var(--border-color); padding-bottom:5px;">
+            📖 {t('Variables Glossary & Rationale', 'Từ điển Biến số & Rationale')}
+          </h3>
+          <table style="font-size:13px;">
+            <thead><tr>
+              <th style="width: 20%;">{t('Variable', 'Biến')}</th>
+              <th style="width: 15%;">{t('Expected Sign', 'Kỳ vọng Dấu')}</th>
+              <th>{t('Rationale / Meaning', 'Ý nghĩa & Nguyên nhân đưa vào mô hình')}</th>
+            </tr></thead>
+            <tbody>{mlr_glossary_rows}</tbody>
           </table>
         </div>"""
 
