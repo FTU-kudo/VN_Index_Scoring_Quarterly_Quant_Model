@@ -1,6 +1,14 @@
 name: Deploy Reports to GitHub Pages
 
 on:
+  # Tự động deploy khi có thay đổi trong thư mục reports được push lên nhánh main
+  push:
+    branches:
+      - main
+    paths:
+      - 'output/reports/**'
+      - '.github/workflows/deploy_pages.yml'
+
   # Chạy tự động sau khi workflow quarterly-scoring thành công
   workflow_run:
     workflows: ["📊 VN-Index Quarterly Scoring"]
