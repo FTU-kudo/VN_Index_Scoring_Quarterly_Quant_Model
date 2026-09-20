@@ -1,13 +1,13 @@
 {
   "metadata": {
     "quarter": "2025-Q1",
-    "generated_at": "2026-09-21T02:07:15.289544",
+    "generated_at": "2026-09-21T03:03:14.936782",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2025-Q1",
-    "date_computed": "2026-09-21 02:07",
+    "date_computed": "2026-09-21 03:03",
     "total_score": 51.44,
     "label": "HOLD",
     "emoji": "🟡",
