@@ -595,11 +595,26 @@ def compute_quarterly_score(
 
     # Get from parameter, fallback to calculating it if missing to prevent failure
     if months_to_next_rebalancing is None:
-        now = datetime.now()
+        # Lấy tháng và ngày thực tế từ dữ liệu cuối cùng thay vì datetime.now() để backtest chính xác
+        try:
+            current_month = df_latest.name.month
+            current_day = df_latest.name.day
+        except Exception:
+            now = datetime.now()
+            current_month = now.month
+            current_day = now.day
+
         rebal_months = [3, 6, 9, 12]
-        months_to_next_rebalancing = min(((m - now.month) % 12) or 12 for m in rebal_months)
-        if now.month in rebal_months:
-            months_to_next_rebalancing = 0
+        months_to_next_rebalancing = min(((m - current_month) % 12) or 12 for m in rebal_months)
+        
+        if current_month in rebal_months:
+            # Thông thường các đợt cơ cấu quỹ kết thúc vào thứ 6 tuần thứ 3 (quanh ngày 20).
+            # Nếu chạy mô hình vào ngày cuối quý (VD: 31/03, 30/06, 30/09) thì đợt cơ cấu đã xong!
+            # Đợt tiếp theo sẽ là 3 tháng nữa.
+            if current_day > 25:
+                months_to_next_rebalancing = 3
+            else:
+                months_to_next_rebalancing = 0
             
     g6 = score_market_structure(
         ftse_upgrade_status=ftse_upgrade_status,
