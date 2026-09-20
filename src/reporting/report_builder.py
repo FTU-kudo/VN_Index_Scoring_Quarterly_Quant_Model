@@ -516,4 +516,50 @@ def build_html_report(
     out_path = qtr_dir / "index.html"
     out_path.write_text(html, encoding="utf-8")
     logger.info(f"[REPORT] HTML report → {out_path}")
+    
+    # Tạo root index.html cho GitHub Pages
+    build_root_index_html()
+    
     return out_path
+
+
+def build_root_index_html():
+    """Tạo file index.html ở gốc thư mục reports để làm Homepage cho GitHub Pages."""
+    reports = []
+    # Tìm tất cả các thư mục con trong REPORTS_DIR có chứa index.html
+    for d in sorted(REPORTS_DIR.iterdir(), reverse=True):
+        if d.is_dir() and (d / "index.html").exists():
+            reports.append(d.name)
+            
+    links_html = ""
+    for r in reports:
+        links_html += f'      <li><a href="{r}/index.html" style="color: #60a5fa; text-decoration: none; font-size: 18px;">📄 Báo cáo {r.replace("_", "/")}</a></li>\n'
+        
+    html = f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VN-Index Quantitative Reports</title>
+  <style>
+    body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 40px; }}
+    .container {{ max-width: 800px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; }}
+    h1 {{ color: #f1f5f9; border-bottom: 2px solid #334155; padding-bottom: 12px; }}
+    ul {{ list-style-type: none; padding: 0; }}
+    li {{ margin: 15px 0; padding: 10px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; transition: transform 0.2s; }}
+    li:hover {{ transform: translateX(5px); border-color: #3b82f6; }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 VN-Index Quantitative Reports</h1>
+    <p style="color: #94a3b8; font-size: 15px;">Danh sách các báo cáo định lượng được tạo tự động:</p>
+    <ul>
+{links_html}    </ul>
+  </div>
+</body>
+</html>"""
+    
+    out_path = REPORTS_DIR / "index.html"
+    out_path.write_text(html, encoding="utf-8")
+    logger.info(f"[REPORT] Cập nhật Homepage (Root Index) → {out_path}")

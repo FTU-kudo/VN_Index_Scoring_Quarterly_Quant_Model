@@ -1,0 +1,52 @@
+name: Deploy Reports to GitHub Pages
+
+on:
+  # Chạy tự động sau khi workflow quarterly-scoring thành công
+  workflow_run:
+    workflows: ["📊 VN-Index Quarterly Scoring"]
+    types:
+      - completed
+  
+  # Cho phép chạy thủ công
+  workflow_dispatch:
+
+# Quyền hạn cần thiết để deploy lên GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Tránh deploy song song gây xung đột
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # Artifact pages chỉ chứa thư mục output/reports/
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'output/reports/'
+
+  # Deploy job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
