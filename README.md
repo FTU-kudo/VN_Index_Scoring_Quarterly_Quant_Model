@@ -19,8 +19,8 @@ Hệ thống được thiết kế đáp ứng trọn vẹn **5 Tiêu chuẩn V�
 1. **Xác định toàn diện các biến số**: Tích hợp 4 trụ cột định lượng (Vĩ mô & Tiền tệ, Định giá lịch sử, Dòng tiền & Margin, Động lượng Kỹ thuật).
 2. **Định lượng hóa chặt chẽ**: Ứng dụng Hồi quy Đa biến (MLR với Newey-West HAC robust errors), Mô hình Tự hồi quy Vectơ (VAR với Granger Causality & IRF), và Machine Learning (XGBoost / Random Forest).
 3. **Thu thập dữ liệu tự động & thực tế**: Tích hợp trực tiếp với API `vnstock` thế hệ mới (`Quote`, `Listing`) và `yfinance`.
-4. **Tự động hóa 100%**: Sẵn sàng với CI/CD GitHub Actions chạy tự động vào đầu mỗi quý (01/01, 01/04, 01/07, 01/10) và runner hàng ngày sau 16:05 ICT.
-5. **Kiểm định thực nghiệm nghiêm ngặt (Backtest & WFV)**: Áp dụng phương pháp Walk-Forward Validation (WFV) trượt tránh rò rỉ thông tin tương lai (Look-ahead bias).
+4. **Tự động hóa 100%**: Sẵn sàng với CI/CD GitHub Actions chạy tự động vào đầu mỗi quý và tự động Deploy Báo cáo HTML lên GitHub Pages.
+5. **Kiểm định thực nghiệm nghiêm ngặt (Backtest & WFV)**: Áp dụng phương pháp Walk-Forward Validation (WFV) trượt tránh rò rỉ thông tin tương lai. Mô hình đã được backtest thành công trên **23 quý liên tiếp (Q1/2021 đến Q3/2026)**.
 
 ---
 
@@ -252,12 +252,14 @@ python run_daily_update.py
 
 ## 🤖 TỰ ĐỘNG HÓA CI/CD (GITHUB ACTIONS)
 
-Dự án tích hợp sẵn 2 workflows tự động trong `.github/workflows/`:
+Dự án tích hợp sẵn 3 workflows tự động trong `.github/workflows/`:
 1. **`quarterly_scoring.yml`**:
    - Tự động kích hoạt vào lúc 09:00 ICT ngày đầu tiên của mỗi quý (ngày 1 các tháng 1, 4, 7, 10).
    - Tự động fetch dữ liệu, tính điểm composite, xuất báo cáo HTML và lưu trữ Artifacts trên GitHub.
    - Hỗ trợ kích hoạt thủ công qua nút **Run workflow** trên giao diện GitHub Actions (`workflow_dispatch`).
-2. **`validate_data.yml`**:
+2. **`deploy_pages.yml`**:
+   - Tự động publish toàn bộ thư mục `output/reports` lên Internet thông qua **GitHub Pages** mỗi khi có commit mới vào nhánh main, giúp nhà quản lý quỹ xem báo cáo mọi lúc mọi nơi.
+3. **`validate_data.yml`**:
    - Tự động kiểm tra chất lượng kết nối API và tính toàn vẹn dữ liệu từ Thứ 2 đến Thứ 6 hàng tuần.
 
 ---
