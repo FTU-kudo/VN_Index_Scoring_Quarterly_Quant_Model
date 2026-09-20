@@ -1,7 +1,7 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-20T14:09:44.418350",
+    "generated_at": "2026-09-20T14:10:13.130934",
     "data_range": "2021-01-01 → 2026-09-19",
     "disclaimer": "Kết quả từ dữ liệu thực tế. Nguồn thiếu được báo rõ."
   },
@@ -87,7 +87,7 @@
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "computed_at": "2026-09-20 14:09",
+    "computed_at": "2026-09-20 14:10",
     "total_score": 47.85,
     "label": "HOLD",
     "emoji": "🟡",
