@@ -15,9 +15,10 @@ on:
       ftse_status:
         description: "FTSE upgrade status"
         required: false
-        default: "pending"
+        default: "auto"
         type: choice
         options:
+          - auto
           - pending
           - confirmed
           - completed
@@ -80,7 +81,7 @@ jobs:
           VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
         run: |
           QUARTER="${{ steps.set-quarter.outputs.quarter }}"
-          FTSE_STATUS="${{ github.event.inputs.ftse_status || 'confirmed' }}"
+          FTSE_STATUS="${{ github.event.inputs.ftse_status || 'auto' }}"
           SKIP_ML="${{ github.event.inputs.skip_ml || 'false' }}"
 
           CMD="python run_quarterly.py --quarter $QUARTER --ftse-status $FTSE_STATUS"

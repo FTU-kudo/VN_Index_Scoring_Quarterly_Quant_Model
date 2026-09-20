@@ -14,9 +14,10 @@ on:
       ftse_status:
         description: "Trạng thái nâng hạng FTSE"
         required: false
-        default: "confirmed"
+        default: "auto"
         type: choice
         options:
+          - auto
           - pending
           - confirmed
           - completed

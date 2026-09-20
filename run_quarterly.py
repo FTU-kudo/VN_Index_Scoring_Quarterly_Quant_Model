@@ -58,9 +58,9 @@ def parse_args() -> argparse.Namespace:
         help="Bỏ qua bước VAR (nhanh hơn)"
     )
     parser.add_argument(
-        "--ftse-status", type=str, default="pending",
-        choices=["pending", "confirmed", "completed"],
-        help="Trạng thái nâng hạng FTSE"
+        "--ftse-status", type=str, default="auto",
+        choices=["auto", "pending", "confirmed", "completed", "unknown"],
+        help="Tình trạng nâng hạng FTSE hiện tại (auto = tự động dựa trên mốc lịch sử)"
     )
     return parser.parse_args()
 
@@ -222,6 +222,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
             df_ml = build_ml_features(df_all)
             df_ml = create_target_variable(df_ml)
+            df_ml.to_parquet("debug_df_ml.parquet")
+
 
             # Lấy danh sách feature columns cho ML
             exclude = {"date", "open", "high", "low", "close", "volume",
@@ -261,6 +263,21 @@ def run_pipeline(args: argparse.Namespace) -> None:
     # Lấy giá trị indicators mới nhất
     latest = df_all.iloc[-1].copy() if len(df_all) > 0 else pd.Series()
 
+    # ── Xác định tình trạng FTSE theo lịch sử (nếu auto) ─────────────────────
+    if args.ftse_status == "auto":
+        y_str, q_str = quarter.split("-Q")
+        y = int(y_str)
+        q = int(q_str)
+        if y < 2025 or (y == 2025 and q < 3):
+            actual_ftse_status = "unknown"
+        elif (y == 2025 and q >= 3) or (y == 2026 and q < 4):
+            actual_ftse_status = "pending"
+        else: # >= 2026 Q4
+            actual_ftse_status = "confirmed"
+        logger.info(f"[FTSE] Auto-detected historical FTSE status for {quarter}: {actual_ftse_status}")
+    else:
+        actual_ftse_status = args.ftse_status
+
     score_record = compute_quarterly_score(
         quarter=quarter,
         df_latest=latest,
@@ -272,7 +289,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
         ml_f1=wfv_summary.get("mean_f1") if wfv_summary else None,
         ml_pred_class=ml_pred_class,
         ml_confidence=ml_confidence,
-        ftse_upgrade_status=args.ftse_status,
+        ftse_upgrade_status=actual_ftse_status,
     )
 
     # ── Step 7: Build Reports ─────────────────────────────────────────────────
