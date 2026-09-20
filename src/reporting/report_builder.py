@@ -158,6 +158,7 @@ _HTML_STYLE = """
   .badge-ok     { background: var(--badge-ok-bg); color: var(--badge-ok-text); }
   .badge-fail   { background: var(--badge-fail-bg); color: var(--badge-fail-text); }
   .leading-badge { background: var(--color-blue); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12px; margin-left: 8px; }
+  .report-badge { display: inline-block; white-space: nowrap; }
   
   .rationale { color: var(--text-muted); font-style: italic; font-size: 14px; border-left: 3px solid var(--border-color); padding-left: 14px; margin-top: 12px; }
   .disclaimer { color: var(--text-muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: center; padding-bottom: 40px; }
@@ -167,7 +168,7 @@ _HTML_STYLE = """
   body.lang-vi-active .lang-vi { display: inline; }
   body.lang-vi-active .lang-en { display: none; }
   
-  .chart-container { position: relative; height: 350px; width: 100%; display: flex; justify-content: center; }
+  .chart-container { position: sticky; top: 1.5rem; align-self: flex-start; height: 350px; width: 100%; display: flex; justify-content: center; }
 </style>
 """
 
@@ -177,7 +178,9 @@ _JS_SCRIPT = """
   // Real-time Clock
   function updateClock() {
     const now = new Date();
-    document.getElementById('clock').innerText = now.toISOString().slice(0, 19).replace('T', ' ') + ' ICT';
+    const options = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const formatter = new Intl.DateTimeFormat('sv-SE', options); // sv-SE gives ISO-like format YYYY-MM-DD HH:mm:ss
+    document.getElementById('clock').innerText = formatter.format(now) + ' ICT';
   }
   setInterval(updateClock, 1000);
   updateClock();
@@ -196,6 +199,50 @@ _JS_SCRIPT = """
     themeBtn.innerHTML = '☀️ Light';
   }
 
+  // Dynamic Keyword Translation
+  function translateDynamicContent(isVi) {
+    const dict = {
+      "score": "điểm",
+      "Forecast": "Dự báo",
+      "stable": "ổn định",
+      "strong": "mạnh",
+      "weak": "yếu",
+      "normal": "bình thường",
+      "pressure": "áp lực",
+      "hikes": "tăng",
+      "cuts": "cắt giảm",
+      "growth": "tăng trưởng",
+      "Incomplete": "Không đầy đủ",
+      "data": "dữ liệu",
+      "need": "cần",
+      "weekly": "tuần",
+      "bil": "tỷ",
+      "Status": "Trạng thái",
+      "confirmed": "đã xác nhận",
+      "pending": "đang chờ",
+      "completed": "hoàn thành",
+      "months to rebalancing": "tháng tới kỳ cơ cấu",
+      "bonus": "điểm thưởng",
+      "unavailable": "không có",
+      "neutral": "trung lập"
+    };
+    
+    const els = document.querySelectorAll('td:nth-child(2), .rationale');
+    els.forEach(el => {
+      if (!el.dataset.orig) el.dataset.orig = el.innerHTML;
+      let text = el.dataset.orig;
+      if (isVi) {
+        for (const [en, vi] of Object.entries(dict)) {
+          const regex = new RegExp(`\\\\b${en}\\\\b`, 'g');
+          text = text.replace(regex, vi);
+        }
+        // Also case-insensitive replacements for some
+        text = text.replace(/\\\\bscore\\\\b/gi, "điểm");
+      }
+      el.innerHTML = text;
+    });
+  }
+
   // Language Toggle
   const langBtn = document.getElementById('lang-btn');
   langBtn.addEventListener('click', () => {
@@ -203,10 +250,30 @@ _JS_SCRIPT = """
     const isVi = document.body.classList.contains('lang-vi-active');
     localStorage.setItem('lang', isVi ? 'vi' : 'en');
     langBtn.innerHTML = isVi ? '🇬🇧 EN' : '🇻🇳 VI';
+    
+    // Radar Chart Labels Translation
+    if (window.chartDataRadar && radarChartInstance) {
+      const radarVi = {
+        "Macro & Monetary": "Vĩ mô & Tiền tệ",
+        "Global & Intermarket": "Biến số Toàn cầu",
+        "Valuation & Leverage": "Định giá & Đòn bẩy",
+        "Quant Model": "Mô hình Định lượng",
+        "ML Forecast": "Dự báo Máy học",
+        "Market Structure": "Cấu trúc Thị trường"
+      };
+      const baseLabels = ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"];
+      window.chartDataRadar.labels = baseLabels.map(l => isVi ? radarVi[l] : l);
+      radarChartInstance.update();
+    }
+    
+    translateDynamicContent(isVi);
   });
+  
   if (localStorage.getItem('lang') === 'vi') {
     document.body.classList.add('lang-vi-active');
     langBtn.innerHTML = '🇬🇧 EN';
+    // Let charts and dynamic content translate on next tick
+    setTimeout(() => translateDynamicContent(true), 100);
   }
   
   // Charts setup
@@ -216,7 +283,7 @@ _JS_SCRIPT = """
   function renderCharts() {
     const isDark = document.body.classList.contains('dark-mode');
     const textColor = isDark ? '#e2e8f0' : '#0f172a';
-    const gridColor = isDark ? '#334155' : '#e2e8f0';
+    const gridColor = isDark ? '#64748b' : '#e2e8f0';
     
     // Radar Chart
     const radarCtx = document.getElementById('radarChart');
@@ -230,8 +297,8 @@ _JS_SCRIPT = """
           maintainAspectRatio: false,
           scales: {
             r: {
-              angleLines: { color: gridColor },
-              grid: { color: gridColor },
+              angleLines: { color: gridColor, lineWidth: 1 },
+              grid: { color: gridColor, lineWidth: 1 },
               pointLabels: { color: textColor, font: { size: 12 } },
               ticks: { display: false, min: 0, max: 100 }
             }
@@ -353,7 +420,7 @@ def build_html_report(
       </div>
       <div style="margin-top: 14px; color: var(--text-muted); font-size: 14px;">
         {t("Leading Indicator", "Nhóm dẫn dắt")}:
-        <span class="leading-badge">{leading.replace('_', ' ').title()}</span>
+        <span class="leading-badge">{t(leading.replace('_', ' ').title())}</span>
       </div>
     </div>
     """
@@ -538,7 +605,7 @@ def build_html_report(
   {navbar}
   <div class="container">
     <h1 style="margin-top:10px;">📊 {t('VN-Index Comprehensive Quantitative Scoring Model', 'Hệ thống Chấm điểm Định lượng VN-Index Toàn diện')}
-      <span style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">{quarter} Report</span>
+      <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">{quarter} Report</span>
     </h1>
 
     {hero_html}
