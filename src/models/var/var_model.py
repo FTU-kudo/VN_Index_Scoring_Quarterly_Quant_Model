@@ -296,7 +296,17 @@ class VARModel:
         logger.info(f"[VAR] Fitting VAR({self.optimal_lag_})...")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.results_ = model.fit(self.optimal_lag_)
+            try:
+                self.results_ = model.fit(self.optimal_lag_)
+            except Exception as e:
+                logger.warning(f"[VAR] Lỗi fit với lag {self.optimal_lag_} ({e}). Thử lag=1...")
+                self.optimal_lag_ = 1
+                try:
+                    self.results_ = model.fit(self.optimal_lag_)
+                except Exception as e2:
+                    logger.warning(f"[VAR] Lỗi fit với lag=1 ({e2}). Bỏ qua VAR model.")
+                    self.results_ = None
+                    return self
 
         logger.info(f"[VAR] Fit xong. AIC = {self.results_.aic:.4f}")
         return self

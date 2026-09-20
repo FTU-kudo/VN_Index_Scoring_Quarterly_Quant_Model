@@ -196,11 +196,22 @@ class MLRModel:
         # Fit OLS với Newey-West HAC covariance
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            ols = sm.OLS(y_train, X_train_const)
-            self.model_ = ols.fit(
-                cov_type="HAC",
-                cov_kwds={"maxlags": self.max_lags_nw}
-            )
+            try:
+                ols = sm.OLS(y_train, X_train_const)
+                self.model_ = ols.fit(
+                    cov_type="HAC",
+                    cov_kwds={"maxlags": self.max_lags_nw}
+                )
+            except Exception as e:
+                logger.warning(f"[MLR] Lỗi ma trận suy biến: {e}. Đang thêm nhiễu (noise) để khắc phục...")
+                import numpy as np
+                noise = np.random.normal(0, 1e-6, X_train_const.shape)
+                X_train_const_noisy = X_train_const + noise
+                ols = sm.OLS(y_train, X_train_const_noisy)
+                self.model_ = ols.fit(
+                    cov_type="HAC",
+                    cov_kwds={"maxlags": self.max_lags_nw}
+                )
 
         # Lưu kết quả
         self.coefs_   = dict(self.model_.params.drop("const", errors="ignore"))

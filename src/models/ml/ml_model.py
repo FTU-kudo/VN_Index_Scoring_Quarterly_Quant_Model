@@ -212,16 +212,21 @@ def walk_forward_splits(
     List of (train_start, train_end, test_start, test_end) tuples
     """
     train_min = int(n * train_min_frac)
-    step = (n - train_min) // (n_splits + 1)
+    step = max(1, (n - train_min) // (n_splits + 1))
 
     splits = []
     for i in range(n_splits):
         train_end   = train_min + (i + 1) * step
         test_start  = train_end
         test_end    = min(test_start + step, n)
-        splits.append((0, train_end, test_start, test_end))
-        if test_end >= n:
+        if test_start >= n or test_start >= test_end:
             break
+        splits.append((0, train_end, test_start, test_end))
+
+    if not splits:
+        # Fallback to single split if data is too small
+        train_end = max(1, int(n * 0.8))
+        splits = [(0, train_end, train_end, n)]
 
     logger.info(f"[WFV] Tạo {len(splits)} fold với expanding window")
     return splits
