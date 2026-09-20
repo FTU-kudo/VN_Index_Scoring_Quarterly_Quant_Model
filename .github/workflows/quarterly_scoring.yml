@@ -1,9 +1,9 @@
 name: "📊 VN-Index Quarterly Scoring"
 
 on:
-  # Chạy tự động đầu mỗi quý (01/01, 01/04, 01/07, 01/10 lúc 02:00 UTC = 09:00 ICT)
+  # Chạy tự động đầu mỗi quý (01/01, 01/04, 01/07, 01/10 lúc 00:00 UTC = 07:00 ICT)
   schedule:
-    - cron: "0 2 1 1,4,7,10 *"
+    - cron: "0 0 1 1,4,7,10 *"
 
   # Cho phép chạy thủ công
   workflow_dispatch:
