@@ -127,7 +127,7 @@
     <div class="hero">
       <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px; font-weight: 500;">
         <span class="lang-en">VN-INDEX QUARTERLY QUANTITATIVE SCORE</span><span class="lang-vi">ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ</span> — 2026-Q3
-        &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-20 14:37
+        &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-20 14:49
       </div>
       <div class="score-big" style="color: var(--color-amber);">53.2</div>
       <div class="score-label" style="color: var(--color-amber);">🟡 HOLD</div>
@@ -212,10 +212,10 @@
     
         <script>
           window.chartDataLine = {
-            labels: ["2026-Q2", "2026-Q1", "2025-Q4", "2026-Q3"],
+            labels: ["2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3"],
             datasets: [{
               label: 'Total Score',
-              data: [53.53999999999999, 53.53999999999999, 53.53999999999999, 53.239999999999995],
+              data: [53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995, 53.239999999999995],
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               borderWidth: 3,
@@ -305,10 +305,41 @@
         <span class="lang-en">This is a quantitative analysis report. Please combine with fundamental analysis and your risk tolerance before making investment decisions.</span><span class="lang-vi">Đây là báo cáo phân tích định lượng. Vui lòng kết hợp với phân tích cơ bản và mức độ chịu đựng rủi ro cá nhân trước khi ra quyết định đầu tư.</span>
       </div>
     </div>
+    
+    <div class="section">
+      <h2>🧠 <span class="lang-en">Interpretation of Results & Methodology</span><span class="lang-vi">Diễn giải Kết quả & Phương pháp luận</span></h2>
+      
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">1. Composite Scoring System (0-100)</span><span class="lang-vi">1. Hệ thống Chấm điểm Tổng hợp (0-100)</span></h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        <span class="lang-en">The model evaluates the VN-Index across 6 fundamental and quantitative pillars. Each pillar is assigned a specific weight based on empirical backtesting: <strong>Macro & Monetary (25%)</strong>, <strong>Valuation & Leverage (20%)</strong>, <strong>Global Intermarket (20%)</strong>, <strong>Quant Model (15%)</strong>, <strong>Machine Learning (10%)</strong>, and <strong>Market Structure (10%)</strong>. A score closer to 100 indicates a highly favorable environment for equities, while a score near 0 suggests extreme risk.</span><span class="lang-vi">Mô hình đánh giá VN-Index qua 6 trụ cột cơ bản và định lượng. Mỗi trụ cột được gán trọng số dựa trên kiểm định lịch sử: <strong>Vĩ mô & Tiền tệ (25%)</strong>, <strong>Định giá & Đòn bẩy (20%)</strong>, <strong>Liên thị trường (20%)</strong>, <strong>Mô hình Định lượng (15%)</strong>, <strong>Machine Learning (10%)</strong>, và <strong>Cấu trúc Thị trường (10%)</strong>. Điểm gần 100 cho thấy môi trường rất thuận lợi cho cổ phiếu, trong khi điểm gần 0 cảnh báo rủi ro cực đại.</span>
+      </p>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">2. Econometric Models</span><span class="lang-vi">2. Mô hình Kinh tế lượng</span></h3>
+      <ul style="font-size: 14px; line-height: 1.6; color: var(--text-muted); padding-left: 20px;">
+        <li><strong><span class="lang-en">Multiple Linear Regression (MLR)</span><span class="lang-vi">Hồi quy Đa biến (MLR)</span>:</strong> <span class="lang-en">Predicts the next quarter return by regressing it against macro variables (DXY, US10Y, OMO, etc.). We use Newey-West HAC robust standard errors to correct for heteroskedasticity and autocorrelation, ensuring reliable Beta coefficients.</span><span class="lang-vi">Dự báo lợi suất quý tiếp theo dựa trên các biến vĩ mô (DXY, US10Y, OMO...). Mô hình sử dụng sai số chuẩn mạnh Newey-West HAC để khắc phục hiện tượng phương sai thay đổi và tự tương quan, đảm bảo hệ số Beta đáng tin cậy.</span></li>
+        <li><strong><span class="lang-en">Vector Autoregression (VAR)</span><span class="lang-vi">Tự hồi quy Vectơ (VAR)</span>:</strong> <span class="lang-en">Analyzes the dynamic impact of macro shocks over time. It utilizes Granger Causality Tests to determine if variables like DXY lead the VN-Index, and Impulse Response Functions (IRF) to simulate the market reaction to external shocks.</span><span class="lang-vi">Phân tích tác động động lượng của các cú sốc vĩ mô qua thời gian. Mô hình dùng Kiểm định Nhân quả Granger để xác định xem các biến như DXY có dẫn dắt VN-Index hay không, và Hàm phản ứng xung (IRF) để mô phỏng phản ứng của thị trường trước cú sốc bên ngoài.</span></li>
+      </ul>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">3. Machine Learning & Reliability</span><span class="lang-vi">3. Học máy & Độ tin cậy</span></h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        <span class="lang-en">The system incorporates an <strong>XGBoost / Random Forest Classifier</strong> to predict market trends (UP, DOWN, SIDEWAY). To eliminate <em>look-ahead bias</em> (peeking into the future), we strictly employ <strong>Walk-Forward Validation (WFV)</strong> with an expanding window. This means the model is only trained on historical data up to a specific point and tested on unseen future data, mirroring real-world trading conditions.</span><span class="lang-vi">Hệ thống sử dụng bộ phân loại <strong>XGBoost / Random Forest</strong> để dự báo xu hướng (UP, DOWN, SIDEWAY). Để loại bỏ hoàn toàn <em>thành kiến nhìn trước (look-ahead bias)</em>, chúng tôi áp dụng nghiêm ngặt <strong>Kiểm định Trượt (Walk-Forward Validation)</strong> với cửa sổ mở rộng. Điều này đảm bảo mô hình chỉ học từ dữ liệu quá khứ và dự báo trên dữ liệu tương lai chưa từng thấy, phản ánh đúng điều kiện giao dịch thực tế.</span>
+      </p>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);"><span class="lang-en">4. Asset Allocation Recommendations</span><span class="lang-vi">4. Khuyến nghị Phân bổ Tài sản</span></h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        <span class="lang-en">Based on the composite score, the model outputs 5 strategic recommendations:</span><span class="lang-vi">Dựa trên điểm số tổng hợp, mô hình đưa ra 5 mức khuyến nghị chiến lược:</span>
+        <br>• <strong>80-100:</strong> <span class="lang-en">Strong Buy (85-100% Equities)</span><span class="lang-vi">Rất hấp dẫn (85-100% Cổ phiếu)</span>
+        <br>• <strong>65-79:</strong> <span class="lang-en">Accumulate (70-85% Equities)</span><span class="lang-vi">Hấp dẫn / Tích lũy (70-85% Cổ phiếu)</span>
+        <br>• <strong>50-64:</strong> <span class="lang-en">Neutral (40-60% Equities)</span><span class="lang-vi">Trung lập (40-60% Cổ phiếu)</span>
+        <br>• <strong>35-49:</strong> <span class="lang-en">Reduce (20-40% Equities)</span><span class="lang-vi">Kém hấp dẫn / Giảm tỷ trọng (20-40% Cổ phiếu)</span>
+        <br>• <strong>0-34:</strong> <span class="lang-en">Defensive (0-20% Equities)</span><span class="lang-vi">Phòng thủ / Tiền mặt (0-20% Cổ phiếu)</span>
+      </p>
+    </div>
+    
 
     <div class="disclaimer">
       <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
-      Generated at: 2026-09-20 14:37:02
+      Generated at: 2026-09-20 14:49:28
     </div>
   </div>
   

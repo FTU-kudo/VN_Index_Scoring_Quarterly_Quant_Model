@@ -592,6 +592,39 @@ def build_html_report(
       </div>
     </div>"""
 
+    # Interpretation of Results
+    interpretation_html = f"""
+    <div class="section">
+      <h2>🧠 {t('Interpretation of Results & Methodology', 'Diễn giải Kết quả & Phương pháp luận')}</h2>
+      
+      <h3 style="margin-top: 16px; color: var(--color-blue);">{t('1. Composite Scoring System (0-100)', '1. Hệ thống Chấm điểm Tổng hợp (0-100)')}</h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        {t('The model evaluates the VN-Index across 6 fundamental and quantitative pillars. Each pillar is assigned a specific weight based on empirical backtesting: <strong>Macro & Monetary (25%)</strong>, <strong>Valuation & Leverage (20%)</strong>, <strong>Global Intermarket (20%)</strong>, <strong>Quant Model (15%)</strong>, <strong>Machine Learning (10%)</strong>, and <strong>Market Structure (10%)</strong>. A score closer to 100 indicates a highly favorable environment for equities, while a score near 0 suggests extreme risk.', 'Mô hình đánh giá VN-Index qua 6 trụ cột cơ bản và định lượng. Mỗi trụ cột được gán trọng số dựa trên kiểm định lịch sử: <strong>Vĩ mô & Tiền tệ (25%)</strong>, <strong>Định giá & Đòn bẩy (20%)</strong>, <strong>Liên thị trường (20%)</strong>, <strong>Mô hình Định lượng (15%)</strong>, <strong>Machine Learning (10%)</strong>, và <strong>Cấu trúc Thị trường (10%)</strong>. Điểm gần 100 cho thấy môi trường rất thuận lợi cho cổ phiếu, trong khi điểm gần 0 cảnh báo rủi ro cực đại.')}
+      </p>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);">{t('2. Econometric Models', '2. Mô hình Kinh tế lượng')}</h3>
+      <ul style="font-size: 14px; line-height: 1.6; color: var(--text-muted); padding-left: 20px;">
+        <li><strong>{t('Multiple Linear Regression (MLR)', 'Hồi quy Đa biến (MLR)')}:</strong> {t('Predicts the next quarter return by regressing it against macro variables (DXY, US10Y, OMO, etc.). We use Newey-West HAC robust standard errors to correct for heteroskedasticity and autocorrelation, ensuring reliable Beta coefficients.', 'Dự báo lợi suất quý tiếp theo dựa trên các biến vĩ mô (DXY, US10Y, OMO...). Mô hình sử dụng sai số chuẩn mạnh Newey-West HAC để khắc phục hiện tượng phương sai thay đổi và tự tương quan, đảm bảo hệ số Beta đáng tin cậy.')}</li>
+        <li><strong>{t('Vector Autoregression (VAR)', 'Tự hồi quy Vectơ (VAR)')}:</strong> {t("Analyzes the dynamic impact of macro shocks over time. It utilizes Granger Causality Tests to determine if variables like DXY lead the VN-Index, and Impulse Response Functions (IRF) to simulate the market reaction to external shocks.", "Phân tích tác động động lượng của các cú sốc vĩ mô qua thời gian. Mô hình dùng Kiểm định Nhân quả Granger để xác định xem các biến như DXY có dẫn dắt VN-Index hay không, và Hàm phản ứng xung (IRF) để mô phỏng phản ứng của thị trường trước cú sốc bên ngoài.")}</li>
+      </ul>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);">{t('3. Machine Learning & Reliability', '3. Học máy & Độ tin cậy')}</h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        {t('The system incorporates an <strong>XGBoost / Random Forest Classifier</strong> to predict market trends (UP, DOWN, SIDEWAY). To eliminate <em>look-ahead bias</em> (peeking into the future), we strictly employ <strong>Walk-Forward Validation (WFV)</strong> with an expanding window. This means the model is only trained on historical data up to a specific point and tested on unseen future data, mirroring real-world trading conditions.', 'Hệ thống sử dụng bộ phân loại <strong>XGBoost / Random Forest</strong> để dự báo xu hướng (UP, DOWN, SIDEWAY). Để loại bỏ hoàn toàn <em>thành kiến nhìn trước (look-ahead bias)</em>, chúng tôi áp dụng nghiêm ngặt <strong>Kiểm định Trượt (Walk-Forward Validation)</strong> với cửa sổ mở rộng. Điều này đảm bảo mô hình chỉ học từ dữ liệu quá khứ và dự báo trên dữ liệu tương lai chưa từng thấy, phản ánh đúng điều kiện giao dịch thực tế.')}
+      </p>
+
+      <h3 style="margin-top: 16px; color: var(--color-blue);">{t('4. Asset Allocation Recommendations', '4. Khuyến nghị Phân bổ Tài sản')}</h3>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+        {t('Based on the composite score, the model outputs 5 strategic recommendations:', 'Dựa trên điểm số tổng hợp, mô hình đưa ra 5 mức khuyến nghị chiến lược:')}
+        <br>• <strong>80-100:</strong> {t('Strong Buy (85-100% Equities)', 'Rất hấp dẫn (85-100% Cổ phiếu)')}
+        <br>• <strong>65-79:</strong> {t('Accumulate (70-85% Equities)', 'Hấp dẫn / Tích lũy (70-85% Cổ phiếu)')}
+        <br>• <strong>50-64:</strong> {t('Neutral (40-60% Equities)', 'Trung lập (40-60% Cổ phiếu)')}
+        <br>• <strong>35-49:</strong> {t('Reduce (20-40% Equities)', 'Kém hấp dẫn / Giảm tỷ trọng (20-40% Cổ phiếu)')}
+        <br>• <strong>0-34:</strong> {t('Defensive (0-20% Equities)', 'Phòng thủ / Tiền mặt (0-20% Cổ phiếu)')}
+      </p>
+    </div>
+    """
+
     # Full HTML
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -615,6 +648,7 @@ def build_html_report(
     {mlr_html}
     {history_html}
     {rec_html}
+    {interpretation_html}
 
     <div class="disclaimer">
       <strong>Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.')}<br>
