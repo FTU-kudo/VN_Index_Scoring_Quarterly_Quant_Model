@@ -1,0 +1,96 @@
+name: "🚀 Batch Run All Quarters (2021-2026)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: "Năm bắt đầu (ví dụ: 2021)"
+        required: true
+        default: "2021"
+      end_year:
+        description: "Năm kết thúc (ví dụ: 2026)"
+        required: true
+        default: "2026"
+      ftse_status:
+        description: "Trạng thái nâng hạng FTSE"
+        required: false
+        default: "confirmed"
+        type: choice
+        options:
+          - pending
+          - confirmed
+          - completed
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  batch-scoring:
+    name: "Batch Run ${{ github.event.inputs.start_year }} to ${{ github.event.inputs.end_year }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 180 # Cho phép chạy tối đa 3 tiếng
+    permissions:
+      contents: write
+
+    steps:
+      - name: "📁 Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python ${{ env.PYTHON_VERSION }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: "📦 Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: "🚀 Run Batch Pipeline"
+        env:
+          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
+          PYTHONUTF8: 1
+        run: |
+          START_YEAR=${{ github.event.inputs.start_year }}
+          END_YEAR=${{ github.event.inputs.end_year }}
+          FTSE_STATUS="${{ github.event.inputs.ftse_status }}"
+          
+          for YEAR in $(seq $START_YEAR $END_YEAR); do
+            for Q in 1 2 3 4; do
+              QUARTER="${YEAR}-Q${Q}"
+              echo "=========================================================="
+              echo "Running pipeline for $QUARTER..."
+              echo "=========================================================="
+              python run_quarterly.py --quarter $QUARTER --ftse-status $FTSE_STATUS || echo "Failed to process $QUARTER, continuing..."
+            done
+          done
+
+      - name: "📤 Upload Artifacts"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: "batch-reports-${{ github.event.inputs.start_year }}-${{ github.event.inputs.end_year }}"
+          path: |
+            output/reports/
+            output/exports/
+            logs/
+          retention-days: 90
+
+      - name: "💾 Commit all quarterly scores history"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: batch update quarterly scores from ${{ github.event.inputs.start_year }} to ${{ github.event.inputs.end_year }}"
+          file_pattern: |
+            data/scores/*.parquet
+            output/reports/**/*.html
+            output/exports/*.json
+            README.md
+          commit_author: "GitHub Actions <actions@github.com>"
+
+      - name: "📋 Job summary"
+        if: always()
+        run: |
+          echo "## ✅ Batch Run Completed" >> $GITHUB_STEP_SUMMARY
+          echo "Đã chạy thành công từ năm ${{ github.event.inputs.start_year }} đến ${{ github.event.inputs.end_year }}." >> $GITHUB_STEP_SUMMARY
+          echo "Vui lòng kiểm tra tab Actions hoặc nhánh main để xem dữ liệu mới nhất." >> $GITHUB_STEP_SUMMARY
