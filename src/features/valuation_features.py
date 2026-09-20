@@ -50,6 +50,7 @@ def load_sector_pepb_history() -> pd.DataFrame:
     # Ưu tiên dùng dữ liệu từ dự án PE/PB đã xây dựng
     external_path = _PEPB_PROJECT_PATH / "sector_history.parquet"
     local_path    = PROCESSED_DIR / "sector_pepb_history.parquet"
+    github_raw_url = "https://raw.githubusercontent.com/FTU-kudo/PE_PB_HOSE_stocks/main/data/sector_history.parquet"
 
     if external_path.exists():
         df = pd.read_parquet(external_path)
@@ -58,14 +59,17 @@ def load_sector_pepb_history() -> pd.DataFrame:
         df = pd.read_parquet(local_path)
         logger.info(f"[PE/PB] Load từ cache local: {len(df)} rows")
     else:
-        logger.warning(
-            "[PE/PB] Không tìm thấy dữ liệu sector history.\n"
-            "Chạy VN_PE_PB_analysis pipeline trước, hoặc\n"
-            "cung cấp file data/processed/sector_pepb_history.parquet\n"
-            "Schema: date, median_pe, median_pb\n"
-            "Trả về DataFrame trống."
-        )
-        return pd.DataFrame(columns=["date", "median_pe", "median_pb"])
+        try:
+            logger.info(f"[PE/PB] Fetching remote data từ FTU-kudo/PE_PB_HOSE_stocks...")
+            df = pd.read_parquet(github_raw_url)
+            logger.info(f"[PE/PB] Tải thành công từ GitHub: {len(df)} rows")
+        except Exception as e:
+            logger.warning(
+                f"[PE/PB] Không tìm thấy dữ liệu cục bộ và tải từ GitHub thất bại ({e}).\n"
+                "Trả về DataFrame trống."
+            )
+            return pd.DataFrame(columns=["date", "median_pe", "median_pb"])
+
 
     # Chuẩn hóa
     df["date"] = pd.to_datetime(df["date"])

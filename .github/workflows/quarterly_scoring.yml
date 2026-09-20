@@ -15,7 +15,7 @@ on:
       ftse_status:
         description: "FTSE upgrade status"
         required: false
-        default: "confirmed"
+        default: "pending"
         type: choice
         options:
           - pending

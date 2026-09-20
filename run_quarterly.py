@@ -58,7 +58,7 @@ def parse_args() -> argparse.Namespace:
         help="Bỏ qua bước VAR (nhanh hơn)"
     )
     parser.add_argument(
-        "--ftse-status", type=str, default="confirmed",
+        "--ftse-status", type=str, default="pending",
         choices=["pending", "confirmed", "completed"],
         help="Trạng thái nâng hạng FTSE"
     )
