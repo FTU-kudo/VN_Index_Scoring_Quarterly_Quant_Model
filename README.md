@@ -102,7 +102,7 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q3
-     Generated: 2026-09-20T15:41:20.800983
+     Generated: 2026-09-20T17:48:19.230907
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
@@ -115,20 +115,20 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
   • R-squared              : N/A (R-adj = N/A)
 
 [MACHINE LEARNING: WALK-FORWARD VALIDATION]
-  • XGBoost Accuracy       : N/A
-  • N Folds (WFV)          : N/A
-  • Latest Prediction      : N/A
+  • XGBoost Accuracy       : 0.4680
+  • N Folds (WFV)          : 8
+  • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score            : 53.33 / 100
+  • Total Score            : 52.55 / 100
   • Classification         : 🟡 HOLD — Neutral — Await confirming signals
 
 [GROUP BREAKDOWN]
   • macro_monetary                : raw=  54.5  weight=13.62
   • global_intermarket            : raw=  32.4  weight=6.48
   • valuation_leverage            : raw=  56.2  weight=11.23
-  • quant_model                   : raw=  50.0  weight=7.5
-  • ml_forecast                   : raw=  50.0  weight=5.0
+  • quant_model                   : raw=  59.9  weight=8.98
+  • ml_forecast                   : raw=  27.4  weight=2.74
   • market_structure              : raw=  95.0  weight=9.5
 ======================================================================
 ```

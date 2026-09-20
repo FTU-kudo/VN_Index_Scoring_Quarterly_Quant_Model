@@ -52,7 +52,10 @@ def export_score_json(
             granger_df.to_dict(orient="records")
             if granger_df is not None else None
         ),
-        "ml_walk_forward_validation": wfv_summary,
+        "ml_walk_forward_validation": (
+            {k: v for k, v in wfv_summary.items() if not isinstance(v, pd.DataFrame)}
+            if isinstance(wfv_summary, dict) else wfv_summary
+        ),
         "feature_importance": (
             fi_df.head(15).to_dict(orient="records")
             if fi_df is not None else None

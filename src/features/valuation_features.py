@@ -334,6 +334,9 @@ def build_valuation_leverage_features(
                          "margin_call_risk_flag", "margin_risk_score"]],
         on="date", how="left"
     )
+    if "margin_debt_b_vnd" in df_vl.columns:
+        df_vl["delta_margin_debt_pct"] = df_vl["margin_debt_b_vnd"].pct_change(fill_method=None)
+        df_vl["delta_margin_debt"] = df_vl["delta_margin_debt_pct"]
 
     # Lưu features
     out_path = FEATURES_DIR / "valuation_leverage_features.parquet"

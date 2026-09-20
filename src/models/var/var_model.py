@@ -30,6 +30,12 @@ import pandas as pd
 
 from src.utils.config import VAR_MAX_LAGS, VAR_VARIABLES
 
+# Ánh xạ tên cột config → tên thực tế sau feature engineering
+VAR_COLUMN_ALIASES = {
+    "net_foreign_flow": ["net_foreign_flow", "net_foreign_flow_b_vnd"],
+    "delta_margin_debt": ["delta_margin_debt", "delta_margin_debt_pct"],
+}
+
 logger = logging.getLogger(__name__)
 
 
@@ -187,20 +193,56 @@ class VARModel:
         self.results_       = None   # fitted results
         self.optimal_lag_   = None
         self.stat_report_   = None   # stationarity report
+        self.data_          = None   # bảng đã làm sạch dùng để fit/forecast
+
+    def _resolve_column(self, df: pd.DataFrame, name: str) -> Optional[str]:
+        aliases = VAR_COLUMN_ALIASES.get(name, [name])
+        for alias in aliases:
+            if alias in df.columns and pd.api.types.is_numeric_dtype(df[alias]):
+                coverage = float(df[alias].notna().mean())
+                if coverage >= 0.40:
+                    return alias
+        return None
 
     def _prepare_var_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Chọn và làm sạch dữ liệu cho VAR.
+        Chọn biến có coverage đủ, forward-fill chuỗi thưa, rồi dropna.
+        Không bắt buộc P/E hay NFF nếu lịch sử không có.
         """
-        available = [c for c in self.variable_cols if c in df.columns]
-        missing   = [c for c in self.variable_cols if c not in df.columns]
+        resolved = {}
+        missing = []
+        for name in self.variable_cols:
+            col = self._resolve_column(df, name)
+            if col is None:
+                missing.append(name)
+            else:
+                resolved[name] = col
         if missing:
-            logger.warning(f"[VAR] Thiếu biến: {missing}")
-        if len(available) < 2:
-            raise ValueError(f"[VAR] Cần ít nhất 2 biến. Chỉ có: {available}")
+            logger.warning(f"[VAR] Thiếu / quá thưa biến: {missing}")
+        if len(resolved) < 3:
+            raise ValueError(
+                f"[VAR] Cần ít nhất 3 biến usable. Chỉ có: {list(resolved)}"
+            )
 
-        df_var = df[available].dropna()
-        logger.info(f"[VAR] Sử dụng {len(available)} biến, {len(df_var)} obs")
+        frame = pd.DataFrame({name: df[col] for name, col in resolved.items()})
+        frame = frame.apply(pd.to_numeric, errors="coerce").ffill()
+        low_var = [c for c in frame.columns if float(frame[c].std(skipna=True) or 0) < 1e-10]
+        if low_var:
+            logger.warning(f"[VAR] Bỏ biến gần như hằng: {low_var}")
+            frame = frame.drop(columns=low_var)
+        df_var = frame.dropna()
+        if len(df_var.columns) < 3:
+            raise ValueError(
+                f"[VAR] Cần ít nhất 3 biến usable. Chỉ có: {list(df_var.columns)}"
+            )
+        if len(df_var) < 80:
+            raise ValueError(
+                f"[VAR] Chỉ còn {len(df_var)} obs sau làm sạch — cần ≥80"
+            )
+        logger.info(
+            f"[VAR] Sử dụng {len(resolved)} biến {list(resolved.keys())}, "
+            f"{len(df_var)} obs"
+        )
         return df_var
 
     def fit(self, df: pd.DataFrame, lag: Optional[int] = None) -> "VARModel":
@@ -228,19 +270,29 @@ class VARModel:
         ]["variable"].tolist()
         if non_stat:
             logger.warning(
-                f"[VAR] Biến non-stationary: {non_stat}\n"
-                "Đang áp dụng first-difference để đảm bảo tính dừng..."
+                f"[VAR] Biến non-stationary: {non_stat} — difference từng cột, "
+                "không difference cả hệ (tránh biến return thành Δreturn)."
             )
-            df_var = df_var.diff().dropna()
+            for col in non_stat:
+                if col in df_var.columns:
+                    df_var[col] = df_var[col].diff()
+            df_var = df_var.dropna()
 
         # Chọn lag
+        df_var = df_var.reset_index(drop=True)
         model = StatsVAR(df_var)
         if lag is None:
-            lag_obj = model.select_order(maxlags=self.max_lags)
-            self.optimal_lag_ = lag_obj.selected_orders.get("aic", 2)
+            try:
+                lag_obj = model.select_order(maxlags=self.max_lags)
+                self.optimal_lag_ = int(lag_obj.selected_orders.get("aic", 2) or 2)
+                self.optimal_lag_ = max(1, self.optimal_lag_)
+            except Exception as e:
+                logger.warning(f"[VAR] select_order thất bại ({e}) — dùng lag=2")
+                self.optimal_lag_ = 2
         else:
             self.optimal_lag_ = lag
 
+        self.data_ = df_var
         logger.info(f"[VAR] Fitting VAR({self.optimal_lag_})...")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

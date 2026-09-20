@@ -1,7 +1,7 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-20T14:10:13.130934",
+    "generated_at": "2026-09-21T01:09:29.581647",
     "data_range": "2021-01-01 → 2026-09-19",
     "disclaimer": "Kết quả từ dữ liệu thực tế. Nguồn thiếu được báo rõ."
   },
@@ -87,8 +87,8 @@
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "computed_at": "2026-09-20 14:10",
-    "total_score": 47.85,
+    "computed_at": "2026-09-21 01:09",
+    "total_score": 49.01,
     "label": "HOLD",
     "emoji": "🟡",
     "description": "Neutral — Await confirming signals",
@@ -99,7 +99,7 @@
         "data_source": "Canonical pipeline (macro_monetary)"
       },
       "global_intermarket": {
-        "raw": 26.68,
+        "raw": 32.51,
         "weight": 0.2,
         "data_source": "Canonical pipeline (global_intermarket)"
       },
@@ -126,7 +126,7 @@
     },
     "group_details": {
       "macro_monetary": {
-        "omo_overnight_rate": "N/A → default 50",
+        "vn1y_yield": "N/A → default 50",
         "usd_vnd": "N/A → default 50",
         "vn_bonds": "VN10Y 4.41% | Spread 0.45% → score 41"
       },

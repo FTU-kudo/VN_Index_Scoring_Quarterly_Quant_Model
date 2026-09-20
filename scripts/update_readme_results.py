@@ -36,6 +36,10 @@ def extract_results(data: dict) -> str:
     market = data.get("latest_market_data", {})
     mlr = data.get("mlr_results", data.get("mlr_regression", {}))
     wfv = data.get("wfv_results", data.get("ml_walk_forward_validation", {}))
+    if isinstance(mlr, list):
+        mlr = {}
+    if not isinstance(wfv, dict):
+        wfv = {}
 
     # Extract values with fallbacks
     quarter = meta.get("quarter", qs.get("quarter", "N/A"))

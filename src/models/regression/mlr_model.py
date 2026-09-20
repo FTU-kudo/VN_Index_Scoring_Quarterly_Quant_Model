@@ -31,7 +31,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Tên biến cho mô hình MLR lõi
+# Tên biến cho mô hình MLR lõi (ưu tiên lý thuyết)
 CORE_FEATURES = [
     "delta_vn1y_yield",        # β₁: Δ Lợi suất TPCP 1Y
     "delta_dxy",               # β₂: Δ DXY
@@ -41,6 +41,26 @@ CORE_FEATURES = [
     "delta_us10y",             # β₆: Δ US10Y yield
     "delta_usdjpy",            # β₇: Δ USD/JPY (Yen Carry Trade)
 ]
+
+# Fallback khi P/E, NFF, margin lịch sử thiếu — vẫn fit được trên dữ liệu OHLCV + global
+FALLBACK_FEATURES = [
+    "delta_dxy",
+    "delta_us10y",
+    "delta_usdjpy",
+    "delta_vn1y_yield",
+    "usd_vnd_pct_change",
+    "rsi_14",
+    "macd_hist",
+    "bb_pct",
+    "rvol_20d",
+    "drawdown_from_peak",
+    "price_vs_ma200",
+    "log_return_lag1",
+    "log_return_lag5",
+]
+
+MIN_FEATURE_COVERAGE = 0.55
+MIN_MLR_OBS = 80
 
 # Dấu kỳ vọng theo lý thuyết kinh tế
 EXPECTED_SIGNS = {
@@ -88,21 +108,60 @@ class MLRModel:
         self.residuals_ = None
         self.model_     = None
 
-    def _prepare_data(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, pd.Series]:
-        """
-        Chuẩn bị X, y: dropna, chọn features có trong df.
-        """
-        available = [f for f in self.feature_cols if f in df.columns]
-        missing   = [f for f in self.feature_cols if f not in df.columns]
+    def _select_usable_features(self, df: pd.DataFrame) -> List[str]:
+        """Chọn cột có đủ coverage; bổ sung fallback nếu CORE quá thưa."""
+        def _ok(col: str) -> bool:
+            if col not in df.columns or col == self.target_col:
+                return False
+            series = pd.to_numeric(df[col], errors="coerce")
+            if float(series.notna().mean()) < MIN_FEATURE_COVERAGE:
+                return False
+            if float(series.std(skipna=True) or 0) < 1e-10:
+                return False
+            return True
+
+        available = [f for f in self.feature_cols if _ok(f)]
+        missing = [f for f in self.feature_cols if f not in df.columns]
+        sparse = [
+            f for f in self.feature_cols
+            if f in df.columns and f not in available
+        ]
         if missing:
             logger.warning(f"[MLR] Thiếu features: {missing} — bỏ qua trong model")
+        if sparse:
+            logger.warning(f"[MLR] Features quá thưa/hằng (bỏ): {sparse}")
 
+        extra = [f for f in FALLBACK_FEATURES if _ok(f) and f not in available]
+        available.extend(extra)
+        if extra:
+            logger.info(f"[MLR] Bổ sung fallback features: {extra}")
+
+        return available
+
+    def _prepare_data(
+        self, df: pd.DataFrame, min_obs: Optional[int] = None
+    ) -> Tuple[pd.DataFrame, pd.Series]:
+        """
+        Chuẩn bị X, y: chỉ dropna trên cột đã đủ coverage (không bắt P/E/NFF).
+        """
         if self.target_col not in df.columns:
             raise ValueError(f"Target column '{self.target_col}' không tồn tại")
 
+        available = self._select_usable_features(df)
+        if len(available) < 2:
+            raise ValueError(
+                f"[MLR] Không đủ feature usable (cần ≥2). Có: {available}"
+            )
+
         sub = df[available + [self.target_col]].dropna()
+        if min_obs is None:
+            min_obs = MIN_MLR_OBS
+        if len(sub) < min_obs:
+            raise ValueError(
+                f"[MLR] Chỉ còn {len(sub)} obs sau dropna — cần ≥{min_obs}. "
+                f"Features: {available}"
+            )
+        self.feature_cols = available
         X = sub[available]
         y = sub[self.target_col]
         return X, y
@@ -169,8 +228,18 @@ class MLRModel:
         if self.model_ is None:
             raise RuntimeError("Model chưa được fit — gọi .fit() trước")
         import statsmodels.api as sm
-        X, _ = self._prepare_data(df)
+        used = [c for c in self.feature_cols if c in df.columns and c in self.coefs_]
+        if not used:
+            used = list(self.coefs_.keys())
+        X = df[used].apply(pd.to_numeric, errors="coerce").ffill().dropna()
+        if X.empty:
+            raise ValueError("[MLR] Predict: không còn hàng sau dropna")
         X_const = sm.add_constant(X, has_constant="add")
+        exog_names = list(self.model_.model.exog_names)
+        for name in exog_names:
+            if name not in X_const.columns:
+                X_const[name] = 0.0 if name != "const" else 1.0
+        X_const = X_const[exog_names]
         return self.model_.predict(X_const)
 
     def diagnostics(self) -> Dict:

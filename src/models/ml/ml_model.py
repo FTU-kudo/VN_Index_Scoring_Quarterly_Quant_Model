@@ -249,12 +249,30 @@ def evaluate_wfv(
     -------
     dict: fold_metrics, mean_accuracy, mean_f1, overall_summary
     """
-    # Lọc dữ liệu
-    available_features = [f for f in feature_cols if f in df_ml.columns]
+    # Lọc dữ liệu — chỉ giữ feature numeric có coverage, tránh dropna toàn bảng về 0
+    numeric_ok = []
+    for f in feature_cols:
+        if f not in df_ml.columns:
+            continue
+        if not pd.api.types.is_numeric_dtype(df_ml[f]):
+            continue
+        if float(df_ml[f].notna().mean()) < 0.55:
+            continue
+        numeric_ok.append(f)
+    available_features = numeric_ok
+    if len(available_features) < 5:
+        logger.warning(
+            f"[ML-WFV] Chỉ {len(available_features)} features usable — bỏ qua"
+        )
+        return {}
+
     df_clean = df_ml[available_features + [target_col]].dropna()
     X = df_clean[available_features].values
     y = df_clean[target_col].values.astype(int)
     n = len(X)
+    if n < 120:
+        logger.warning(f"[ML-WFV] Chỉ {n} obs sau dropna — quá ít")
+        return {}
 
     splits = walk_forward_splits(n, n_splits=n_splits)
 
@@ -276,7 +294,7 @@ def evaluate_wfv(
                     n_estimators=200, max_depth=4, learning_rate=0.05,
                     subsample=0.8, colsample_bytree=0.8,
                     random_state=42, eval_metric="mlogloss",
-                    verbosity=0, use_label_encoder=False
+                    verbosity=0,
                 )
             elif model_type == "lightgbm":
                 from lightgbm import LGBMClassifier
@@ -333,15 +351,54 @@ def evaluate_wfv(
         summary = {
             "model_type":      model_type,
             "n_folds":         len(fold_metrics),
+            "n_features":      len(available_features),
+            "features_used":   available_features,
             "mean_accuracy":   round(df_metrics["accuracy"].mean(), 4),
-            "std_accuracy":    round(df_metrics["accuracy"].std(), 4),
+            "std_accuracy":    round(float(df_metrics["accuracy"].std()), 4)
+            if len(df_metrics) > 1 else 0.0,
             "mean_f1":         round(df_metrics["f1_weighted"].mean(), 4),
-            "fold_metrics_df": df_metrics,
+            "fold_metrics":    fold_metrics,
         }
+        # Fit cuối trên toàn bộ sample có target → dự báo điểm mới nhất
+        try:
+            y_unique = np.unique(y)
+            label_map = {v: i for i, v in enumerate(y_unique)}
+            inv_map = {i: v for v, i in label_map.items()}
+            y_mapped = np.array([label_map[v] for v in y])
+            if model_type == "xgboost":
+                from xgboost import XGBClassifier
+                final_clf = XGBClassifier(
+                    n_estimators=200, max_depth=4, learning_rate=0.05,
+                    subsample=0.8, colsample_bytree=0.8,
+                    random_state=42, eval_metric="mlogloss", verbosity=0,
+                )
+            else:
+                from lightgbm import LGBMClassifier
+                final_clf = LGBMClassifier(
+                    n_estimators=200, max_depth=4, learning_rate=0.05,
+                    subsample=0.8, colsample_bytree=0.8,
+                    random_state=42, verbose=-1,
+                )
+            final_clf.fit(X, y_mapped)
+            latest_X = df_ml[available_features].dropna().iloc[-1:].values
+            pred_idx = int(final_clf.predict(latest_X)[0])
+            orig = int(inv_map.get(pred_idx, 0))
+            class_name = {1: "UP", 0: "NEUTRAL", -1: "DOWN"}.get(orig, str(orig))
+            summary["latest_pred_class"] = orig
+            summary["latest_prediction"] = class_name
+            try:
+                proba = final_clf.predict_proba(latest_X)[0]
+                summary["latest_confidence"] = round(float(max(proba)), 4)
+            except Exception:
+                summary["latest_confidence"] = None
+        except Exception as e:
+            logger.warning(f"[ML-WFV] Latest prediction failed: {e}")
+
         logger.info(
             f"[ML-WFV] {model_type.upper()} | {len(fold_metrics)} folds\n"
             f"  Mean Accuracy = {summary['mean_accuracy']:.1%} ± {summary['std_accuracy']:.1%}\n"
-            f"  Mean F1       = {summary['mean_f1']:.4f}"
+            f"  Mean F1       = {summary['mean_f1']:.4f}\n"
+            f"  Latest pred   = {summary.get('latest_prediction', 'N/A')}"
         )
         return summary
     else:
@@ -381,8 +438,7 @@ def get_feature_importance(
         if model_type == "xgboost":
             from xgboost import XGBClassifier
             clf = XGBClassifier(n_estimators=300, max_depth=4, random_state=42,
-                                verbosity=0, eval_metric="mlogloss",
-                                use_label_encoder=False)
+                                verbosity=0, eval_metric="mlogloss")
         else:
             from lightgbm import LGBMClassifier
             clf = LGBMClassifier(n_estimators=300, max_depth=4, random_state=42,

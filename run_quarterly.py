@@ -129,6 +129,18 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     df_all = df_all.dropna(subset=["log_return"]).reset_index(drop=True)
 
+    from src.features.technical_features import add_technical_indicators
+    df_all = add_technical_indicators(df_all)
+    if "net_foreign_flow_b_vnd" in df_all.columns and "net_foreign_flow" not in df_all.columns:
+        df_all["net_foreign_flow"] = df_all["net_foreign_flow_b_vnd"]
+    if "delta_margin_debt_pct" in df_all.columns and "delta_margin_debt" not in df_all.columns:
+        df_all["delta_margin_debt"] = df_all["delta_margin_debt_pct"]
+    for col in df_all.columns:
+        if col in ("date", "open", "high", "low", "close", "volume"):
+            continue
+        if pd.api.types.is_numeric_dtype(df_all[col]):
+            df_all[col] = df_all[col].ffill()
+
     logger.info(f"[FE] Master dataset: {len(df_all)} rows × {len(df_all.columns)} cols")
 
     # ── Step 3: MLR Model ─────────────────────────────────────────────────────
@@ -155,7 +167,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
         logger.info(f"[MLR] ADF residuals p-value = {diag.get('adf_residuals_pvalue', 'N/A')}")
 
     except Exception as e:
-        logger.warning(f"[MLR] Bỏ qua do lỗi: {e}")
+        logger.warning(f"[MLR] Bỏ qua do lỗi: {e}", exc_info=True)
 
     # ── Step 4: VAR Model ─────────────────────────────────────────────────────
     var_forecast   = None
@@ -168,39 +180,29 @@ def run_pipeline(args: argparse.Namespace) -> None:
             from src.models.var.var_model import VARModel
             from src.utils.config import VAR_VARIABLES
 
-            # Rename để khớp VAR_VARIABLES
             df_var_input = df_all.copy()
-            rename_map = {"log_return": "vni_return"}
-            df_var_input = df_var_input.rename(columns=rename_map)
+            df_var_input = df_var_input.rename(columns={"log_return": "vni_return"})
 
-            available_var_cols = [c for c in VAR_VARIABLES
-                                  if c in df_var_input.columns]
-            if len(available_var_cols) >= 3:
-                var_model = VARModel(variable_cols=available_var_cols)
-                var_model.fit(df_var_input)
+            var_model = VARModel(variable_cols=VAR_VARIABLES)
+            var_model.fit(df_var_input)
 
-                # Granger causality
-                granger_df = var_model.granger_causality(caused="vni_return")
-                granger_leaders = int(
-                    (granger_df["granger_causes_vni"] == True).sum()
-                )
+            granger_df = var_model.granger_causality(caused="vni_return")
+            granger_leaders = int(
+                (granger_df["granger_causes_vni"] == True).sum()
+            ) if granger_df is not None and len(granger_df) else 0
 
-                # Forecast T+5
-                last_rows = df_var_input[available_var_cols].dropna().tail(
-                    var_model.optimal_lag_
-                ).values
+            if var_model.data_ is not None and var_model.optimal_lag_:
+                last_rows = var_model.data_.tail(var_model.optimal_lag_).values
                 if len(last_rows) == var_model.optimal_lag_:
                     forecast_df = var_model.forecast(last_rows, steps=5)
                     if "vni_return" in forecast_df.columns:
                         var_forecast = float(forecast_df["vni_return"].mean())
 
-                logger.info(f"[VAR] {granger_leaders} Granger leaders, "
-                            f"VAR forecast T+5 = {var_forecast}")
-            else:
-                logger.warning(f"[VAR] Chỉ có {len(available_var_cols)} biến khả dụng — cần ≥3")
+            logger.info(f"[VAR] {granger_leaders} Granger leaders, "
+                        f"VAR forecast T+5 = {var_forecast}")
 
         except Exception as e:
-            logger.warning(f"[VAR] Bỏ qua do lỗi: {e}")
+            logger.warning(f"[VAR] Bỏ qua do lỗi: {e}", exc_info=True)
     else:
         logger.info("[4/7] Skip VAR (--skip-var flag)")
 
@@ -223,24 +225,32 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
             # Lấy danh sách feature columns cho ML
             exclude = {"date", "open", "high", "low", "close", "volume",
-                       "target", "target_binary", "forward_return",
+                       "index", "target", "target_binary", "forward_return",
                        "log_return", "weekly_return", "monthly_return"}
             feature_cols = [c for c in df_ml.columns
                             if c not in exclude
-                            and df_ml[c].dtype in ["float64", "float32", "int64"]]
+                            and df_ml[c].dtype in ["float64", "float32", "int64", "int32"]
+                            and float(pd.to_numeric(df_ml[c], errors="coerce").std(skipna=True) or 0) > 1e-10]
 
             if len(feature_cols) > 5:
                 wfv_summary = evaluate_wfv(
                     df_ml, feature_cols, model_type="xgboost"
                 )
-                fi_df = get_feature_importance(
-                    df_ml, feature_cols, model_type="xgboost"
+                fi_cols = (
+                    wfv_summary.get("features_used", feature_cols)
+                    if wfv_summary else feature_cols
                 )
+                fi_df = get_feature_importance(
+                    df_ml, fi_cols, model_type="xgboost"
+                )
+                if wfv_summary:
+                    ml_pred_class = wfv_summary.get("latest_pred_class")
+                    ml_confidence = wfv_summary.get("latest_confidence")
             else:
                 logger.warning(f"[ML] Chỉ có {len(feature_cols)} features — bỏ qua WFV")
 
         except Exception as e:
-            logger.warning(f"[ML] Bỏ qua do lỗi: {e}")
+            logger.warning(f"[ML] Bỏ qua do lỗi: {e}", exc_info=True)
     else:
         logger.info("[5/7] Skip ML (--skip-ml flag)")
 
