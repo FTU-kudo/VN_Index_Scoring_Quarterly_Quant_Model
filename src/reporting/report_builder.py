@@ -435,6 +435,9 @@ def build_html_report(
         <div class="clock" id="clock">Loading time...</div>
       </div>
       <div class="nav-right">
+        <button class="btn" id="prev-quarter-btn" title="Previous Quarter" style="padding: 6px 10px;">◀</button>
+        <select class="btn" id="quarter-select" style="max-width: 150px; cursor: pointer;"></select>
+        <button class="btn" id="next-quarter-btn" title="Next Quarter" style="padding: 6px 10px;">▶</button>
         <button class="btn" id="lang-btn">🇻🇳 VI</button>
         <button class="btn" id="theme-btn">🌙 Dark</button>
       </div>
@@ -816,6 +819,63 @@ def build_html_report(
   </div>
   {_JS_SCRIPT}
   <script>
+    // Quarter Navigation Logic
+    (async function() {{
+      const currentQuarter = "{quarter}";
+      const select = document.getElementById("quarter-select");
+      const prevBtn = document.getElementById("prev-quarter-btn");
+      const nextBtn = document.getElementById("next-quarter-btn");
+      
+      try {{
+        const response = await fetch("../quarters.json");
+        if (!response.ok) throw new Error("Failed to fetch quarters.json");
+        const quarters = await response.json();
+        
+        if (!quarters || quarters.length === 0) return;
+        
+        quarters.forEach(q => {{
+          const option = document.createElement("option");
+          option.value = q;
+          option.textContent = q.replace("_", "/");
+          if (q.replace("_", "-") === currentQuarter) {{
+            option.selected = true;
+          }}
+          select.appendChild(option);
+        }});
+        
+        const currentIndex = quarters.findIndex(q => q.replace("_", "-") === currentQuarter);
+        
+        if (currentIndex === 0) {{
+          nextBtn.disabled = true;
+          nextBtn.style.opacity = "0.5";
+          nextBtn.style.cursor = "not-allowed";
+        }}
+        if (currentIndex === quarters.length - 1) {{
+          prevBtn.disabled = true;
+          prevBtn.style.opacity = "0.5";
+          prevBtn.style.cursor = "not-allowed";
+        }}
+        
+        const navigateTo = (index) => {{
+          if (index >= 0 && index < quarters.length) {{
+            window.location.href = "../" + quarters[index] + "/index.html";
+          }}
+        }};
+        
+        select.addEventListener("change", (e) => {{
+          const target = e.target.value;
+          window.location.href = "../" + target + "/index.html";
+        }});
+        
+        prevBtn.addEventListener("click", () => navigateTo(currentIndex + 1));
+        nextBtn.addEventListener("click", () => navigateTo(currentIndex - 1));
+        
+      }} catch (err) {{
+        console.error("Quarter navigation error:", err);
+      }}
+    }})();
+  </script>
+  <script>
     // Trigger charts on load
     document.addEventListener("DOMContentLoaded", () => {{
       if (typeof renderCharts === 'function') renderCharts();
@@ -841,6 +901,12 @@ def build_root_index_html():
         if d.is_dir() and (d / "index.html").exists():
             reports.append(d.name)
             
+    # Export list of quarters to quarters.json for dynamic navigation
+    import json
+    quarters_json_path = REPORTS_DIR / "quarters.json"
+    with open(quarters_json_path, "w", encoding="utf-8") as f:
+        json.dump(reports, f)
+
     links_html = ""
     for r in reports:
         links_html += f'      <li><a href="{r}/index.html">📄 {t("Report", "Báo cáo")} {r.replace("_", "/")}</a></li>\n'
