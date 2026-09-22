@@ -169,6 +169,9 @@
         <li class="tab-link" onclick="openTab(event, 'tab-recommendation')">
            🎯 <span class="lang-en">Investment Rec</span><span class="lang-vi">Khuyến nghị Đầu tư</span>
         </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-references')">
+           📚 <span class="lang-en">References & Data</span><span class="lang-vi">Trích dẫn & Nguồn dữ liệu</span>
+        </li>
       </ul>
     </div>
     
@@ -199,7 +202,7 @@
             labels: ["2021-Q1", "2021-Q2", "2021-Q3", "2021-Q4", "2022-Q1", "2022-Q2", "2022-Q3", "2022-Q4", "2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"],
             datasets: [{
               label: 'Total Score',
-              data: [53.410000000000004, 54.29, 53.68, 60.76, 51.410000000000004, 55.60000000000001, 49.59, 54.480000000000004, 60.25, 60.15, 51.6, 55.80999999999999, 58.2, 49.72, 60.949999999999996, 53.37, 51.44, 63.7, 53.06999999999999, 71.57, 58.29, 61.34, 51.89, 53.0],
+              data: [54.65, 54.99, 50.03, 52.74, 50.62, 51.38, 47.230000000000004, 52.12, 54.71, 59.85, 57.73, 54.18, 56.54, 53.17, 50.97, 49.21, 50.97, 52.230000000000004, 46.18, 46.05, 47.89, 45.95, 52.900000000000006, 54.900000000000006],
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               borderWidth: 3,
@@ -551,6 +554,80 @@
     
       </div>
       
+      <div id="tab-references" class="tab-content" style="display: none;">
+        
+    <div class="card">
+      <div class="card-header">
+        <h2 style="margin: 0; font-size: 18px;"><span class="lang-en">Academic Citations & Theories</span><span class="lang-vi">Trích dẫn Học thuật & Lý thuyết</span></h2>
+      </div>
+      <div class="card-body">
+        <div class="references-list" style="line-height: 1.6; color: var(--text-main);">
+          <h4 style="color: var(--primary-color); margin-bottom: 8px;">1. <span class="lang-en">Mathematical Formulas</span><span class="lang-vi">Các Công thức Toán học Định lượng</span></h4>
+          <ul style="margin-top: 0; margin-bottom: 20px; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">
+              <strong><span class="lang-en">Logarithmic Returns (VN-Index):</span><span class="lang-vi">Lợi suất Logarit (VN-Index):</span></strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$R_t = \ln(P_t / P_{t-1})$</code>
+              <br><em><span class="lang-en">Used to calculate continuous returns, ensuring symmetric scaling for financial time series.</span><span class="lang-vi">Sử dụng để tính lợi suất liên tục, đảm bảo tính đối xứng cho chuỗi thời gian tài chính.</span></em>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong><span class="lang-en">Multiple Linear Regression (MLR):</span><span class="lang-vi">Hồi quy Tuyến tính Đa biến (MLR):</span></strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$\hat{Y} = \beta_0 + \sum_{i=1}^{n} \beta_i X_i + \epsilon$</code>
+              <br><em><span class="lang-en">Estimates the beta coefficients (impact weights) of macroeconomic variables on VN-Index returns.</span><span class="lang-vi">Ước lượng hệ số Beta (trọng số tác động) của các biến số vĩ mô lên lợi suất VN-Index.</span></em>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong><span class="lang-en">Vector Autoregression (VAR):</span><span class="lang-vi">Tự Hồi quy Vector (VAR):</span></strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$Y_t = \alpha + \sum_{i=1}^{p} \Phi_i Y_{t-i} + \epsilon_t$</code>
+              <br><em><span class="lang-en">Analyzes the dynamic impact of random disturbances on the system of variables (Granger Causality).</span><span class="lang-vi">Phân tích tác động động của các cú sốc ngẫu nhiên lên hệ thống biến số (Kiểm định Granger Causality).</span></em>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong><span class="lang-en">Z-Score Normalization:</span><span class="lang-vi">Chuẩn hóa Z-Score:</span></strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$Z = (X - \mu) / \sigma$</code>
+              <br><em><span class="lang-en">Normalizes disparate fundamental data into a unified 0-100 scoring scale.</span><span class="lang-vi">Chuẩn hóa dữ liệu cơ bản khác biệt về thang điểm 0-100 thống nhất.</span></em>
+            </li>
+          </ul>
+
+          <h4 style="color: var(--primary-color); margin-bottom: 8px;">2. <span class="lang-en">Economic Theories & Authors</span><span class="lang-vi">Lý thuyết Kinh tế & Tác giả</span></h4>
+          <ul style="margin-top: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">
+              <strong>Arbitrage Pricing Theory (APT)</strong> — <em>Stephen Ross (1976)</em>:
+              <br><span class="lang-en">Forms the foundation for using multiple macroeconomic factors (interest rates, exchange rates) to price assets and forecast index returns.</span><span class="lang-vi">Tạo nền tảng cho việc sử dụng đa yếu tố vĩ mô (lãi suất, tỷ giá) để định giá tài sản và dự báo lợi suất chỉ số.</span>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>Liquidity Preference Theory</strong> — <em>John Maynard Keynes (1936)</em>:
+              <br><span class="lang-en">Explains why money supply (M2) and credit growth affect interest rates and, subsequently, asset prices (the "liquidity pillar").</span><span class="lang-vi">Giải thích lý do cung tiền (M2) và tăng trưởng tín dụng ảnh hưởng đến lãi suất và giá tài sản (trụ cột "Thanh khoản").</span>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>Efficient Market Hypothesis (EMH) & Anomalies</strong> — <em>Eugene Fama (1970) & Fama-French (1993)</em>:
+              <br><span class="lang-en">While EMH assumes prices reflect all information, our model exploits structural anomalies (e.g., foreign flow momentum) to identify excess returns.</span><span class="lang-vi">Mặc dù EMH cho rằng giá phản ánh mọi thông tin, mô hình khai thác các dị biệt cấu trúc (như quán tính dòng tiền khối ngoại) để tìm kiếm lợi nhuận vượt trội.</span>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>Granger Causality</strong> — <em>Clive Granger (1969)</em>:
+              <br><span class="lang-en">The theoretical basis for our VAR model to empirically test whether leading indicators (e.g., global yields) actually "cause" movements in VN-Index.</span><span class="lang-vi">Cơ sở lý thuyết cho mô hình VAR của chúng tôi nhằm kiểm định thực nghiệm xem các chỉ báo dẫn dắt (ví dụ: lợi suất trái phiếu Mỹ) có thực sự "gây ra" biến động của VN-Index hay không.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 20px;">
+      <div class="card-header">
+        <h2 style="margin: 0; font-size: 18px;"><span class="lang-en">Data Sources & Integrity</span><span class="lang-vi">Nguồn Dữ liệu & Tính Toàn vẹn</span></h2>
+      </div>
+      <div class="card-body">
+        <div style="line-height: 1.6; color: var(--text-main);">
+          <p style="margin-top: 0; margin-bottom: 16px;"><span class="lang-en">This quantitative project pulls data from verified, institutional-grade sources to ensure the highest level of integrity and accuracy:</span><span class="lang-vi">Dự án định lượng này trích xuất dữ liệu từ các nguồn đã được xác minh, đạt chuẩn tổ chức để đảm bảo mức độ toàn vẹn và chính xác cao nhất:</span></p>
+          <ul style="margin-top: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;"><strong>State Bank of Vietnam (SBV)</strong>: <span class="lang-en">OMO rates, 12M Deposit Rates, USD/VND Exchange Rates, M2 and Credit Growth.</span><span class="lang-vi">Lãi suất OMO, Lãi suất huy động 12T, Tỷ giá trung tâm USD/VND, Cung tiền M2 và Tăng trưởng tín dụng.</span></li>
+            <li style="margin-bottom: 8px;"><strong>Ho Chi Minh City Stock Exchange (HOSE) & HNX</strong>: <span class="lang-en">VN-Index OHLCV, market breadth, and Net Foreign Flows (accessed via the vnstock API).</span><span class="lang-vi">Dữ liệu OHLCV VN-Index, độ rộng thị trường, và Giao dịch khối ngoại (truy cập qua API vnstock).</span></li>
+            <li style="margin-bottom: 8px;"><strong>Federal Reserve Economic Data (FRED) / Yahoo Finance</strong>: <span class="lang-en">US 10Y/2Y Treasury Yields, US Dollar Index (DXY).</span><span class="lang-vi">Lợi suất trái phiếu chính phủ Mỹ 10Y/2Y, Chỉ số sức mạnh đồng USD (DXY).</span></li>
+            <li style="margin-bottom: 8px;"><strong>Vietnam State Treasury (KBNN)</strong>: <span class="lang-en">Vietnam Government Bond Yield Curve (VN1Y, VN10Y) computed via Nelson-Siegel model from the FTU-kudo Bond Yield pipeline.</span><span class="lang-vi">Đường cong lợi suất trái phiếu chính phủ Việt Nam (VN1Y, VN10Y) được tính toán qua mô hình Nelson-Siegel từ dự án VN_Bond_Yield_pipeline.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+      </div>
+      
       
     <div id="tab-recommendation" class="tab-content">
       <div class="section">
@@ -590,7 +667,7 @@
 
       <div class="disclaimer">
         <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
-        Generated at: 2026-09-23 01:29:39
+        Generated at: 2026-09-23 03:10:20
       </div>
     </div>
   </div>
