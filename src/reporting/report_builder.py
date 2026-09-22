@@ -883,6 +883,80 @@ def build_html_report(
     </div>
     """
 
+    references_html = f"""
+    <div class="card">
+      <div class="card-header">
+        <h2 style="margin: 0; font-size: 18px;">{t('Academic Citations & Theories', 'Trích dẫn Học thuật & Lý thuyết')}</h2>
+      </div>
+      <div class="card-body">
+        <div class="references-list" style="line-height: 1.6; color: var(--text-main);">
+          <h4 style="color: var(--primary-color); margin-bottom: 8px;">1. {t('Mathematical Formulas', 'Các Công thức Toán học Định lượng')}</h4>
+          <ul style="margin-top: 0; margin-bottom: 20px; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">
+              <strong>{t('Logarithmic Returns (VN-Index):', 'Lợi suất Logarit (VN-Index):')}</strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$R_t = \\ln(P_t / P_{{t-1}})$</code>
+              <br><em>{t('Used to calculate continuous returns, ensuring symmetric scaling for financial time series.', 'Sử dụng để tính lợi suất liên tục, đảm bảo tính đối xứng cho chuỗi thời gian tài chính.')}</em>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>{t('Multiple Linear Regression (MLR):', 'Hồi quy Tuyến tính Đa biến (MLR):')}</strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$\\hat{{Y}} = \\beta_0 + \\sum_{{i=1}}^{{n}} \\beta_i X_i + \\epsilon$</code>
+              <br><em>{t('Estimates the beta coefficients (impact weights) of macroeconomic variables on VN-Index returns.', 'Ước lượng hệ số Beta (trọng số tác động) của các biến số vĩ mô lên lợi suất VN-Index.')}</em>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>{t('Vector Autoregression (VAR):', 'Tự Hồi quy Vector (VAR):')}</strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$Y_t = \\alpha + \\sum_{{i=1}}^{{p}} \\Phi_i Y_{{t-i}} + \\epsilon_t$</code>
+              <br><em>{t('Analyzes the dynamic impact of random disturbances on the system of variables (Granger Causality).', 'Phân tích tác động động của các cú sốc ngẫu nhiên lên hệ thống biến số (Kiểm định Granger Causality).')}</em>
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>{t('Z-Score Normalization:', 'Chuẩn hóa Z-Score:')}</strong> 
+              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$Z = (X - \\mu) / \\sigma$</code>
+              <br><em>{t('Normalizes disparate fundamental data into a unified 0-100 scoring scale.', 'Chuẩn hóa dữ liệu cơ bản khác biệt về thang điểm 0-100 thống nhất.')}</em>
+            </li>
+          </ul>
+
+          <h4 style="color: var(--primary-color); margin-bottom: 8px;">2. {t('Economic Theories & Authors', 'Lý thuyết Kinh tế & Tác giả')}</h4>
+          <ul style="margin-top: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">
+              <strong>Arbitrage Pricing Theory (APT)</strong> — <em>Stephen Ross (1976)</em>:
+              <br>{t('Forms the foundation for using multiple macroeconomic factors (interest rates, exchange rates) to price assets and forecast index returns.', 'Tạo nền tảng cho việc sử dụng đa yếu tố vĩ mô (lãi suất, tỷ giá) để định giá tài sản và dự báo lợi suất chỉ số.')}
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>Liquidity Preference Theory</strong> — <em>John Maynard Keynes (1936)</em>:
+              <br>{t('Explains why money supply (M2) and credit growth affect interest rates and, subsequently, asset prices (the "liquidity pillar").', 'Giải thích lý do cung tiền (M2) và tăng trưởng tín dụng ảnh hưởng đến lãi suất và giá tài sản (trụ cột "Thanh khoản").')}
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>Efficient Market Hypothesis (EMH) & Anomalies</strong> — <em>Eugene Fama (1970) & Fama-French (1993)</em>:
+              <br>{t('While EMH assumes prices reflect all information, our model exploits structural anomalies (e.g., foreign flow momentum) to identify excess returns.', 'Mặc dù EMH cho rằng giá phản ánh mọi thông tin, mô hình khai thác các dị biệt cấu trúc (như quán tính dòng tiền khối ngoại) để tìm kiếm lợi nhuận vượt trội.')}
+            </li>
+            <li style="margin-bottom: 8px;">
+              <strong>Granger Causality</strong> — <em>Clive Granger (1969)</em>:
+              <br>{t('The theoretical basis for our VAR model to empirically test whether leading indicators (e.g., global yields) actually "cause" movements in VN-Index.', 'Cơ sở lý thuyết cho mô hình VAR của chúng tôi nhằm kiểm định thực nghiệm xem các chỉ báo dẫn dắt (ví dụ: lợi suất trái phiếu Mỹ) có thực sự "gây ra" biến động của VN-Index hay không.')}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 20px;">
+      <div class="card-header">
+        <h2 style="margin: 0; font-size: 18px;">{t('Data Sources & Integrity', 'Nguồn Dữ liệu & Tính Toàn vẹn')}</h2>
+      </div>
+      <div class="card-body">
+        <div style="line-height: 1.6; color: var(--text-main);">
+          <p style="margin-top: 0; margin-bottom: 16px;">{t(
+              'This quantitative project pulls data from verified, institutional-grade sources to ensure the highest level of integrity and accuracy:', 
+              'Dự án định lượng này trích xuất dữ liệu từ các nguồn đã được xác minh, đạt chuẩn tổ chức để đảm bảo mức độ toàn vẹn và chính xác cao nhất:')}</p>
+          <ul style="margin-top: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;"><strong>State Bank of Vietnam (SBV)</strong>: {t('OMO rates, 12M Deposit Rates, USD/VND Exchange Rates, M2 and Credit Growth.', 'Lãi suất OMO, Lãi suất huy động 12T, Tỷ giá trung tâm USD/VND, Cung tiền M2 và Tăng trưởng tín dụng.')}</li>
+            <li style="margin-bottom: 8px;"><strong>Ho Chi Minh City Stock Exchange (HOSE) & HNX</strong>: {t('VN-Index OHLCV, market breadth, and Net Foreign Flows (accessed via the vnstock API).', 'Dữ liệu OHLCV VN-Index, độ rộng thị trường, và Giao dịch khối ngoại (truy cập qua API vnstock).')}</li>
+            <li style="margin-bottom: 8px;"><strong>Federal Reserve Economic Data (FRED) / Yahoo Finance</strong>: {t('US 10Y/2Y Treasury Yields, US Dollar Index (DXY).', 'Lợi suất trái phiếu chính phủ Mỹ 10Y/2Y, Chỉ số sức mạnh đồng USD (DXY).')}</li>
+            <li style="margin-bottom: 8px;"><strong>Vietnam State Treasury (KBNN)</strong>: {t('Vietnam Government Bond Yield Curve (VN1Y, VN10Y) computed via Nelson-Siegel model from the FTU-kudo Bond Yield pipeline.', 'Đường cong lợi suất trái phiếu chính phủ Việt Nam (VN1Y, VN10Y) được tính toán qua mô hình Nelson-Siegel từ dự án VN_Bond_Yield_pipeline.')}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    """
+
     # Full HTML
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -918,6 +992,9 @@ def build_html_report(
         <li class="tab-link" onclick="openTab(event, 'tab-recommendation')">
            🎯 {t('Investment Rec', 'Khuyến nghị Đầu tư')}
         </li>
+        <li class="tab-link" onclick="openTab(event, 'tab-references')">
+           📚 {t('References & Data', 'Trích dẫn & Nguồn dữ liệu')}
+        </li>
       </ul>
     </div>
     
@@ -950,6 +1027,10 @@ def build_html_report(
       
       <div id="tab-methodology" class="tab-content">
         {interpretation_html}
+      </div>
+      
+      <div id="tab-references" class="tab-content" style="display: none;">
+        {references_html}
       </div>
       
       {investment_rec_html}
