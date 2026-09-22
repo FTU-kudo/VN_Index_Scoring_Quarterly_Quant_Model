@@ -11,7 +11,7 @@ on:
 
   # Chạy tự động sau khi workflow quarterly-scoring thành công
   workflow_run:
-    workflows: ["📊 VN-Index Quarterly Scoring"]
+    workflows: ["📊 VN-Index Quarterly Scoring", "🚀 Batch Run All Quarters (2021-2026)"]
     types:
       - completed
   
