@@ -784,6 +784,13 @@ def build_html_report(
         <li style="margin-bottom: 8px;"><strong>{t('Random Forest Classifier', 'Mô hình Rừng ngẫu nhiên (Random Forest)')}:</strong> Breiman, L. (2001). <em>Random Forests</em>. Machine Learning, 45(1), 5-32.</li>
         <li style="margin-bottom: 8px;"><strong>{t('XGBoost (Extreme Gradient Boosting)', 'Mô hình Tăng cường độ dốc (XGBoost)')}:</strong> Chen, T., & Guestrin, C. (2016). <em>XGBoost: A Scalable Tree Boosting System</em>. Proceedings of the 22nd ACM SIGKDD International Conference.</li>
       </ul>
+
+      <h3 style="margin-top: 24px; color: var(--color-blue); border-top: 1px solid var(--border-color); padding-top: 16px;">{t('6. Data Sources & Integrity', '6. Nguồn Dữ liệu & Tính Toàn vẹn')}</h3>
+      <ul style="font-size: 14px; line-height: 1.6; color: var(--text-muted); padding-left: 20px;">
+        <li style="margin-bottom: 8px;"><strong>{t('Vietnam Equity & Market Data', 'Dữ liệu Thị trường Cổ phiếu Việt Nam')}:</strong> {t('Directly sourced from the highly reliable <code>vnstock</code> ecosystem, integrating real-time and historical OHLCV, foreign net flows, and valuation metrics from top-tier domestic securities firms (SSI, TCBS, VNDIRECT).', 'Được trích xuất trực tiếp từ hệ sinh thái <code>vnstock</code> uy tín, tích hợp dữ liệu giá (OHLCV), giao dịch khối ngoại và định giá từ các công ty chứng khoán hàng đầu (SSI, TCBS, VNDIRECT).')}</li>
+        <li style="margin-bottom: 8px;"><strong>{t('Global Macro & Intermarket Data', 'Dữ liệu Vĩ mô Toàn cầu & Liên thị trường')}:</strong> {t('Fetched via <code>yfinance</code> and <code>pandas_datareader</code> APIs for authoritative global indicators including the US Dollar Index (DXY), US 10-Year Treasury Yields (US10Y), and global exchange rates (USD/JPY, USD/VND).', 'Truy xuất qua API của <code>yfinance</code> và <code>pandas_datareader</code> để lấy các chỉ số toàn cầu chuẩn xác như Chỉ số Dolar Mỹ (DXY), Lợi suất Trái phiếu Mỹ 10 năm (US10Y) và tỷ giá (USD/JPY, USD/VND).')}</li>
+        <li style="margin-bottom: 8px;"><strong>{t('Data Integrity & Preprocessing', 'Tính Toàn vẹn & Tiền xử lý dữ liệu')}:</strong> {t('Missing data is rigorously imputed using forward-filling methods. The pipeline executes automated daily validation scripts (via GitHub Actions) to ensure zero data gaps before calculating the final quarterly composite score.', 'Dữ liệu khuyết thiếu được xử lý nghiêm ngặt bằng phương pháp nội suy tịnh tiến (forward-fill). Luồng thực thi chạy các kịch bản kiểm tra dữ liệu tự động hàng ngày (qua GitHub Actions) nhằm đảm bảo không có lỗ hổng dữ liệu trước khi chấm điểm.')}</li>
+      </ul>
     </div>
     """
 
