@@ -18,6 +18,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Thêm project root vào PYTHONPATH
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -37,12 +38,17 @@ logging.basicConfig(
 logger = logging.getLogger("run_quarterly")
 
 
+def get_current_quarter() -> str:
+    now = datetime.now()
+    q = (now.month - 1) // 3 + 1
+    return f"{now.year}-Q{q}"
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="VN-Index Quarterly Quantitative Scoring Pipeline"
     )
     parser.add_argument(
-        "--quarter", type=str, default="2026-Q3",
+        "--quarter", type=str, default=get_current_quarter(),
         help="Quý cần phân tích (định dạng: YYYY-QN, ví dụ: 2026-Q3)"
     )
     parser.add_argument(

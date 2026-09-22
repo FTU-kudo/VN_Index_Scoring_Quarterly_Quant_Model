@@ -39,7 +39,7 @@ VNSTOCK_API_KEY = os.getenv("VNSTOCK_API_KEY", "")
 # ── Khoảng thời gian dữ liệu ─────────────────────────────────────────────────
 # Dữ liệu lịch sử tối đa cho backtest & calibration
 HISTORY_START   = "2018-01-01"   # 8+ năm dữ liệu
-HISTORY_END     = "2026-09-19"   # Ngày hiện tại: 19/09/2026
+HISTORY_END     = datetime.now().strftime("%Y-%m-%d")   # Ngày hiện tại (Dynamic)
 
 # Cửa sổ Z-score (năm)
 ZSCORE_WINDOW_YEARS = 5          # Rolling 5 năm cho P/E, P/B Z-score
