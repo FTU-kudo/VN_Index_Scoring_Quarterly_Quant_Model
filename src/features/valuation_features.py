@@ -38,19 +38,20 @@ _PEPB_PROJECT_PATH = Path(__file__).resolve().parents[3].parent / \
 # 1. Load P/E, P/B lịch sử
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def load_sector_pepb_history() -> pd.DataFrame:
+def load_market_pepb_history() -> pd.DataFrame:
     """
-    Load lịch sử P/E, P/B từ dự án VN_PE_PB_analysis (sector_history.parquet)
-    hoặc từ cache local.
-
+    Load lịch sử P/E, P/B từ dự án VN_PE_PB_analysis (ticker_history.parquet)
+    hoặc từ GitHub.
+    Tính toán Headline P/E (Trọng số vốn hóa) và Median P/E.
+    
     Returns
     -------
-    DataFrame: date, median_pe, median_pb, weighted_pe, weighted_pb
+    DataFrame: date, median_pe, median_pb, headline_pe, headline_pb
     """
     # Ưu tiên dùng dữ liệu từ dự án PE/PB đã xây dựng
-    external_path = _PEPB_PROJECT_PATH / "sector_history.parquet"
-    local_path    = PROCESSED_DIR / "sector_pepb_history.parquet"
-    github_raw_url = "https://raw.githubusercontent.com/FTU-kudo/PE_PB_HOSE_stocks/main/data/sector_history.parquet"
+    external_path = _PEPB_PROJECT_PATH / "ticker_history.parquet"
+    local_path    = PROCESSED_DIR / "ticker_history.parquet"
+    github_raw_url = "https://raw.githubusercontent.com/FTU-kudo/PE_PB_HOSE_stocks/main/data/ticker_history.parquet"
 
     if external_path.exists():
         df = pd.read_parquet(external_path)
@@ -60,49 +61,71 @@ def load_sector_pepb_history() -> pd.DataFrame:
         logger.info(f"[PE/PB] Load từ cache local: {len(df)} rows")
     else:
         try:
-            logger.info(f"[PE/PB] Fetching remote data từ FTU-kudo/PE_PB_HOSE_stocks...")
+            logger.info(f"[PE/PB] Fetching remote data từ FTU-kudo/PE_PB_HOSE_stocks (ticker_history)...")
             df = pd.read_parquet(github_raw_url)
             logger.info(f"[PE/PB] Tải thành công từ GitHub: {len(df)} rows")
+            # Cache locally to speed up future runs
+            df.to_parquet(local_path, index=False)
         except Exception as e:
             logger.warning(
                 f"[PE/PB] Không tìm thấy dữ liệu cục bộ và tải từ GitHub thất bại ({e}).\n"
                 "Trả về DataFrame trống."
             )
-            return pd.DataFrame(columns=["date", "median_pe", "median_pb"])
-
+            return pd.DataFrame(columns=["date", "median_pe", "median_pb", "headline_pe", "headline_pb"])
 
     # Chuẩn hóa
     df["date"] = pd.to_datetime(df["date"])
-    # Tổng hợp về mức thị trường (trung bình median toàn ngành)
-    if "sector" in df.columns:
-        market_pe = df.groupby("date")["median_pe"].median().reset_index()
-        market_pe.columns = ["date", "median_pe"]
-        market_pb = df.groupby("date")["median_pb"].median().reset_index()
-        market_pb.columns = ["date", "median_pb"]
-        df = market_pe.merge(market_pb, on="date", how="inner")
-    elif "median_pe" not in df.columns:
-        logger.warning("[PE/PB] Schema không khớp — kiểm tra lại file parquet")
-        return pd.DataFrame(columns=["date", "median_pe", "median_pb"])
+    
+    # Tính Market Cap và Earnings, Book Value
+    # Giả sử file có: date, ticker, close, shares, pe, pb
+    if "shares" in df.columns and "pe" in df.columns and "pb" in df.columns:
+        df["market_cap"] = df["close"] * df["shares"]
+        # earnings = market_cap / pe
+        df["earnings"] = np.where(df["pe"] > 0, df["market_cap"] / df["pe"], np.nan)
+        # book_value = market_cap / pb
+        df["book_value"] = np.where(df["pb"] > 0, df["market_cap"] / df["pb"], np.nan)
+        
+        # Nhóm theo ngày để tính Headline (Trọng số vốn hóa)
+        headline_df = df.groupby("date").agg(
+            total_mc=("market_cap", "sum"),
+            total_ern=("earnings", "sum"),
+            total_bv=("book_value", "sum")
+        ).reset_index()
+        
+        headline_df["headline_pe"] = np.where(headline_df["total_ern"] > 0, headline_df["total_mc"] / headline_df["total_ern"], np.nan)
+        headline_df["headline_pb"] = np.where(headline_df["total_bv"] > 0, headline_df["total_mc"] / headline_df["total_bv"], np.nan)
+        
+        # Nhóm theo ngày để tính Median (Loại trừ nhiễu)
+        # Lọc các P/E, P/B hợp lý (pe > 0)
+        df_valid_pe = df[df["pe"] > 0]
+        median_pe_df = df_valid_pe.groupby("date")["pe"].median().reset_index().rename(columns={"pe": "median_pe"})
+        
+        df_valid_pb = df[df["pb"] > 0]
+        median_pb_df = df_valid_pb.groupby("date")["pb"].median().reset_index().rename(columns={"pb": "median_pb"})
+        
+        # Ex-Vingroup
+        df_ex_vingroup = df[~df["ticker"].isin(["VIC", "VHM", "VRE"])]
+        ex_vg_df = df_ex_vingroup.groupby("date").agg(
+            total_mc=("market_cap", "sum"),
+            total_ern=("earnings", "sum"),
+            total_bv=("book_value", "sum")
+        ).reset_index()
+        ex_vg_df["ex_vingroup_pe"] = np.where(ex_vg_df["total_ern"] > 0, ex_vg_df["total_mc"] / ex_vg_df["total_ern"], np.nan)
+        ex_vg_df["ex_vingroup_pb"] = np.where(ex_vg_df["total_bv"] > 0, ex_vg_df["total_mc"] / ex_vg_df["total_bv"], np.nan)
 
-    return df.sort_values("date").reset_index(drop=True)
-
-
-def load_ticker_pepb_history() -> pd.DataFrame:
-    """
-    Load lịch sử P/E, P/B từng ticker (ticker_history.parquet).
-
-    Returns
-    -------
-    DataFrame: date, symbol, pe, pb
-    """
-    external_path = _PEPB_PROJECT_PATH / "ticker_history.parquet"
-    if external_path.exists():
-        df = pd.read_parquet(external_path)
-        df["date"] = pd.to_datetime(df["date"])
-        return df.sort_values(["date", "symbol"]).reset_index(drop=True)
+        # Gộp lại
+        market_df = headline_df[["date", "headline_pe", "headline_pb"]].merge(median_pe_df, on="date", how="left")
+        market_df = market_df.merge(median_pb_df, on="date", how="left")
+        market_df = market_df.merge(ex_vg_df[["date", "ex_vingroup_pe", "ex_vingroup_pb"]], on="date", how="left")
     else:
-        logger.warning("[PE/PB] ticker_history.parquet không tìm thấy")
-        return pd.DataFrame(columns=["date", "symbol", "pe", "pb"])
+        logger.warning("[PE/PB] Schema không khớp — thiếu shares/pe/pb")
+        return pd.DataFrame(columns=["date", "median_pe", "median_pb", "headline_pe", "headline_pb", "ex_vingroup_pe", "ex_vingroup_pb"])
+
+    if market_df.duplicated("date").any():
+        logger.error("[PE/PB] Data Leakage detected: Multiple rows for the same date after merge. Check grouping logic.")
+        raise ValueError("Data Leakage: Duplicate dates in market_df")
+
+    return market_df.sort_values("date").reset_index(drop=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -169,9 +192,12 @@ def compute_pe_pb_features(df_pepb: pd.DataFrame, df_macro: pd.DataFrame = None)
 
     df = df_pepb.copy().sort_values("date").reset_index(drop=True)
 
-    # Z-score rolling
-    df["pe_zscore"] = compute_zscore_rolling(df["median_pe"])
-    df["pb_zscore"] = compute_zscore_rolling(df["median_pb"])
+    # Z-score rolling (Use Ex-Vingroup if available, else fallback to Median)
+    primary_pe = "ex_vingroup_pe" if "ex_vingroup_pe" in df.columns else "median_pe"
+    primary_pb = "ex_vingroup_pb" if "ex_vingroup_pb" in df.columns else "median_pb"
+    
+    df["pe_zscore"] = compute_zscore_rolling(df[primary_pe])
+    df["pb_zscore"] = compute_zscore_rolling(df[primary_pb])
 
     # Phân loại vùng định giá P/E
     def _zone(z: float, ob_thresh: float, os_thresh: float) -> str:
@@ -196,7 +222,7 @@ def compute_pe_pb_features(df_pepb: pd.DataFrame, df_macro: pd.DataFrame = None)
         df = df.merge(df_macro[["date", "vn10y_yield"]], on="date", how="left")
         df["vn10y_yield"] = df["vn10y_yield"].ffill()
         # EYG = (1/PE)*100 - VN10Y
-        df["eyg"] = (1 / df["median_pe"]) * 100 - df["vn10y_yield"]
+        df["eyg"] = (1 / df[primary_pe]) * 100 - df["vn10y_yield"]
         df["eyg_zscore"] = compute_zscore_rolling(df["eyg"])
     else:
         df["eyg"] = np.nan
@@ -307,7 +333,7 @@ def build_valuation_leverage_features(
     logger.info("[ValLev] Building valuation & leverage features...")
 
     # 1. P/E, P/B Z-score và EYG
-    df_pepb = load_sector_pepb_history()
+    df_pepb = load_market_pepb_history()
     if not df_pepb.empty:
         df_pepb = compute_pe_pb_features(df_pepb, df_macro)
     else:
@@ -315,6 +341,8 @@ def build_valuation_leverage_features(
         df_pepb = pd.DataFrame({
             "date": df_vni["date"],
             "median_pe": np.nan, "median_pb": np.nan,
+            "headline_pe": np.nan, "headline_pb": np.nan,
+            "ex_vingroup_pe": np.nan, "ex_vingroup_pb": np.nan,
             "pe_zscore": np.nan, "pb_zscore": np.nan,
             "pe_valuation_zone": "unknown",
             "pb_valuation_zone": "unknown",
@@ -327,10 +355,18 @@ def build_valuation_leverage_features(
 
     # 3. Merge
     df_vl = df_vni[["date"]].copy()
+    
+    cols_to_merge = [
+        "date", "median_pe", "median_pb", "headline_pe", "headline_pb", 
+        "ex_vingroup_pe", "ex_vingroup_pb", "pe_zscore", "pb_zscore",
+        "pe_valuation_zone", "pb_valuation_zone", 
+        "eyg", "eyg_zscore", "valuation_composite_score"
+    ]
+    # Filter only columns that actually exist in df_pepb to avoid KeyError
+    cols_to_merge = [c for c in cols_to_merge if c in df_pepb.columns]
+    
     df_vl = df_vl.merge(
-        df_pepb[["date", "median_pe", "median_pb", "pe_zscore", "pb_zscore",
-                 "pe_valuation_zone", "pb_valuation_zone", 
-                 "eyg", "eyg_zscore", "valuation_composite_score"]],
+        df_pepb[cols_to_merge],
         on="date", how="left"
     )
     df_vl = df_vl.merge(

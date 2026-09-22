@@ -72,7 +72,7 @@ def export_score_json(
     out_path = EXPORTS_DIR / f"score_{quarter.replace('-','_')}.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2, default=_convert)
-    logger.info(f"[REPORT] JSON exported → {out_path}")
+    logger.info(f"[REPORT] JSON exported -> {out_path}")
     return out_path
 
 
@@ -828,7 +828,7 @@ def build_html_report(
     qtr_dir.mkdir(parents=True, exist_ok=True)
     out_path = qtr_dir / "index.html"
     out_path.write_text(html, encoding="utf-8")
-    logger.info(f"[REPORT] HTML report → {out_path}")
+    logger.info(f"[REPORT] HTML report -> {out_path}")
     
     build_root_index_html()
     
@@ -921,4 +921,4 @@ def build_root_index_html():
     
     out_path = REPORTS_DIR / "index.html"
     out_path.write_text(html, encoding="utf-8")
-    logger.info(f"[REPORT] Root Index updated → {out_path}")
+    logger.info(f"[REPORT] Root Index updated -> {out_path}")

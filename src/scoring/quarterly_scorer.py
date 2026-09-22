@@ -265,14 +265,15 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
     scores = {}
     details = {}
 
-    # Lấy các giá trị P/E, P/B gốc (nếu có)
     headline_pe = df_latest.get("headline_pe", np.nan)
     median_pe = df_latest.get("median_pe", np.nan)
+    ex_vingroup_pe = df_latest.get("ex_vingroup_pe", np.nan)
     headline_pb = df_latest.get("headline_pb", np.nan)
     median_pb = df_latest.get("median_pb", np.nan)
+    ex_vingroup_pb = df_latest.get("ex_vingroup_pb", np.nan)
 
-    pe_str = f"P/E Headline: {headline_pe:.2f} | Median: {median_pe:.2f}" if pd.notna(headline_pe) and pd.notna(median_pe) else ""
-    pb_str = f"P/B Headline: {headline_pb:.2f} | Median: {median_pb:.2f}" if pd.notna(headline_pb) and pd.notna(median_pb) else ""
+    pe_str = f"P/E Headline: {headline_pe:.2f} | Median: {median_pe:.2f} | Ex-VG: {ex_vingroup_pe:.2f}" if pd.notna(headline_pe) and pd.notna(median_pe) else ""
+    pb_str = f"P/B Headline: {headline_pb:.2f} | Median: {median_pb:.2f} | Ex-VG: {ex_vingroup_pb:.2f}" if pd.notna(headline_pb) and pd.notna(median_pb) else ""
 
     # ── P/E Z-score ───────────────────────────────────────────────────────────
     pe_z = df_latest.get("pe_zscore", np.nan)
@@ -618,12 +619,16 @@ def compute_quarterly_score(
     if months_to_next_rebalancing is None:
         # Lấy tháng và ngày thực tế từ dữ liệu cuối cùng thay vì datetime.now() để backtest chính xác
         try:
-            current_month = df_latest.name.month
-            current_day = df_latest.name.day
+            current_month = df_latest["date"].month
+            current_day = df_latest["date"].day
         except Exception:
-            now = datetime.now()
-            current_month = now.month
-            current_day = now.day
+            try:
+                current_month = df_latest.name.month
+                current_day = df_latest.name.day
+            except Exception:
+                now = datetime.now()
+                current_month = now.month
+                current_day = now.day
 
         rebal_months = [3, 6, 9, 12]
         months_to_next_rebalancing = min(((m - current_month) % 12) or 12 for m in rebal_months)
