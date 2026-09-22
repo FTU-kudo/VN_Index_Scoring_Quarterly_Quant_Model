@@ -409,11 +409,19 @@ def fetch_vietnam_bonds() -> pd.DataFrame:
     DataFrame: date, vn1y_yield, vn2y_yield, vn10y_yield
     """
     import requests
-    import time
     
-    # Thêm timestamp để bypass GitHub Fastly CDN cache
-    url = f"https://raw.githubusercontent.com/FTU-kudo/VN_Bond_Yield_pipeline/main/exports/data/fitted_curve_ns.json?t={int(time.time())}"
-    logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ GitHub: {url}")
+    # Lấy commit SHA mới nhất để bypass hoàn toàn GitHub Fastly CDN cache
+    # (Do CDN của GitHub thường bị kẹt cache ở các edge node Mỹ nơi GitHub Actions chạy)
+    sha = "main"
+    try:
+        sha_resp = requests.get("https://api.github.com/repos/FTU-kudo/VN_Bond_Yield_pipeline/commits/main", timeout=5)
+        if sha_resp.status_code == 200:
+            sha = sha_resp.json()["sha"]
+    except Exception as e:
+        logger.warning(f"[BONDS] Không lấy được SHA, fallback về main: {e}")
+        
+    url = f"https://raw.githubusercontent.com/FTU-kudo/VN_Bond_Yield_pipeline/{sha}/exports/data/fitted_curve_ns.json"
+    logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ GitHub (sha={sha[:7]}): {url}")
     
     try:
         response = requests.get(url, timeout=10)
