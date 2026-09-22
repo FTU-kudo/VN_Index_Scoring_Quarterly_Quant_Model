@@ -274,7 +274,7 @@ def build_macro_features(
         # Forward fill in case bond data is slightly delayed
         for col in bond_cols:
             if col in result.columns:
-                result[col] = result[col].ffill()
+                result[col] = result[col].ffill(limit=3)
 
     # Lưu cache
     out_path = FEATURES_DIR / "macro_features.parquet"

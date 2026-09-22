@@ -409,8 +409,10 @@ def fetch_vietnam_bonds() -> pd.DataFrame:
     DataFrame: date, vn1y_yield, vn2y_yield, vn10y_yield
     """
     import requests
+    import time
     
-    url = "https://raw.githubusercontent.com/FTU-kudo/VN_Bond_Yield_pipeline/main/exports/data/fitted_curve_ns.json"
+    # Thêm timestamp để bypass GitHub Fastly CDN cache
+    url = f"https://raw.githubusercontent.com/FTU-kudo/VN_Bond_Yield_pipeline/main/exports/data/fitted_curve_ns.json?t={int(time.time())}"
     logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ GitHub: {url}")
     
     try:
