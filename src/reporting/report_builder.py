@@ -185,7 +185,8 @@ _HTML_STYLE = """
   .leading-badge { background: linear-gradient(135deg, var(--color-blue), #8b5cf6); color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 12px; margin-left: 8px; font-weight: 600; box-shadow: 0 2px 4px rgba(59,130,246,0.2); }
   .report-badge { display: inline-block; white-space: nowrap; }
   
-  .math-formula { color: var(--text-main); font-size: 14px; font-family: 'JetBrains Mono', monospace; background: rgba(59,130,246,0.08); padding: 16px 20px; border-radius: 10px; border-left: 4px solid var(--color-blue); margin-bottom: 20px; overflow-x: auto; }
+  .math-formula { font-size: 16px; font-weight: 600; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08)); padding: 20px 24px; border-radius: 12px; border: 1px solid rgba(59,130,246,0.15); border-left: 6px solid var(--color-blue); margin-bottom: 24px; overflow-x: auto; box-shadow: 0 8px 20px -6px rgba(59,130,246,0.15); color: #1e3a8a; letter-spacing: 0.5px; }
+  body.dark-mode .math-formula { color: #93c5fd; border-color: rgba(59,130,246,0.25); background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); }
   
   .rationale { color: var(--text-muted); font-style: normal; font-size: 14px; border-left: 3px solid var(--color-amber); padding-left: 16px; margin-top: 16px; background: rgba(245,158,11,0.05); padding: 12px 16px; border-radius: 0 8px 8px 0; }
   .disclaimer { color: var(--text-muted); font-size: 13px; margin-top: 50px; border-top: 1px solid var(--border-color); padding-top: 30px; text-align: center; padding-bottom: 40px; opacity: 0.8; }
