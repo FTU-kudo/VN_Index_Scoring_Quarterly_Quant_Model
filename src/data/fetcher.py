@@ -402,26 +402,22 @@ def fetch_m2_credit_manual() -> pd.DataFrame:
 def fetch_vietnam_bonds() -> pd.DataFrame:
     """
     Tải dữ liệu đường cong lợi suất trái phiếu chính phủ Việt Nam.
-    Dữ liệu lấy từ project Vietnam_Bonds (JSON format).
+    Dữ liệu lấy trực tiếp từ GitHub repo VN_Bond_Yield_pipeline.
 
     Returns
     -------
-    DataFrame: date, vn2y_yield, vn10y_yield
+    DataFrame: date, vn1y_yield, vn2y_yield, vn10y_yield
     """
-    import json
+    import requests
     
-    # Path tới dự án Vietnam_Bonds (cùng cấp với thư mục hiện tại hoặc hardcode như yêu cầu)
-    bond_path = Path(r"d:\17. Quant Analysis\Vietnam_Bonds\exports\data\fitted_curve_ns.json")
+    url = "https://raw.githubusercontent.com/FTU-kudo/VN_Bond_Yield_pipeline/main/exports/data/fitted_curve_ns.json"
+    logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ GitHub: {url}")
     
-    if not bond_path.exists():
-        logger.warning(f"[BONDS] Không tìm thấy dữ liệu trái phiếu tại {bond_path}")
-        return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
-        
-    logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ {bond_path}...")
     try:
-        with open(bond_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
         df = pd.DataFrame(data)
         if df.empty:
             return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
@@ -437,9 +433,9 @@ def fetch_vietnam_bonds() -> pd.DataFrame:
         merged = pd.merge(df_10y, df_2y, on="date", how="outer")
         merged = pd.merge(merged, df_1y, on="date", how="outer")
         merged = merged.sort_values("date").reset_index(drop=True)
-        logger.info(f"[BONDS] Tải thành công {len(merged)} ngày dữ liệu trái phiếu")
+        logger.info(f"[BONDS] Tải thành công {len(merged)} ngày dữ liệu trái phiếu từ GitHub")
         return merged
     except Exception as e:
-        logger.error(f"[BONDS] Lỗi tải dữ liệu trái phiếu: {e}")
-        return pd.DataFrame(columns=["date", "vn2y_yield", "vn10y_yield"])
+        logger.error(f"[BONDS] Lỗi tải dữ liệu trái phiếu từ GitHub: {e}")
+        return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
 
