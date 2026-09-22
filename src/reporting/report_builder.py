@@ -907,81 +907,26 @@ def build_root_index_html():
     with open(quarters_json_path, "w", encoding="utf-8") as f:
         json.dump(reports, f)
 
-    links_html = ""
-    for r in reports:
-        links_html += f'      <li><a href="{r}/index.html">📄 {t("Report", "Báo cáo")} {r.replace("_", "/")}</a></li>\n'
-        
+    if not reports:
+        logger.warning("[REPORT] No quarter reports found to build root index.")
+        return
+
+    latest_quarter = reports[0]
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VN-Index Quantitative Reports</title>
-  <style>
-    body {{ font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }}
-    body.dark-mode {{ background: #0f172a; color: #e2e8f0; }}
-    
-    .navbar {{ background: #ffffff; padding: 15px 30px; display: flex; justify-content: flex-end; border-bottom: 1px solid #e2e8f0; }}
-    body.dark-mode .navbar {{ background: #1e293b; border-color: #334155; }}
-    
-    .btn {{ cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; font-size: 14px; font-weight: 600; margin-left:10px; }}
-    body.dark-mode .btn {{ border-color: #334155; background: #0f172a; color: #e2e8f0; }}
-    
-    .container {{ max-width: 800px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }}
-    body.dark-mode .container {{ background: #1e293b; border-color: #334155; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5); }}
-    
-    h1 {{ border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-top:0; }}
-    body.dark-mode h1 {{ border-color: #334155; }}
-    
-    ul {{ list-style-type: none; padding: 0; }}
-    li {{ margin: 15px 0; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; transition: transform 0.2s, border-color 0.2s; }}
-    body.dark-mode li {{ background: #0f172a; border-color: #334155; }}
-    
-    li:hover {{ transform: translateX(5px); border-color: #3b82f6; }}
-    a {{ color: #2563eb; text-decoration: none; font-size: 18px; font-weight: 600; display:block; }}
-    body.dark-mode a {{ color: #60a5fa; }}
-    
-    .lang-vi {{ display: none; }}
-    body.lang-vi-active .lang-vi {{ display: inline; }}
-    body.lang-vi-active .lang-en {{ display: none; }}
-  </style>
-</head>
-<body>
-  <div class="navbar">
-    <button class="btn" id="lang-btn">🇻🇳 VI</button>
-    <button class="btn" id="theme-btn">🌙 Dark</button>
-  </div>
-  <div class="container">
-    <h1>📊 {t("VN-Index Quantitative Reports", "Hệ thống Báo cáo Định lượng VN-Index")}</h1>
-    <p style="color: #64748b; font-size: 15px;">{t("List of automatically generated quantitative reports:", "Danh sách các báo cáo định lượng được tạo tự động:")}</p>
-    <ul>
-{links_html}    </ul>
-  </div>
+  <meta http-equiv="refresh" content="0; url={latest_quarter}/index.html" />
+  <title>Redirecting to Latest Quarter...</title>
   <script>
-    const themeBtn = document.getElementById('theme-btn');
-    themeBtn.addEventListener('click', () => {{
-      document.body.classList.toggle('dark-mode');
-      const isDark = document.body.classList.contains('dark-mode');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      themeBtn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
-    }});
-    if (localStorage.getItem('theme') === 'dark') {{
-      document.body.classList.add('dark-mode');
-      themeBtn.innerHTML = '☀️ Light';
-    }}
-
-    const langBtn = document.getElementById('lang-btn');
-    langBtn.addEventListener('click', () => {{
-      document.body.classList.toggle('lang-vi-active');
-      const isVi = document.body.classList.contains('lang-vi-active');
-      localStorage.setItem('lang', isVi ? 'vi' : 'en');
-      langBtn.innerHTML = isVi ? '🇬🇧 EN' : '🇻🇳 VI';
-    }});
-    if (localStorage.getItem('lang') === 'vi') {{
-      document.body.classList.add('lang-vi-active');
-      langBtn.innerHTML = '🇬🇧 EN';
-    }}
+    window.location.replace("{latest_quarter}/index.html");
   </script>
+</head>
+<body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+  <p>Redirecting to the latest report ({latest_quarter.replace("_", "/")})...</p>
+  <p>If you are not redirected automatically, please <a href="{latest_quarter}/index.html">click here</a>.</p>
 </body>
 </html>"""
     
