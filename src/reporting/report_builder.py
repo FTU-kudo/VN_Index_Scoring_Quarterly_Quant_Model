@@ -775,6 +775,15 @@ def build_html_report(
         <br>• <strong>35-49:</strong> {t('Reduce (20-40% Equities)', 'Kém hấp dẫn / Giảm tỷ trọng (20-40% Cổ phiếu)')}
         <br>• <strong>0-34:</strong> {t('Defensive (0-20% Equities)', 'Phòng thủ / Tiền mặt (0-20% Cổ phiếu)')}
       </p>
+
+      <h3 style="margin-top: 24px; color: var(--color-blue); border-top: 1px solid var(--border-color); padding-top: 16px;">{t('5. Academic References & Citations', '5. Tài liệu tham khảo & Nền tảng học thuật')}</h3>
+      <ul style="font-size: 14px; line-height: 1.6; color: var(--text-muted); padding-left: 20px;">
+        <li style="margin-bottom: 8px;"><strong>{t('Multiple Linear Regression (MLR) & HAC Standard Errors', 'Hồi quy đa biến (MLR) & Sai số chuẩn HAC')}:</strong> Newey, W. K., & West, K. D. (1987). <em>A Simple, Positive Semi-Definite, Heteroskedasticity and Autocorrelation Consistent Covariance Matrix</em>. Econometrica, 55(3), 703-708.</li>
+        <li style="margin-bottom: 8px;"><strong>{t('Vector Autoregression (VAR)', 'Tự hồi quy Vectơ (VAR)')}:</strong> Sims, C. A. (1980). <em>Macroeconomics and Reality</em>. Econometrica, 48(1), 1-48.</li>
+        <li style="margin-bottom: 8px;"><strong>{t('Granger Causality', 'Kiểm định Nhân quả Granger')}:</strong> Granger, C. W. J. (1969). <em>Investigating Causal Relations by Econometric Models and Cross-spectral Methods</em>. Econometrica, 37(3), 424-438.</li>
+        <li style="margin-bottom: 8px;"><strong>{t('Random Forest Classifier', 'Mô hình Rừng ngẫu nhiên (Random Forest)')}:</strong> Breiman, L. (2001). <em>Random Forests</em>. Machine Learning, 45(1), 5-32.</li>
+        <li style="margin-bottom: 8px;"><strong>{t('XGBoost (Extreme Gradient Boosting)', 'Mô hình Tăng cường độ dốc (XGBoost)')}:</strong> Chen, T., & Guestrin, C. (2016). <em>XGBoost: A Scalable Tree Boosting System</em>. Proceedings of the 22nd ACM SIGKDD International Conference.</li>
+      </ul>
     </div>
     """
 
