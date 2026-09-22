@@ -32,7 +32,7 @@ import pandas as pd
 
 from src.utils.config import (
     ML_LOOKBACK_DAYS, ML_FORECAST_DAYS, ML_TARGET_THRESHOLD,
-    ML_N_SPLITS_WFV, FEATURES_DIR
+    ML_N_SPLITS_WFV, FEATURES_DIR, ML_XGB_PARAMS, ML_LGBM_PARAMS
 )
 
 logger = logging.getLogger(__name__)
@@ -295,19 +295,10 @@ def evaluate_wfv(
         try:
             if model_type == "xgboost":
                 from xgboost import XGBClassifier
-                clf = XGBClassifier(
-                    n_estimators=200, max_depth=4, learning_rate=0.05,
-                    subsample=0.8, colsample_bytree=0.8,
-                    random_state=42, eval_metric="mlogloss",
-                    verbosity=0,
-                )
+                clf = XGBClassifier(**ML_XGB_PARAMS)
             elif model_type == "lightgbm":
                 from lightgbm import LGBMClassifier
-                clf = LGBMClassifier(
-                    n_estimators=200, max_depth=4, learning_rate=0.05,
-                    subsample=0.8, colsample_bytree=0.8,
-                    random_state=42, verbose=-1
-                )
+                clf = LGBMClassifier(**ML_LGBM_PARAMS)
             else:
                 raise ValueError(f"model_type không hỗ trợ: {model_type}")
         except ImportError as e:
@@ -372,18 +363,10 @@ def evaluate_wfv(
             y_mapped = np.array([label_map[v] for v in y])
             if model_type == "xgboost":
                 from xgboost import XGBClassifier
-                final_clf = XGBClassifier(
-                    n_estimators=200, max_depth=4, learning_rate=0.05,
-                    subsample=0.8, colsample_bytree=0.8,
-                    random_state=42, eval_metric="mlogloss", verbosity=0,
-                )
+                final_clf = XGBClassifier(**ML_XGB_PARAMS)
             else:
                 from lightgbm import LGBMClassifier
-                final_clf = LGBMClassifier(
-                    n_estimators=200, max_depth=4, learning_rate=0.05,
-                    subsample=0.8, colsample_bytree=0.8,
-                    random_state=42, verbose=-1,
-                )
+                final_clf = LGBMClassifier(**ML_LGBM_PARAMS)
             final_clf.fit(X, y_mapped)
             latest_X = df_ml[available_features].dropna().iloc[-1:].values
             pred_idx = int(final_clf.predict(latest_X)[0])
@@ -442,12 +425,10 @@ def get_feature_importance(
     try:
         if model_type == "xgboost":
             from xgboost import XGBClassifier
-            clf = XGBClassifier(n_estimators=300, max_depth=4, random_state=42,
-                                verbosity=0, eval_metric="mlogloss")
+            clf = XGBClassifier(**{**ML_XGB_PARAMS, "n_estimators": 300})
         else:
             from lightgbm import LGBMClassifier
-            clf = LGBMClassifier(n_estimators=300, max_depth=4, random_state=42,
-                                 verbose=-1)
+            clf = LGBMClassifier(**{**ML_LGBM_PARAMS, "n_estimators": 300})
     except ImportError as e:
         logger.error(f"[FI] {e}")
         return pd.DataFrame()

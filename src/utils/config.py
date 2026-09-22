@@ -153,6 +153,28 @@ ML_FORECAST_DAYS   = 5     # Dự báo T+5 (1 tuần)
 ML_TARGET_THRESHOLD = 0.005  # Ngưỡng ±0.5% để phân loại UP/DOWN/NEUTRAL
 ML_N_SPLITS_WFV    = 8     # Số fold Walk-Forward Validation
 
+# Hyperparameters cho mô hình ML
+ML_XGB_PARAMS = {
+    "n_estimators": 200,
+    "max_depth": 4,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "random_state": 42,
+    "eval_metric": "mlogloss",
+    "verbosity": 0
+}
+
+ML_LGBM_PARAMS = {
+    "n_estimators": 200,
+    "max_depth": 4,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "random_state": 42,
+    "verbose": -1
+}
+
 # ── Tham số chấm điểm theo quý ───────────────────────────────────────────────
 SCORING_WEIGHTS = {
     "macro_monetary":   0.25,

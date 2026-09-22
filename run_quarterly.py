@@ -135,11 +135,11 @@ def run_pipeline(args: argparse.Namespace) -> None:
         df_all["net_foreign_flow"] = df_all["net_foreign_flow_b_vnd"]
     if "delta_margin_debt_pct" in df_all.columns and "delta_margin_debt" not in df_all.columns:
         df_all["delta_margin_debt"] = df_all["delta_margin_debt_pct"]
-    for col in df_all.columns:
-        if col in ("date", "open", "high", "low", "close", "volume"):
-            continue
-        if pd.api.types.is_numeric_dtype(df_all[col]):
-            df_all[col] = df_all[col].ffill()
+    # Điền khuyết an toàn (ffill causal) và cập nhật chuẩn Pandas 2.1.0+
+    numeric_cols = [c for c in df_all.columns if c not in ("date", "open", "high", "low", "close", "volume") and pd.api.types.is_numeric_dtype(df_all[c])]
+    if numeric_cols:
+        df_all[numeric_cols] = df_all[numeric_cols].ffill()
+        df_all[numeric_cols] = df_all[numeric_cols].infer_objects(copy=False)
 
     logger.info(f"[FE] Master dataset: {len(df_all)} rows × {len(df_all.columns)} cols")
 
