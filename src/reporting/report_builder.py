@@ -554,17 +554,66 @@ def build_html_report(
             for old, new in acronyms:
                 k_display = k_display.replace(old, new)
                 
-            if str(v).startswith("<MISSING>"):
-                val_text = str(v).replace("<MISSING>", "").strip()
-                rows_html += f"<tr><td class=\"var-col\">{t(k_display)}</td><td><span class=\"badge badge-fail\" style=\"background:#94a3b8; color:#fff;\">N/A</span> {val_text}</td></tr>"
+            import re
+            val_text = str(v)
+            is_missing = False
+            
+            if val_text.startswith("<MISSING>"):
+                is_missing = True
+                val_text = val_text.replace("<MISSING>", "").strip()
+                val_text = re.sub(r"^(?:N/A\s*)+", "", val_text).strip()
+                val_text = re.sub(r"^(?:→|->)\s*", "", val_text).strip()
+                if val_text.startswith("default"):
+                    val_text = val_text.replace("default", "Mặc định trung lập / Default neutral").strip()
+
+            score_match = re.search(r"(?:→|->)\s*(?:score|default)\s*([\d\.]+)", val_text)
+            score_val = None
+            if score_match:
+                score_val = float(score_match.group(1))
+                val_text = val_text[:score_match.start()].strip()
+                if val_text.endswith("|"): val_text = val_text[:-1].strip()
+
+            if is_missing and not val_text:
+                val_text = "Mặc định trung lập / Default neutral"
+            elif is_missing and "50" in val_text:
+                val_text = val_text.replace(" 50", "").strip()
+
+            if "|" in val_text:
+                parts = [p.strip() for p in val_text.split("|") if p.strip()]
+                val_text_html = "<ul style='margin:0; padding-left:20px; color:var(--text-muted); font-size: 14px;'>"
+                for p in parts:
+                    if ":" in p:
+                        lbl, val = p.split(":", 1)
+                        val_text_html += f"<li style='margin-bottom:4px;'><span style='color:var(--text-main); font-weight:600;'>{lbl}:</span> {val}</li>"
+                    else:
+                        val_text_html += f"<li style='margin-bottom:4px;'>{p}</li>"
+                val_text_html += "</ul>"
             else:
-                rows_html += f"<tr><td class=\"var-col\">{t(k_display)}</td><td>{str(v)}</td></tr>"
+                val_text_html = val_text
+
+            # Create score badge
+            def get_score_badge(s):
+                if s is None:
+                    return '<span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span>'
+                if s <= 34: bg = "#ef4444"       # Red
+                elif s <= 49: bg = "#f59e0b"     # Orange
+                elif s <= 64: bg = "#eab308"     # Yellow
+                elif s <= 79: bg = "#84cc16"     # Light Green
+                else: bg = "#16a34a"             # Dark Green
+                return f'<span class="badge" style="background:{bg}; color:#fff; display:inline-block; width:100%; text-align:center;">{s:.0f}</span>'
+
+            score_badge_html = get_score_badge(score_val)
+
+            if is_missing:
+                val_text_html = f"<span class=\"badge badge-fail\" style=\"background:#94a3b8; color:#fff; margin-bottom: 4px;\">N/A</span> {val_text_html}"
+
+            rows_html += f"<tr><td class=\"var-col\">{t(k_display)}</td><td>{val_text_html}</td><td style='width: 70px; vertical-align: middle;'>{score_badge_html}</td></tr>"
 
         details_html += f"""
         <div class="section" style="padding:16px;">
           <h3 style="color:{color}; margin-top:0; font-size: 16px;">{ico} {t(name)} — {raw:.1f}/100</h3>
           <table style="margin: 8px 0;">
-            <thead><tr><th>{t('Variable / Indicator')}</th><th>{t('Value & Analysis')}</th></tr></thead>
+            <thead><tr><th>{t('Variable / Indicator')}</th><th>{t('Value & Analysis')}</th><th style="width: 70px; text-align: center;">{t('Score')}</th></tr></thead>
             <tbody>{rows_html}</tbody>
           </table>
           <div class="rationale">{rationale}</div>
