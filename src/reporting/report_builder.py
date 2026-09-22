@@ -578,7 +578,7 @@ def build_html_report(
                 val_text = re.sub(r"^(?:N/A\s*)+", "", val_text).strip()
                 val_text = re.sub(r"^(?:→|->)\s*", "", val_text).strip()
                 if val_text.startswith("default"):
-                    val_text = val_text.replace("default", "Mặc định trung lập / Default neutral").strip()
+                    val_text = val_text.replace("default", t("Default neutral", "Mặc định trung lập")).strip()
 
             score_match = re.search(r"(?:→|->)\s*(?:score|default)\s*([\d\.]+)", val_text)
             score_val = None
@@ -588,7 +588,7 @@ def build_html_report(
                 if val_text.endswith("|"): val_text = val_text[:-1].strip()
 
             if is_missing and not val_text:
-                val_text = "Mặc định trung lập / Default neutral"
+                val_text = t("Default neutral", "Mặc định trung lập")
             elif is_missing and "50" in val_text:
                 val_text = val_text.replace(" 50", "").strip()
 
