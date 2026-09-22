@@ -851,13 +851,13 @@ def build_html_report(
                 "Quá trình thu thập dữ liệu được tự động hóa cao và ổn định, lấy trực tiếp từ thư viện 'vnstock' đối với dữ liệu thị trường, vĩ mô trong nước, dòng tiền khối ngoại, kết hợp với các API tiêu chuẩn để lấy lợi suất trái phiếu Mỹ và chỉ số DXY."
             )}</p>
 
-            <h4 style="color: var(--text-main); margin-bottom: 4px;">4. {t('Ability to automate the model\\'s scoring in future', 'Khả năng tự động hóa việc chấm điểm của mô hình trong tương lai')}</h4>
+            <h4 style="color: var(--text-main); margin-bottom: 4px;">4. {t("Ability to automate the model's scoring in future", "Khả năng tự động hóa việc chấm điểm của mô hình trong tương lai")}</h4>
             <p class="rationale" style="margin-top: 0; margin-bottom: 16px;">{t(
                 "The pipeline is fully automated via 'run_quarterly.py', dynamically computing the current quarter using the datetime module. This ensures the entire process from data fetching to HTML report generation is turnkey and ready for crontab scheduling.",
                 "Toàn bộ luồng (pipeline) được tự động hóa hoàn toàn thông qua 'run_quarterly.py', với khả năng tự động tính toán quý hiện hành qua module datetime. Điều này đảm bảo quá trình từ tải dữ liệu đến xuất báo cáo HTML diễn ra liền mạch và sẵn sàng để lập lịch tự động (crontab)."
             )}</p>
 
-            <h4 style="color: var(--text-main); margin-bottom: 4px;">5. {t('Back-testing and evaluation of the model\\'s validity', 'Kiểm định (Back-test) và đánh giá tính hợp lệ của mô hình')}</h4>
+            <h4 style="color: var(--text-main); margin-bottom: 4px;">5. {t("Back-testing and evaluation of the model's validity", "Kiểm định (Back-test) và đánh giá tính hợp lệ của mô hình")}</h4>
             <p class="rationale" style="margin-top: 0;">{t(
                 "Validity is enforced through a Walk-Forward Validation (WFV) approach for the XGBoost ML component, preventing data leakage, alongside rigorous statistical diagnostics (p-values) in the MLR and VAR models to ensure relationships are not spurious.",
                 "Tính hợp lệ được đảm bảo thông qua phương pháp Kiểm chứng Tiến bước (Walk-Forward Validation) cho mô hình XGBoost nhằm ngăn ngừa rò rỉ dữ liệu (data leakage), kết hợp với các chẩn đoán thống kê nghiêm ngặt (p-values) trong MLR và VAR để đảm bảo các mối quan hệ không phải là giả mạo."

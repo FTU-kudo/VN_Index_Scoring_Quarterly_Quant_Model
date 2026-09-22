@@ -568,53 +568,35 @@
       
     <div id="tab-recommendation" class="tab-content">
       <div class="section">
-        <h2>🎯 {t('Investment Recommendation & Project Evaluation', 'Khuyến nghị Đầu tư & Đánh giá Dự án')}</h2>
+        <h2>🎯 <span class="lang-en">Investment Recommendation & Project Evaluation</span><span class="lang-vi">Khuyến nghị Đầu tư & Đánh giá Dự án</span></h2>
         
         <div class="card" style="margin-bottom: 24px;">
             <h3 style="margin-top: 0; color: var(--color-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                {t('Quarterly Investment Recommendation', 'Khuyến nghị Đầu tư theo Quý')}
+                <span class="lang-en">Quarterly Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư theo Quý</span>
             </h3>
-            <p><strong>{t('Current Score', 'Điểm số hiện tại')}:</strong> <span style="color: var(--color-amber); font-weight: bold;">58.2 / 100 (HOLD)</span></p>
-            <p style="line-height: 1.6;"><strong>{t('Recommendation', 'Khuyến nghị')}:</strong> {t(
-                "Based on the aggregate quantitative score, the current market environment is classified as " + label + ". Investors are advised to align their equity exposure with this regime, utilizing the 'Pillars Analysis' to identify the specific macro or valuation drivers behind this score.",
-                f"Dựa trên tổng điểm định lượng, môi trường thị trường hiện tại được phân loại là HOLD. Nhà đầu tư được khuyến nghị điều chỉnh tỷ trọng cổ phiếu theo trạng thái này, đồng thời sử dụng 'Phân rã Điểm số' để nhận diện các động lực vĩ mô hoặc định giá cụ thể đứng sau mức điểm này."
-            )}</p>
+            <p><strong><span class="lang-en">Current Score</span><span class="lang-vi">Điểm số hiện tại</span>:</strong> <span style="color: var(--color-amber); font-weight: bold;">58.2 / 100 (HOLD)</span></p>
+            <p style="line-height: 1.6;"><strong><span class="lang-en">Recommendation</span><span class="lang-vi">Khuyến nghị</span>:</strong> <span class="lang-en">Based on the aggregate quantitative score, the current market environment is classified as HOLD. Investors are advised to align their equity exposure with this regime, utilizing the 'Pillars Analysis' to identify the specific macro or valuation drivers behind this score.</span><span class="lang-vi">Dựa trên tổng điểm định lượng, môi trường thị trường hiện tại được phân loại là HOLD. Nhà đầu tư được khuyến nghị điều chỉnh tỷ trọng cổ phiếu theo trạng thái này, đồng thời sử dụng 'Phân rã Điểm số' để nhận diện các động lực vĩ mô hoặc định giá cụ thể đứng sau mức điểm này.</span></p>
         </div>
 
         <div class="card">
             <h3 style="margin-top: 0; color: var(--color-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                {t('Project Requirements Evaluation', 'Đánh giá các Yêu cầu của Dự án')}
+                <span class="lang-en">Project Requirements Evaluation</span><span class="lang-vi">Đánh giá các Yêu cầu của Dự án</span>
             </h3>
             
-            <h4 style="color: var(--text-main); margin-bottom: 4px;">1. {t('Ability to identify the relevant factors', 'Khả năng xác định các yếu tố trọng yếu')}</h4>
-            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;">{t(
-                "The model successfully identifies and integrates 6 distinct pillars: Macro & Monetary, Global & Intermarket, Valuation & Leverage, Quant Model (VAR/MLR), ML Forecast, and Market Structure. These encompass a holistic view of the forces driving the VN-Index.",
-                "Mô hình đã xác định và tích hợp thành công 6 trụ cột khác biệt: Vĩ mô & Tiền tệ, Toàn cầu & Liên thị trường, Định giá & Đòn bẩy, Mô hình Định lượng (VAR/MLR), Dự báo ML và Cấu trúc Thị trường. Các yếu tố này bao quát toàn diện các động lực dẫn dắt VN-Index."
-            )}</p>
+            <h4 style="color: var(--text-main); margin-bottom: 4px;">1. <span class="lang-en">Ability to identify the relevant factors</span><span class="lang-vi">Khả năng xác định các yếu tố trọng yếu</span></h4>
+            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;"><span class="lang-en">The model successfully identifies and integrates 6 distinct pillars: Macro & Monetary, Global & Intermarket, Valuation & Leverage, Quant Model (VAR/MLR), ML Forecast, and Market Structure. These encompass a holistic view of the forces driving the VN-Index.</span><span class="lang-vi">Mô hình đã xác định và tích hợp thành công 6 trụ cột khác biệt: Vĩ mô & Tiền tệ, Toàn cầu & Liên thị trường, Định giá & Đòn bẩy, Mô hình Định lượng (VAR/MLR), Dự báo ML và Cấu trúc Thị trường. Các yếu tố này bao quát toàn diện các động lực dẫn dắt VN-Index.</span></p>
 
-            <h4 style="color: var(--text-main); margin-bottom: 4px;">2. {t('Ability to quantify the impact of each factor', 'Khả năng định lượng tác động của từng yếu tố')}</h4>
-            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;">{t(
-                "Impact is rigorously quantified using Multiple Linear Regression (MLR) to extract beta coefficients, VAR Granger Causality to prove leading relationships, and a robust Z-scoring mechanism to normalize disparate datasets into a unified 0-100 scale.",
-                "Tác động được định lượng chặt chẽ thông qua Hồi quy đa biến (MLR) để trích xuất hệ số Beta, Kiểm định VAR Granger để chứng minh mối quan hệ dẫn dắt, và cơ chế Z-score chuẩn hóa các tập dữ liệu khác biệt về thang điểm 0-100 thống nhất."
-            )}</p>
+            <h4 style="color: var(--text-main); margin-bottom: 4px;">2. <span class="lang-en">Ability to quantify the impact of each factor</span><span class="lang-vi">Khả năng định lượng tác động của từng yếu tố</span></h4>
+            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;"><span class="lang-en">Impact is rigorously quantified using Multiple Linear Regression (MLR) to extract beta coefficients, VAR Granger Causality to prove leading relationships, and a robust Z-scoring mechanism to normalize disparate datasets into a unified 0-100 scale.</span><span class="lang-vi">Tác động được định lượng chặt chẽ thông qua Hồi quy đa biến (MLR) để trích xuất hệ số Beta, Kiểm định VAR Granger để chứng minh mối quan hệ dẫn dắt, và cơ chế Z-score chuẩn hóa các tập dữ liệu khác biệt về thang điểm 0-100 thống nhất.</span></p>
 
-            <h4 style="color: var(--text-main); margin-bottom: 4px;">3. {t('Ability to obtain data from any of the sources available to you', 'Khả năng thu thập dữ liệu từ các nguồn khả dụng')}</h4>
-            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;">{t(
-                "Data acquisition is highly automated and robust, fetching directly from the 'vnstock' API for market data, domestic macro variables, and foreign flows, coupled with standard APIs for global yields and DXY.",
-                "Quá trình thu thập dữ liệu được tự động hóa cao và ổn định, lấy trực tiếp từ thư viện 'vnstock' đối với dữ liệu thị trường, vĩ mô trong nước, dòng tiền khối ngoại, kết hợp với các API tiêu chuẩn để lấy lợi suất trái phiếu Mỹ và chỉ số DXY."
-            )}</p>
+            <h4 style="color: var(--text-main); margin-bottom: 4px;">3. <span class="lang-en">Ability to obtain data from any of the sources available to you</span><span class="lang-vi">Khả năng thu thập dữ liệu từ các nguồn khả dụng</span></h4>
+            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;"><span class="lang-en">Data acquisition is highly automated and robust, fetching directly from the 'vnstock' API for market data, domestic macro variables, and foreign flows, coupled with standard APIs for global yields and DXY.</span><span class="lang-vi">Quá trình thu thập dữ liệu được tự động hóa cao và ổn định, lấy trực tiếp từ thư viện 'vnstock' đối với dữ liệu thị trường, vĩ mô trong nước, dòng tiền khối ngoại, kết hợp với các API tiêu chuẩn để lấy lợi suất trái phiếu Mỹ và chỉ số DXY.</span></p>
 
-            <h4 style="color: var(--text-main); margin-bottom: 4px;">4. {t('Ability to automate the model\'s scoring in future', 'Khả năng tự động hóa việc chấm điểm của mô hình trong tương lai')}</h4>
-            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;">{t(
-                "The pipeline is fully automated via 'run_quarterly.py', dynamically computing the current quarter using the datetime module. This ensures the entire process from data fetching to HTML report generation is turnkey and ready for crontab scheduling.",
-                "Toàn bộ luồng (pipeline) được tự động hóa hoàn toàn thông qua 'run_quarterly.py', với khả năng tự động tính toán quý hiện hành qua module datetime. Điều này đảm bảo quá trình từ tải dữ liệu đến xuất báo cáo HTML diễn ra liền mạch và sẵn sàng để lập lịch tự động (crontab)."
-            )}</p>
+            <h4 style="color: var(--text-main); margin-bottom: 4px;">4. <span class="lang-en">Ability to automate the model's scoring in future</span><span class="lang-vi">Khả năng tự động hóa việc chấm điểm của mô hình trong tương lai</span></h4>
+            <p class="rationale" style="margin-top: 0; margin-bottom: 16px;"><span class="lang-en">The pipeline is fully automated via 'run_quarterly.py', dynamically computing the current quarter using the datetime module. This ensures the entire process from data fetching to HTML report generation is turnkey and ready for crontab scheduling.</span><span class="lang-vi">Toàn bộ luồng (pipeline) được tự động hóa hoàn toàn thông qua 'run_quarterly.py', với khả năng tự động tính toán quý hiện hành qua module datetime. Điều này đảm bảo quá trình từ tải dữ liệu đến xuất báo cáo HTML diễn ra liền mạch và sẵn sàng để lập lịch tự động (crontab).</span></p>
 
-            <h4 style="color: var(--text-main); margin-bottom: 4px;">5. {t('Back-testing and evaluation of the model\'s validity', 'Kiểm định (Back-test) và đánh giá tính hợp lệ của mô hình')}</h4>
-            <p class="rationale" style="margin-top: 0;">{t(
-                "Validity is enforced through a Walk-Forward Validation (WFV) approach for the XGBoost ML component, preventing data leakage, alongside rigorous statistical diagnostics (p-values) in the MLR and VAR models to ensure relationships are not spurious.",
-                "Tính hợp lệ được đảm bảo thông qua phương pháp Kiểm chứng Tiến bước (Walk-Forward Validation) cho mô hình XGBoost nhằm ngăn ngừa rò rỉ dữ liệu (data leakage), kết hợp với các chẩn đoán thống kê nghiêm ngặt (p-values) trong MLR và VAR để đảm bảo các mối quan hệ không phải là giả mạo."
-            )}</p>
+            <h4 style="color: var(--text-main); margin-bottom: 4px;">5. <span class="lang-en">Back-testing and evaluation of the model's validity</span><span class="lang-vi">Kiểm định (Back-test) và đánh giá tính hợp lệ của mô hình</span></h4>
+            <p class="rationale" style="margin-top: 0;"><span class="lang-en">Validity is enforced through a Walk-Forward Validation (WFV) approach for the XGBoost ML component, preventing data leakage, alongside rigorous statistical diagnostics (p-values) in the MLR and VAR models to ensure relationships are not spurious.</span><span class="lang-vi">Tính hợp lệ được đảm bảo thông qua phương pháp Kiểm chứng Tiến bước (Walk-Forward Validation) cho mô hình XGBoost nhằm ngăn ngừa rò rỉ dữ liệu (data leakage), kết hợp với các chẩn đoán thống kê nghiêm ngặt (p-values) trong MLR và VAR để đảm bảo các mối quan hệ không phải là giả mạo.</span></p>
         </div>
       </div>
     </div>
@@ -622,7 +604,7 @@
 
       <div class="disclaimer">
         <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
-        Generated at: 2026-09-23 01:16:26
+        Generated at: 2026-09-23 01:21:57
       </div>
     </div>
   </div>
