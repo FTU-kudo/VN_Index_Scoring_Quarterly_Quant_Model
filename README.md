@@ -58,7 +58,10 @@ Hệ thống kết hợp ba tầng mô hình phân tích định lượng:
 
 ### 1. Mô hình Hồi quy Đa biến (Multi-Linear Regression - MLR)
 Thiết lập phương trình dự báo lợi suất VN-Index chu kỳ tiếp theo $R_{t+h}$:
-$$R_{t+h} = \alpha + \beta_1 \Delta \text{VN1Y}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE\_Zscore}_t + \beta_6 \Delta \text{Margin}_t + \beta_7 \Delta \text{USD/JPY}_t + \epsilon_t$$
+
+$$
+R_{t+h} = \alpha + \beta_1 \Delta \text{VN1Y}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE\_Zscore}_t + \beta_6 \Delta \text{Margin}_t + \beta_7 \Delta \text{USD/JPY}_t + \epsilon_t
+$$
 - **Newey-West HAC Standard Errors**: Tự động hiệu chỉnh sai số nhằm giải quyết hiện tượng phương sai thay đổi (Heteroskedasticity) và tự tương quan (Autocorrelation).
 - **Phân tích độ nhạy**: Đánh giá chính xác $p$-value và hệ số $\beta$ chuẩn hóa để xếp hạng mức độ ảnh hưởng của từng biến số.
 
