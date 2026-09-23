@@ -228,7 +228,6 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
             df_ml = build_ml_features(df_all)
             df_ml = create_target_variable(df_ml)
-            df_ml.to_parquet("debug_df_ml.parquet")
 
 
             # Lấy danh sách feature columns cho ML
