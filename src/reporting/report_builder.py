@@ -570,7 +570,7 @@ def build_html_report(
                 ("Us10Y", "US10Y"), ("Jpy", "JPY"), ("Pe", "P/E"), ("Pb", "P/B"), 
                 ("Mlr", "MLR"), ("Var", "VAR"), ("R2", "R²"), ("Fdi", "FDI"), 
                 ("Ftse", "FTSE"), ("Adtv", "ADTV"), ("Eyg", "EYG"), ("Omo", "OMO"), 
-                ("Vni", "VNI"), ("Zscore", "Z-Score"),
+                ("Vni", "VNI"), ("Zscore", "Z-Score"), ("Nff", "NFF"), ("Etf", "ETF"),
                 ("Ir Trend", "IR Trend"), ("Vn Bonds", "VN Bonds"), ("USD VND", "USD/VND")
             ]
             for old, new in acronyms:
