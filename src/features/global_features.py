@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 from src.utils.config import FEATURES_DIR
+from src.features.valuation_features import load_market_pepb_history
 
 logger = logging.getLogger(__name__)
 
@@ -161,70 +162,95 @@ def build_jpy_features(df_global: pd.DataFrame) -> pd.DataFrame:
 # 3. Net Foreign Flow Features
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def build_foreign_flow_features(df_ff: pd.DataFrame) -> pd.DataFrame:
+def build_foreign_flow_features(df_ff: pd.DataFrame, df_pepb: pd.DataFrame = None) -> pd.DataFrame:
     """
-    Tạo features từ dòng tiền khối ngoại (Net Foreign Flows).
-
+    Tạo features từ dòng tiền khối ngoại (NFF ex ETF) và ETF Flows.
     Biến tạo ra:
-      - nff_rolling5d      : Rolling sum 5 ngày (tuần)
-      - nff_rolling20d     : Rolling sum 20 ngày (tháng)
-      - nff_zscore_60d     : Z-score 60 ngày
-      - nff_trend_regime   : strong_buy / mild_buy / neutral / mild_sell / strong_sell
-      - nff_momentum       : Momentum (nff_rolling5d - nff_rolling20d / std)
-      - nff_consecutive_sell : Số ngày bán ròng liên tiếp (chuỗi)
-
-    Lý luận kinh tế:
-      - NFF rolling 5 ngày < -1,000 tỷ VND → tín hiệu xả mạnh
-      - Consecutive sell > 10 ngày → áp lực kỹ thuật → VNI giảm điểm
-      - Hệ số tương quan NFF vs VNI thường lag 0-2 ngày
+      - nff_ex_etf_pct, etf_flow_pct (chuẩn hóa theo Market Cap)
+      - Các rolling sum (5d, 20d) cho ML
+      - nff_ex_etf_q_sum, etf_flow_q_sum (tổng lũy kế theo quý)
+      - nff_ex_etf_q_zscore, etf_flow_q_zscore (expanding z-score theo quý)
     """
     df = df_ff.copy()
-    if "net_foreign_flow_b_vnd" not in df.columns:
-        logger.warning("[NFF] Không có cột net_foreign_flow_b_vnd — bỏ qua")
+    if "nff_ex_etf_vnd" not in df.columns or "etf_flow_vnd" not in df.columns:
+        logger.warning("[NFF] Thiếu cột nff_ex_etf_vnd hoặc etf_flow_vnd — bỏ qua")
         return df
 
-    col = "net_foreign_flow_b_vnd"
-    df["nff_rolling5d"]  = df[col].rolling(5,  min_periods=2).sum()
-    df["nff_rolling20d"] = df[col].rolling(20, min_periods=5).sum()
-    df["nff_rolling60d"] = df[col].rolling(60, min_periods=20).sum()
+    # Normalize theo market cap
+    if df_pepb is not None and "total_mc" in df_pepb.columns:
+        df = df.merge(df_pepb[["date", "total_mc"]], on="date", how="left")
+        df["total_mc"] = df["total_mc"].ffill()
+    else:
+        df["total_mc"] = 1.0 # fallback
 
-    # Z-score
-    roll_mean = df[col].rolling(60, min_periods=20).mean()
-    roll_std  = df[col].rolling(60, min_periods=20).std()
-    df["nff_zscore_60d"] = (df[col] - roll_mean) / roll_std.replace(0, np.nan)
+    # Tính theo % market cap (VD: % vốn hóa HOSE)
+    df["nff_ex_etf_pct"] = df["nff_ex_etf_vnd"] / df["total_mc"]
+    df["etf_flow_pct"] = df["etf_flow_vnd"] / df["total_mc"]
 
-    # Momentum: 5d vs 20d (tổng tuần vs tháng)
-    df["nff_momentum"] = df["nff_rolling5d"] / (
-        df["nff_rolling20d"].abs().replace(0, np.nan)
-    )
-
-    # Regime
-    def _nff_regime(z: float) -> str:
-        if pd.isna(z):
-            return "unknown"
-        if z >  2.0: return "strong_buy"
-        if z >  0.5: return "mild_buy"
-        if z < -2.0: return "strong_sell"
-        if z < -0.5: return "mild_sell"
-        return "neutral"
-
-    df["nff_trend_regime"] = df["nff_zscore_60d"].apply(_nff_regime)
-
-    # Consecutive sell streak (chuỗi bán ròng liên tiếp)
-    sell_mask = (df[col] < 0).astype(int)
-    streak = []
-    count = 0
-    for v in sell_mask:
-        if v == 1:
-            count += 1
-        else:
+    # ── Daily Rolling Features (cho ML) ──
+    for col in ["nff_ex_etf_pct", "etf_flow_pct"]:
+        prefix = col.replace("_pct", "")
+        df[f"{prefix}_rolling5d"]  = df[col].rolling(5, min_periods=2).sum()
+        df[f"{prefix}_rolling20d"] = df[col].rolling(20, min_periods=5).sum()
+        df[f"{prefix}_rolling60d"] = df[col].rolling(60, min_periods=20).sum()
+        
+        # Streak cho NFF
+        if prefix == "nff_ex_etf":
+            sell_mask = (df[col] < 0).astype(int)
+            streak = []
             count = 0
-        streak.append(count)
-    df["nff_consecutive_sell_days"] = streak
+            for v in sell_mask:
+                if v == 1: count += 1
+                else: count = 0
+                streak.append(count)
+            df[f"{prefix}_consecutive_sell_days"] = streak
 
-    # Lag features
-    for lag in [1, 2, 5]:
-        df[f"nff_lag{lag}"] = df[col].shift(lag)
+        # Lags
+        for lag in [1, 2, 5]:
+            df[f"{prefix}_lag{lag}"] = df[col].shift(lag)
+
+    # ── Quarterly Resampling & Expanding Z-score ──
+    df_q = df.set_index("date").resample("Q")[["nff_ex_etf_pct", "etf_flow_pct"]].sum().reset_index()
+    df_q = df_q.rename(columns={
+        "nff_ex_etf_pct": "nff_ex_etf_q_sum",
+        "etf_flow_pct": "etf_flow_q_sum"
+    })
+    
+    # Expanding Z-score (min_periods = 4 quarters ~ 1 năm)
+    df_q["nff_ex_etf_q_zscore"] = (df_q["nff_ex_etf_q_sum"] - df_q["nff_ex_etf_q_sum"].expanding(min_periods=4).mean()) / df_q["nff_ex_etf_q_sum"].expanding(min_periods=4).std()
+    df_q["etf_flow_q_zscore"] = (df_q["etf_flow_q_sum"] - df_q["etf_flow_q_sum"].expanding(min_periods=4).mean()) / df_q["etf_flow_q_sum"].expanding(min_periods=4).std()
+
+    # Tạo cột Year-Quarter để merge back về daily
+    df["YQ"] = df["date"].dt.to_period("Q")
+    df_q["YQ"] = df_q["date"].dt.to_period("Q")
+    
+    # Merge lại với daily df
+    df = df.merge(df_q[["YQ", "nff_ex_etf_q_sum", "etf_flow_q_sum", "nff_ex_etf_q_zscore", "etf_flow_q_zscore"]], on="YQ", how="left")
+    
+    # Vì mỗi ngày trong quý đang được gán bằng TỔNG của CẢ QUÝ (look-ahead) nếu dùng giá trị cuối quý.
+    # ĐỂ KHÔNG LOOK-AHEAD TRONG KHI CHẠY MODEL HÀNG NGÀY TRONG QUÝ, 
+    # Ta phải tính YTD-Quarter sum cho mỗi ngày, nhưng vì logic yêu cầu z-score dựa trên lịch sử các quý trước.
+    # Đúng chuẩn: Z-score của quý hiện tại phải lấy expanding mean/std của (các quý trước).
+    
+    # Ở đây, ta tính YTD sum trong quý hiện tại cho mỗi dòng:
+    df["q_group"] = df["date"].dt.to_period("Q")
+    df["nff_ex_etf_q_ytd"] = df.groupby("q_group")["nff_ex_etf_pct"].cumsum()
+    df["etf_flow_q_ytd"] = df.groupby("q_group")["etf_flow_pct"].cumsum()
+    
+    # Lấy expanding mean/std từ các quý ĐÃ KẾT THÚC (shift 1 của df_q)
+    df_q["prev_q_mean_nff"] = df_q["nff_ex_etf_q_sum"].expanding(min_periods=4).mean().shift(1)
+    df_q["prev_q_std_nff"] = df_q["nff_ex_etf_q_sum"].expanding(min_periods=4).std().shift(1)
+    df_q["prev_q_mean_etf"] = df_q["etf_flow_q_sum"].expanding(min_periods=4).mean().shift(1)
+    df_q["prev_q_std_etf"] = df_q["etf_flow_q_sum"].expanding(min_periods=4).std().shift(1)
+    
+    df = df.merge(df_q[["YQ", "prev_q_mean_nff", "prev_q_std_nff", "prev_q_mean_etf", "prev_q_std_etf"]], on="YQ", how="left")
+    
+    # Tính Live Z-score cho ngày hiện tại trong quý (YTD sum so với mean/std các quý trước)
+    df["nff_ex_etf_q_zscore_live"] = (df["nff_ex_etf_q_ytd"] - df["prev_q_mean_nff"]) / df["prev_q_std_nff"]
+    df["etf_flow_q_zscore_live"] = (df["etf_flow_q_ytd"] - df["prev_q_mean_etf"]) / df["prev_q_std_etf"]
+    
+    # Dọn dẹp
+    df = df.drop(columns=["YQ", "q_group", "prev_q_mean_nff", "prev_q_std_nff", "prev_q_mean_etf", "prev_q_std_etf"])
 
     return df
 
@@ -327,7 +353,14 @@ def build_global_features(
 
     # 3. Net Foreign Flow features
     if not df_ff.empty:
-        df_nff = build_foreign_flow_features(df_ff)
+        # Load market cap history to normalize foreign flows
+        try:
+            df_pepb = load_market_pepb_history()
+        except Exception as e:
+            logger.warning(f"[Global] Không load được market pepb history: {e}")
+            df_pepb = None
+            
+        df_nff = build_foreign_flow_features(df_ff, df_pepb)
         nff_cols = [c for c in df_nff.columns if c != "date"]
         result = result.merge(
             df_nff[["date"] + nff_cols], on="date", how="left"
@@ -338,7 +371,13 @@ def build_global_features(
         merged_for_corr = result.merge(
             df_vni[["date", "log_return"]], on="date", how="left"
         )
-        corr_df = compute_rolling_correlations(merged_for_corr, window=60)
+        
+        # Use nff_ex_etf_pct for correlation instead of the old net_foreign_flow_b_vnd
+        global_cols_for_corr = ["delta_dxy", "delta_us10y"]
+        if "nff_ex_etf_pct" in result.columns:
+            global_cols_for_corr.append("nff_ex_etf_pct")
+            
+        corr_df = compute_rolling_correlations(merged_for_corr, global_cols=global_cols_for_corr, window=60)
         corr_cols = [c for c in corr_df.columns if c.startswith("corr_")]
         for col in corr_cols:
             if col in corr_df.columns:

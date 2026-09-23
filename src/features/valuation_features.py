@@ -114,7 +114,7 @@ def load_market_pepb_history() -> pd.DataFrame:
         ex_vg_df["ex_vingroup_pb"] = np.where(ex_vg_df["total_bv"] > 0, ex_vg_df["total_mc"] / ex_vg_df["total_bv"], np.nan)
 
         # Gộp lại
-        market_df = headline_df[["date", "headline_pe", "headline_pb"]].merge(median_pe_df, on="date", how="left")
+        market_df = headline_df[["date", "headline_pe", "headline_pb", "total_mc"]].merge(median_pe_df, on="date", how="left")
         market_df = market_df.merge(median_pb_df, on="date", how="left")
         market_df = market_df.merge(ex_vg_df[["date", "ex_vingroup_pe", "ex_vingroup_pb"]], on="date", how="left")
     else:

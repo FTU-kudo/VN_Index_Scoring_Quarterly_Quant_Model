@@ -200,19 +200,21 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         us10y_score = 50.0
         details["us10y"] = "<MISSING> N/A → default 50"
 
-    # ── Net Foreign Flow ──────────────────────────────────────────────────────
-    nff_z = df_latest.get("nff_zscore_60d", np.nan)
-    nff_5d = df_latest.get("nff_rolling5d", np.nan)
+    # ── Net Foreign Flow (ex ETF) ─────────────────────────────────────────────
+    nff_z = df_latest.get("nff_ex_etf_q_zscore_live", np.nan)
+    nff_q_sum = df_latest.get("nff_ex_etf_q_ytd", np.nan)
+    
     if pd.notna(nff_z):
         nff_score = _clamp_score(50 + nff_z * 15)  # z > 0 → mua ròng → điểm cao
         scores["nff_score"] = nff_score
         dir_str = "NET BUY" if nff_z > 0.5 else ("NET SELL" if nff_z < -0.5 else "Neutral")
-        details["nff"] = f"Z = {nff_z:.2f} ({dir_str}) → score {nff_score:.0f}"
-        if pd.notna(nff_5d):
-            details["nff_5d_rolling"] = f"{nff_5d:.0f} bil VND (weekly)"
+        details["nff_ex_etf"] = f"Z = {nff_z:.2f} ({dir_str}) → score {nff_score:.0f}"
+        if pd.notna(nff_q_sum):
+            details["nff_ex_etf_q_ytd"] = f"{nff_q_sum:.2%} of Market Cap (YTD in Q)"
     else:
+        # Nếu năm 2021 chưa đủ dữ liệu cho expanding Z-score
         nff_score = 50.0
-        details["nff"] = "<MISSING> N/A → default 50"
+        details["nff_ex_etf"] = "<MISSING> Not enough data for Z-score (2021) → default 50"
 
     # ── JPY Carry Trade ───────────────────────────────────────────────────────
     jpy_z = df_latest.get("usdjpy_zscore_60d", np.nan)
@@ -234,6 +236,13 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         raw = min(raw, 20.0)  # Rủi ro cao, cap điểm ở mức 20
 
     raw = _clamp_score(raw)
+    
+    # Chuẩn bị rationale safely
+    rat_parts = []
+    if pd.notna(dxy_z): rat_parts.append(f"DXY={dxy_z:.1f}σ")
+    if pd.notna(us10y): rat_parts.append(f"US10Y={us10y:.2f}%")
+    if pd.notna(nff_z): rat_parts.append(f"NFF-Z={nff_z:.1f}σ")
+    if pd.notna(jpy_z): rat_parts.append(f"JPY-Z={jpy_z:.1f}σ")
 
     return {
         "group":          "global_intermarket",
@@ -242,9 +251,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         "weighted_score": round(raw * SCORING_WEIGHTS["global_intermarket"], 2),
         "sub_scores":     scores,
         "details":        details,
-        "rationale":      f"Global: DXY={dxy_z:.1f}σ | US10Y={us10y:.2f}% | NFF-Z={nff_z:.1f}σ | JPY-Z={jpy_z:.1f}σ"
-            if all(pd.notna(v) for v in [dxy_z, us10y, nff_z, jpy_z])
-            else "Global: Incomplete data — need DXY, US10Y, NFF, JPY"
+        "rationale":      "Global: " + " | ".join(rat_parts) if rat_parts else "Global: Incomplete data"
     }
 
 
@@ -493,6 +500,7 @@ def score_ml_forecast(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def score_market_structure(
+    df_latest: pd.Series,
     ftse_upgrade_status: str = "pending",  # 'pending', 'confirmed', 'completed'
     months_to_next_rebalancing: int = None,
     adtv_change_pct: Optional[float] = None,   # % change ADTV QoQ
@@ -502,6 +510,7 @@ def score_market_structure(
 
     Parameters
     ----------
+    df_latest : Series chứa các features hiện tại, bao gồm etf_flow_q_zscore_live
     ftse_upgrade_status : 'pending', 'confirmed', 'completed'
     months_to_next_rebalancing : Months until next FTSE rebalancing (REQUIRED).
         Rebalancing schedule: March, June, September, December.
@@ -556,8 +565,28 @@ def score_market_structure(
     else:
         adtv_score = 50.0   # Neutral when data unavailable
         details["adtv"] = "<MISSING> ADTV data unavailable → neutral score 50"
+        
+    # ── ETF Passive Flows ────────────────────────────────────────────────────
+    etf_z = df_latest.get("etf_flow_q_zscore_live", np.nan)
+    etf_q_sum = df_latest.get("etf_flow_q_ytd", np.nan)
+    
+    if pd.notna(etf_z):
+        etf_score = _clamp_score(50 + etf_z * 15)
+        scores["etf_flow_score"] = etf_score
+        dir_str = "NET BUY" if etf_z > 0.5 else ("NET SELL" if etf_z < -0.5 else "Neutral")
+        details["etf_flow"] = f"Z = {etf_z:.2f} ({dir_str}) → score {etf_score:.0f}"
+        if pd.notna(etf_q_sum):
+            details["etf_flow_q_ytd"] = f"{etf_q_sum:.2%} of Market Cap (YTD in Q)"
+    else:
+        etf_score = 50.0
+        details["etf_flow"] = "<MISSING> Not enough data for Z-score (2021) → default 50"
 
-    raw = _clamp_score(ftse_score + rebal_bonus + (adtv_score - 50) * 0.3)
+    # Cập nhật công thức tính raw score có include etf_score (với tỷ trọng phù hợp)
+    raw = _clamp_score(np.mean([ftse_score + rebal_bonus, adtv_score, etf_score]))
+
+    rat_parts = [f"FTSE: {ftse_upgrade_status.upper()}"]
+    if adtv_change_pct: rat_parts.append(f"ADTV: {adtv_change_pct:+.0%}")
+    if pd.notna(etf_z): rat_parts.append(f"ETF-Z: {etf_z:.1f}σ")
 
     return {
         "group":          "market_structure",
@@ -566,12 +595,7 @@ def score_market_structure(
         "weighted_score": round(raw * SCORING_WEIGHTS["market_structure"], 2),
         "sub_scores":     scores,
         "details":        details,
-        "rationale":      (
-            f"FTSE: {ftse_upgrade_status.upper()} | "
-            f"Rebalancing bonus: +{rebal_bonus} | "
-            f"ADTV: {adtv_change_pct:+.0%}" if adtv_change_pct else
-            "FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index"
-        )
+        "rationale":      " | ".join(rat_parts)
     }
 
 
@@ -643,6 +667,7 @@ def compute_quarterly_score(
                 months_to_next_rebalancing = 0
             
     g6 = score_market_structure(
+        df_latest=df_latest,
         ftse_upgrade_status=ftse_upgrade_status,
         months_to_next_rebalancing=months_to_next_rebalancing,
         adtv_change_pct=adtv_change_pct

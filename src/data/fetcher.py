@@ -109,69 +109,101 @@ def fetch_foreign_flows(
     use_cache: bool = True
 ) -> pd.DataFrame:
     """
-    Tải dữ liệu mua/bán ròng khối ngoại (HOSE).
-
-    Phương thức:
-      - Tổng hợp buy_foreign_value - sell_foreign_value từ price_board
-        cho toàn bộ VN30 tickers → proxy net foreign flow VNI.
+    Tải dữ liệu mua/bán ròng khối ngoại (HOSE) từ VNDirect API.
 
     Returns
     -------
-    DataFrame: date, net_foreign_flow_b_vnd (tỷ VND)
+    DataFrame: date, nff_ex_etf_vnd (tỷ VND), etf_flow_vnd (tỷ VND)
     """
+    import requests
+    import time
+    
     cache_path = RAW_DIR / "foreign_flows.parquet"
-    if use_cache and cache_path.exists():
-        df = pd.read_parquet(cache_path)
-        logger.info(f"[FF] Dùng cache foreign flows ({len(df)} ngày)")
-        return df
-
-    logger.info("[FF] Đang tính Net Foreign Flows từ VN30 tickers...")
-    try:
-        from vnstock import Trading
-        records = []
-        vn30_symbols = get_vn30_tickers()
-        for ticker in vn30_symbols:
-            try:
-                try:
-                    td = Trading(symbol=ticker, source="VCI")
-                    hist = td.price_board([ticker])
-                except Exception as e:
-                    logger.warning(f"[FF] {ticker} (VCI) lỗi: {e}. Đang dùng nguồn backup KBS...")
-                    td = Trading(symbol=ticker, source="KBS")
-                    hist = td.price_board([ticker])
-                
-                if "buyForeignValue" in hist.columns:
-                    net = hist["buyForeignValue"] - hist["sellForeignValue"]
-                    records.append(net)
-                time.sleep(0.5)
-            except Exception as e:
-                logger.warning(f"[FF] {ticker} cả VCI & KBS đều lỗi: {e}")
-                err_str = str(e).lower()
-                if "timed out" in err_str or "timeout" in err_str or "max retries exceeded" in err_str:
-                    logger.error("[FF] Bị chặn IP (Timeout/Max Retries) tại GitHub Actions. Dừng fetch foreign flow để tránh treo hệ thống.")
-                    break
-                continue
-
-        if records:
-            combined = pd.concat(records, axis=1).sum(axis=1)
-            df = combined.reset_index()
-            df.columns = ["date", "net_foreign_flow_b_vnd"]
-            df["net_foreign_flow_b_vnd"] /= 1e9  # Đổi sang tỷ VND
+    
+    # Load cache if available
+    df_cache = None
+    if cache_path.exists():
+        df_cache = pd.read_parquet(cache_path)
+        
+    start_date = pd.to_datetime(start)
+    if start_date < pd.to_datetime("2021-01-01"):
+        start_date = pd.to_datetime("2021-01-01") # API giới hạn từ 2021
+        
+    end_date = pd.to_datetime(end)
+    
+    # Xác định ngày bắt đầu fetch để tiết kiệm thời gian nếu đã có cache
+    fetch_start = start_date
+    if use_cache and df_cache is not None and not df_cache.empty:
+        latest = pd.to_datetime(df_cache["date"]).max()
+        if latest >= end_date - timedelta(days=5):
+            logger.info(f"[FF] Dùng toàn bộ cache foreign flows (đến {latest.date()})")
+            return df_cache
         else:
-            # Fallback: tạo empty column nếu API không support (không hardcode 0)
-            logger.warning("[FF] Không lấy được dữ liệu, để trống (NaN)")
-            vni = fetch_vnindex_ohlcv(start=start, end=end)
-            df = vni[["date"]].copy()
-            df["net_foreign_flow_b_vnd"] = np.nan
+            fetch_start = latest + timedelta(days=1)
+            logger.info(f"[FF] Fetch thêm dữ liệu foreign flows từ {fetch_start.date()}...")
+    else:
+        logger.info("[FF] Đang tải Net Foreign Flows từ VNDirect API (toàn bộ)...")
 
-        df["date"] = pd.to_datetime(df["date"])
+    url = 'https://api-finfo.vndirect.com.vn/v4/foreigns'
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    
+    all_data = []
+    current_start = fetch_start
+    
+    while current_start <= end_date:
+        current_end = min(current_start + pd.DateOffset(months=3), end_date)
+        start_str = current_start.strftime('%Y-%m-%d')
+        end_str = current_end.strftime('%Y-%m-%d')
+        
+        q = f'code:STOCK_HNX,STOCK_UPCOM,STOCK_HOSE,ETF_HOSE,IFC_HOSE~tradingDate:gte:{start_str}~tradingDate:lte:{end_str}'
+        params = {
+            'q': q,
+            'sort': 'tradingDate',
+            'size': '10000'
+        }
+        try:
+            r = requests.get(url, params=params, headers=headers, timeout=10)
+            data = r.json()
+            if 'data' in data and data['data']:
+                all_data.extend(data['data'])
+            else:
+                logger.debug(f"[FF] Không có dữ liệu từ {start_str} đến {end_str}")
+        except Exception as e:
+            logger.error(f"[FF] Lỗi khi gọi API VNDirect: {e}")
+            break
+            
+        current_start = current_end + pd.Timedelta(days=1)
+        time.sleep(0.5)
+
+    if all_data:
+        df_new = pd.DataFrame(all_data)
+        df_new['tradingDate'] = pd.to_datetime(df_new['tradingDate'])
+        # Pivot the data
+        df_pivot = df_new.pivot_table(index='tradingDate', columns='code', values='netVal', aggfunc='sum').reset_index()
+        
+        if 'STOCK_HOSE' not in df_pivot.columns:
+            df_pivot['STOCK_HOSE'] = np.nan
+        if 'ETF_HOSE' not in df_pivot.columns:
+            df_pivot['ETF_HOSE'] = np.nan
+            
+        # Calculate features in tỷ VND (billion VND)
+        df_pivot['nff_ex_etf_vnd'] = (df_pivot['STOCK_HOSE'] - df_pivot['ETF_HOSE'].fillna(0)) / 1e9
+        df_pivot['etf_flow_vnd'] = df_pivot['ETF_HOSE'] / 1e9
+        
+        df_result = df_pivot[['tradingDate', 'nff_ex_etf_vnd', 'etf_flow_vnd']].rename(columns={'tradingDate': 'date'})
+        
+        if df_cache is not None and not df_cache.empty:
+            df = pd.concat([df_cache, df_result]).drop_duplicates(subset=['date'], keep='last')
+        else:
+            df = df_result
+    else:
+        logger.warning("[FF] Không lấy được thêm dữ liệu, trả về cache nếu có.")
+        df = df_cache if df_cache is not None else pd.DataFrame(columns=['date', 'nff_ex_etf_vnd', 'etf_flow_vnd'])
+
+    if not df.empty:
         df = df.sort_values("date").reset_index(drop=True)
         df.to_parquet(cache_path, index=False)
-        logger.info(f"[FF] Đã tính foreign flows cho {len(df)} ngày")
-
-    except Exception as e:
-        logger.error(f"[FF] Lỗi nghiêm trọng: {e}")
-        raise
+        logger.info(f"[FF] Đã lưu cache foreign flows cho {len(df)} ngày")
 
     return df
 
