@@ -10,8 +10,8 @@ on:
     inputs:
       quarter:
         description: "Quý cần phân tích (YYYY-QN)"
-        required: true
-        default: "2026-Q3"
+        required: false
+        default: ""
       ftse_status:
         description: "FTSE upgrade status"
         required: false
@@ -25,7 +25,7 @@ on:
       skip_ml:
         description: "Skip ML (nhanh hơn)"
         required: false
-        default: "false"
+        default: false
         type: boolean
 
 env:
