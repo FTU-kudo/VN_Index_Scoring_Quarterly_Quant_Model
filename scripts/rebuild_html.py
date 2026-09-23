@@ -16,6 +16,9 @@ for json_file in exports_dir.glob("score_*.json"):
     mlr_df = pd.DataFrame(export_data.get("mlr_regression", []))
     granger_df = pd.DataFrame(export_data.get("granger_causality", []))
     
+    wfv_dict = export_data.get("ml_walk_forward_validation", {})
+    fi_df = pd.DataFrame(export_data.get("feature_importance", []))
+    
     # Load score history
     history_path = Path("data/scores/quarterly_scores_history.parquet")
     score_history = None
@@ -24,7 +27,7 @@ for json_file in exports_dir.glob("score_*.json"):
 
     report_dir = Path("output/reports") / quarter.replace("-", "_")
     report_dir.mkdir(parents=True, exist_ok=True)
-    build_html_report(score_record, quarter, mlr_df, granger_df, pd.DataFrame(), pd.DataFrame(), score_history)
+    build_html_report(score_record, quarter, mlr_df, granger_df, wfv_dict, fi_df, score_history)
     print(f"Rebuilt {quarter}")
 
 build_root_index_html()

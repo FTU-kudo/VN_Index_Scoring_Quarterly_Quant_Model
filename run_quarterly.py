@@ -157,7 +157,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     # Điền khuyết an toàn (ffill causal) và cập nhật chuẩn Pandas 2.1.0+
     numeric_cols = [c for c in df_all.columns if c not in ("date", "open", "high", "low", "close", "volume") and pd.api.types.is_numeric_dtype(df_all[c])]
     if numeric_cols:
-        df_all[numeric_cols] = df_all[numeric_cols].ffill(limit=3)
+        df_all[numeric_cols] = df_all[numeric_cols].ffill()
         df_all[numeric_cols] = df_all[numeric_cols].infer_objects(copy=False)
 
     logger.info(f"[FE] Master dataset: {len(df_all)} rows × {len(df_all.columns)} cols")
