@@ -1,448 +1,448 @@
 {
-  "metadata": {
-    "quarter": "2025-Q1",
-    "generated_at": "2026-09-24T03:15:20.639993",
-    "model_version": "1.0.0",
-    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
-  },
-  "quarterly_score": {
-    "quarter": "2025-Q1",
-    "date_computed": "2026-09-24 03:15",
-    "total_score": 50.93,
-    "label": "HOLD",
-    "emoji": "🟡",
-    "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "quant_model",
-    "group_scores": {
-      "macro_monetary": {
-        "raw_score": 58.31,
-        "weighted_score": 14.58
-      },
-      "global_intermarket": {
-        "raw_score": 45.1,
-        "weighted_score": 9.02
-      },
-      "valuation_leverage": {
-        "raw_score": 39.91,
-        "weighted_score": 7.98
-      },
-      "quant_model": {
-        "raw_score": 60.48,
-        "weighted_score": 9.07
-      },
-      "ml_forecast": {
-        "raw_score": 52.09,
-        "weighted_score": 5.21
-      },
-      "market_structure": {
-        "raw_score": 50.75,
-        "weighted_score": 5.07
-      }
+    "metadata": {
+        "quarter": "2025-Q1",
+        "generated_at": "2026-09-24T03:15:20.639993",
+        "model_version": "1.0.0",
+        "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
     },
-    "group_details": {
-      "macro_monetary": {
-        "vn1y_yield": "2.09% → score 85",
-        "ir_trend": "Δ VN1Y = -0.0019 (→ Hold) → score 50",
-        "usd_vnd": "Z-score = 0.92 → score 36",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
-        "vn_bonds": "VN10Y 2.88% | Spread 0.69% → score 70"
-      },
-      "global_intermarket": {
-        "dxy": "Z = -1.19 → score 74",
-        "us10y": "4.25% → score 15",
-        "nff_ex_etf": "Z = 0.24 (Neutral) → score 54",
-        "nff_ex_etf_q_ytd": "-0.00% of Market Cap (YTD in Q)",
-        "jpy_carry": "Z = -0.80 (neutral) → score 38"
-      },
-      "valuation_leverage": {
-        "pe_zscore": "P/E Headline: 8.93 | Median: 10.69 | Ex-VG: 8.93<br>Z = 1.45 (FAIR VALUE) → score 14",
-        "pb_zscore": "Z = 1.62 (OVERVALUED) → score 9",
-        "margin_risk": "Risk = 10/100 (SAFE) → score 90"
-      },
-      "quant_model": {
-        "mlr_forecast": "Forecast log-return = 0.0041 → score 62",
-        "var_forecast": "VAR T+5 return = -0.0002 → score 49",
-        "mlr_adj_r2": "Adj-R² = 0.1693 → confidence bonus 1.7",
-        "granger_leaders": "1 vars Granger-cause VNI (p<5%)"
-      },
-      "ml_forecast": {
-        "model_quality": "Accuracy=36.4% F1=0.318 → quality 34",
-        "ml_signal": "Forecast: NEUTRAL"
-      },
-      "market_structure": {
-        "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
-        "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
-        "etf_flow": "Z = -0.25 (Neutral) → score 46",
-        "etf_flow_q_ytd": "-0.00% of Market Cap (YTD in Q)"
-      }
+    "quarterly_score": {
+        "quarter": "2025-Q1",
+        "date_computed": "2026-09-24 03:15",
+        "total_score": 50.93,
+        "label": "HOLD",
+        "emoji": "🟡",
+        "label_description": "Neutral — Await confirming signals",
+        "most_divergent_pillar": "quant_model",
+        "group_scores": {
+            "macro_monetary": {
+                "raw_score": 58.31,
+                "weighted_score": 14.58
+            },
+            "global_intermarket": {
+                "raw_score": 45.1,
+                "weighted_score": 9.02
+            },
+            "valuation_leverage": {
+                "raw_score": 39.91,
+                "weighted_score": 7.98
+            },
+            "quant_model": {
+                "raw_score": 60.48,
+                "weighted_score": 9.07
+            },
+            "ml_forecast": {
+                "raw_score": 52.09,
+                "weighted_score": 5.21
+            },
+            "market_structure": {
+                "raw_score": 50.75,
+                "weighted_score": 5.07
+            }
+        },
+        "group_details": {
+            "macro_monetary": {
+                "vn1y_yield": "2.09% → score 85",
+                "ir_trend": "Δ VN1Y = -0.0019 (→ Hold) → score 50",
+                "usd_vnd": "Z-score = 0.92 → score 36",
+                "m2_yoy_growth": "<MISSING> N/A → default 50",
+                "vn_bonds": "VN10Y 2.88% | Spread 0.69% → score 70"
+            },
+            "global_intermarket": {
+                "dxy": "Z = -1.19 → score 74",
+                "us10y": "4.25% → score 15",
+                "nff_ex_etf": "Z = 0.24 (Neutral) → score 54",
+                "nff_ex_etf_q_ytd": "-0.00% of Market Cap (YTD in Q)",
+                "jpy_carry": "Z = -0.80 (neutral) → score 38"
+            },
+            "valuation_leverage": {
+                "pe_zscore": "P/E Headline: 8.93 | Median: 10.69 | Ex-VG: 8.93<br>Z = 1.45 (FAIR VALUE) → score 14",
+                "pb_zscore": "Z = 1.62 (OVERVALUED) → score 9",
+                "margin_risk": "Risk = 10/100 (SAFE) → score 90"
+            },
+            "quant_model": {
+                "mlr_forecast": "Forecast log-return = 0.0041 → score 62",
+                "var_forecast": "VAR T+5 return = -0.0002 → score 49",
+                "mlr_adj_r2": "Adj-R² = 0.1693 → confidence bonus 1.7",
+                "granger_leaders": "1 vars Granger-cause VNI (p<5%)"
+            },
+            "ml_forecast": {
+                "model_quality": "Accuracy=36.4% F1=0.318 → quality 34",
+                "ml_signal": "Forecast: NEUTRAL"
+            },
+            "market_structure": {
+                "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
+                "rebalancing": "3 months to rebalancing → bonus +6",
+                "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
+                "etf_flow": "Z = -0.25 (Neutral) → score 46",
+                "etf_flow_q_ytd": "-0.00% of Market Cap (YTD in Q)"
+            }
+        },
+        "group_rationale": {
+            "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.09% (low/favorable) | USD/VND z=0.9 (stable) | VN10Y 2.88% (Spread 0.69%)",
+            "global_intermarket": "Global: DXY=-1.2σ | US10Y=4.25% | NFF-Z=0.2σ | JPY-Z=-0.8σ",
+            "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
+            "quant_model": "MLR=62 | VAR=49 | R²=0.169 | Granger=1",
+            "ml_forecast": "ML: Forecast: NEUTRAL | Quality=34",
+            "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
+        }
     },
-    "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.09% (low/favorable) | USD/VND z=0.9 (stable) | VN10Y 2.88% (Spread 0.69%)",
-      "global_intermarket": "Global: DXY=-1.2σ | US10Y=4.25% | NFF-Z=0.2σ | JPY-Z=-0.8σ",
-      "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
-      "quant_model": "MLR=62 | VAR=49 | R²=0.169 | Granger=1",
-      "ml_forecast": "ML: Forecast: NEUTRAL | Quality=34",
-      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
-    }
-  },
-  "mlr_regression": [
-    {
-      "Variable": "delta_dxy",
-      "Beta (β)": -0.005266,
-      "P-value": 0.9554,
-      "Sign Expected": "-",
-      "Sign Actual": "-",
-      "Sign OK": "✅",
-      "Significance": ""
-    },
-    {
-      "Variable": "delta_us10y",
-      "Beta (β)": 0.020984,
-      "P-value": 0.0083,
-      "Sign Expected": "-",
-      "Sign Actual": "+",
-      "Sign OK": "❌",
-      "Significance": "***"
-    },
-    {
-      "Variable": "delta_usdjpy",
-      "Beta (β)": 0.099483,
-      "P-value": 0.1847,
-      "Sign Expected": "+",
-      "Sign Actual": "+",
-      "Sign OK": "✅",
-      "Significance": ""
-    },
-    {
-      "Variable": "usd_vnd_pct_change",
-      "Beta (β)": 0.027961,
-      "P-value": 0.6684,
-      "Sign Expected": "?",
-      "Sign Actual": "+",
-      "Sign OK": "—",
-      "Significance": ""
-    },
-    {
-      "Variable": "rsi_14",
-      "Beta (β)": 0.00053,
-      "P-value": 0.0,
-      "Sign Expected": "?",
-      "Sign Actual": "+",
-      "Sign OK": "—",
-      "Significance": "***"
-    },
-    {
-      "Variable": "macd_hist",
-      "Beta (β)": -0.000134,
-      "P-value": 0.2837,
-      "Sign Expected": "?",
-      "Sign Actual": "-",
-      "Sign OK": "—",
-      "Significance": ""
-    },
-    {
-      "Variable": "rvol_20d",
-      "Beta (β)": 0.02613,
-      "P-value": 0.0001,
-      "Sign Expected": "?",
-      "Sign Actual": "+",
-      "Sign OK": "—",
-      "Significance": "***"
-    },
-    {
-      "Variable": "drawdown_from_peak",
-      "Beta (β)": 0.009,
-      "P-value": 0.4706,
-      "Sign Expected": "?",
-      "Sign Actual": "+",
-      "Sign OK": "—",
-      "Significance": ""
-    },
-    {
-      "Variable": "price_vs_ma200",
-      "Beta (β)": -0.01794,
-      "P-value": 0.0004,
-      "Sign Expected": "?",
-      "Sign Actual": "-",
-      "Sign OK": "—",
-      "Significance": "***"
-    },
-    {
-      "Variable": "log_return_lag1",
-      "Beta (β)": -0.09772,
-      "P-value": 0.0043,
-      "Sign Expected": "?",
-      "Sign Actual": "-",
-      "Sign OK": "—",
-      "Significance": "***"
-    },
-    {
-      "Variable": "log_return_lag5",
-      "Beta (β)": -0.076562,
-      "P-value": 0.06,
-      "Sign Expected": "?",
-      "Sign Actual": "-",
-      "Sign OK": "—",
-      "Significance": "*"
-    }
-  ],
-  "granger_causality": [
-    {
-      "causing_variable": "delta_dxy",
-      "test_statistic": 12.1649,
-      "p_value": 0.0,
-      "granger_causes_vni": true,
-      "significance": "***"
-    },
-    {
-      "causing_variable": "delta_us10y",
-      "test_statistic": 0.2964,
-      "p_value": 0.7435,
-      "granger_causes_vni": false,
-      "significance": ""
-    },
-    {
-      "causing_variable": "delta_usdjpy",
-      "test_statistic": 0.1982,
-      "p_value": 0.8202,
-      "granger_causes_vni": false,
-      "significance": ""
-    }
-  ],
-  "ml_walk_forward_validation": {
-    "model_type": "xgboost",
-    "n_folds": 8,
-    "n_features": 79,
-    "features_used": [
-      "usd_vnd_close",
-      "usd_vnd_pct_change",
-      "usd_vnd_zscore",
-      "fx_5d_change",
-      "fx_devaluation_flag",
-      "usd_vnd_pct_change_lag1",
-      "usd_vnd_pct_change_lag5",
-      "usd_vnd_pct_change_lag10",
-      "usd_vnd_zscore_lag1",
-      "usd_vnd_zscore_lag5",
-      "usd_vnd_zscore_lag10",
-      "dxy_close",
-      "us10y_yield",
-      "usdjpy_close",
-      "dxy_pct_change",
-      "us10y_delta",
-      "delta_dxy",
-      "dxy_zscore_60d",
-      "dxy_momentum_20d",
-      "delta_dxy_lag1",
-      "delta_dxy_lag5",
-      "delta_dxy_lag10",
-      "delta_us10y",
-      "us10y_30d_change",
-      "us10y_zscore_1y",
-      "delta_us10y_lag1",
-      "delta_us10y_lag5",
-      "delta_us10y_lag10",
-      "delta_usdjpy",
-      "usdjpy_zscore_60d",
-      "nff_ex_etf_vnd",
-      "etf_flow_vnd",
-      "total_mc",
-      "nff_ex_etf_rolling20d",
-      "nff_ex_etf_consecutive_sell_days",
-      "nff_ex_etf_q_sum",
-      "etf_flow_q_sum",
-      "nff_ex_etf_q_ytd",
-      "corr_delta_dxy_60d",
-      "corr_delta_us10y_60d",
-      "median_pe",
-      "median_pb",
-      "headline_pe",
-      "headline_pb",
-      "ex_vingroup_pe",
-      "ex_vingroup_pb",
-      "drawdown_from_peak",
-      "margin_risk_score",
-      "rsi_14",
-      "macd_line",
-      "macd_signal",
-      "macd_hist",
-      "bb_pct",
-      "rvol_20d",
-      "log_return_lag1",
-      "log_return_lag5",
-      "price_vs_ma200",
-      "return_lag1",
-      "return_lag2",
-      "return_lag5",
-      "return_lag10",
-      "return_lag20",
-      "rvol_5d",
-      "rvol_10d",
-      "rvol_60d",
-      "ret_mom_5d",
-      "ret_mom_10d",
-      "ret_mom_20d",
-      "bb_upper",
-      "bb_lower",
-      "bb_mid",
-      "ema_20",
-      "ema_50",
-      "ema_cross",
-      "dxy_zscore_60d_lag1",
-      "dxy_zscore_60d_lag5",
-      "us10y_zscore_1y_lag1",
-      "us10y_zscore_1y_lag5",
-      "margin_risk_score_lag1"
+    "mlr_regression": [
+        {
+            "Variable": "delta_dxy",
+            "Beta (β)": -0.005266,
+            "P-value": 0.9554,
+            "Sign Expected": "-",
+            "Sign Actual": "-",
+            "Sign OK": "✅",
+            "Significance": ""
+        },
+        {
+            "Variable": "delta_us10y",
+            "Beta (β)": 0.020984,
+            "P-value": 0.0083,
+            "Sign Expected": "-",
+            "Sign Actual": "+",
+            "Sign OK": "❌",
+            "Significance": "***"
+        },
+        {
+            "Variable": "delta_usdjpy",
+            "Beta (β)": 0.099483,
+            "P-value": 0.1847,
+            "Sign Expected": "+",
+            "Sign Actual": "+",
+            "Sign OK": "✅",
+            "Significance": ""
+        },
+        {
+            "Variable": "usd_vnd_pct_change",
+            "Beta (β)": 0.027961,
+            "P-value": 0.6684,
+            "Sign Expected": "?",
+            "Sign Actual": "+",
+            "Sign OK": "—",
+            "Significance": ""
+        },
+        {
+            "Variable": "rsi_14",
+            "Beta (β)": 0.00053,
+            "P-value": 0.0,
+            "Sign Expected": "?",
+            "Sign Actual": "+",
+            "Sign OK": "—",
+            "Significance": "***"
+        },
+        {
+            "Variable": "macd_hist",
+            "Beta (β)": -0.000134,
+            "P-value": 0.2837,
+            "Sign Expected": "?",
+            "Sign Actual": "-",
+            "Sign OK": "—",
+            "Significance": ""
+        },
+        {
+            "Variable": "rvol_20d",
+            "Beta (β)": 0.02613,
+            "P-value": 0.0001,
+            "Sign Expected": "?",
+            "Sign Actual": "+",
+            "Sign OK": "—",
+            "Significance": "***"
+        },
+        {
+            "Variable": "drawdown_from_peak",
+            "Beta (β)": 0.009,
+            "P-value": 0.4706,
+            "Sign Expected": "?",
+            "Sign Actual": "+",
+            "Sign OK": "—",
+            "Significance": ""
+        },
+        {
+            "Variable": "price_vs_ma200",
+            "Beta (β)": -0.01794,
+            "P-value": 0.0004,
+            "Sign Expected": "?",
+            "Sign Actual": "-",
+            "Sign OK": "—",
+            "Significance": "***"
+        },
+        {
+            "Variable": "log_return_lag1",
+            "Beta (β)": -0.09772,
+            "P-value": 0.0043,
+            "Sign Expected": "?",
+            "Sign Actual": "-",
+            "Sign OK": "—",
+            "Significance": "***"
+        },
+        {
+            "Variable": "log_return_lag5",
+            "Beta (β)": -0.076562,
+            "P-value": 0.06,
+            "Sign Expected": "?",
+            "Sign Actual": "-",
+            "Sign OK": "—",
+            "Significance": "*"
+        }
     ],
-    "mean_accuracy": 0.3642,
-    "std_accuracy": 0.1311,
-    "mean_f1": 0.3178,
-    "fold_metrics": [
-      {
-        "fold": 1,
-        "train_size": 581,
-        "test_size": 58,
-        "accuracy": 0.0862,
-        "f1_weighted": 0.041,
-        "precision": 0.1947
-      },
-      {
-        "fold": 2,
-        "train_size": 639,
-        "test_size": 58,
-        "accuracy": 0.3276,
-        "f1_weighted": 0.2782,
-        "precision": 0.4415
-      },
-      {
-        "fold": 3,
-        "train_size": 697,
-        "test_size": 58,
-        "accuracy": 0.4483,
-        "f1_weighted": 0.4619,
-        "precision": 0.511
-      },
-      {
-        "fold": 4,
-        "train_size": 755,
-        "test_size": 58,
-        "accuracy": 0.4828,
-        "f1_weighted": 0.4347,
-        "precision": 0.3969
-      },
-      {
-        "fold": 5,
-        "train_size": 813,
-        "test_size": 58,
-        "accuracy": 0.3448,
-        "f1_weighted": 0.2825,
-        "precision": 0.6709
-      },
-      {
-        "fold": 6,
-        "train_size": 871,
-        "test_size": 58,
-        "accuracy": 0.4655,
-        "f1_weighted": 0.3477,
-        "precision": 0.6494
-      },
-      {
-        "fold": 7,
-        "train_size": 929,
-        "test_size": 58,
-        "accuracy": 0.4483,
-        "f1_weighted": 0.3712,
-        "precision": 0.3167
-      },
-      {
-        "fold": 8,
-        "train_size": 987,
-        "test_size": 58,
-        "accuracy": 0.3103,
-        "f1_weighted": 0.3251,
-        "precision": 0.456
-      }
+    "granger_causality": [
+        {
+            "causing_variable": "delta_dxy",
+            "test_statistic": 12.1649,
+            "p_value": 0.0,
+            "granger_causes_vni": true,
+            "significance": "***"
+        },
+        {
+            "causing_variable": "delta_us10y",
+            "test_statistic": 0.2964,
+            "p_value": 0.7435,
+            "granger_causes_vni": false,
+            "significance": ""
+        },
+        {
+            "causing_variable": "delta_usdjpy",
+            "test_statistic": 0.1982,
+            "p_value": 0.8202,
+            "granger_causes_vni": false,
+            "significance": ""
+        }
     ],
-    "latest_pred_class": 0,
-    "latest_prediction": "NEUTRAL",
-    "latest_confidence": 0.7959
-  },
-  "feature_importance": [
-    {
-      "feature": "ex_vingroup_pe",
-      "importance": 0.024160759523510933,
-      "rank": 1
+    "ml_walk_forward_validation": {
+        "model_type": "xgboost",
+        "n_folds": 8,
+        "n_features": 79,
+        "features_used": [
+            "usd_vnd_close",
+            "usd_vnd_pct_change",
+            "usd_vnd_zscore",
+            "fx_5d_change",
+            "fx_devaluation_flag",
+            "usd_vnd_pct_change_lag1",
+            "usd_vnd_pct_change_lag5",
+            "usd_vnd_pct_change_lag10",
+            "usd_vnd_zscore_lag1",
+            "usd_vnd_zscore_lag5",
+            "usd_vnd_zscore_lag10",
+            "dxy_close",
+            "us10y_yield",
+            "usdjpy_close",
+            "dxy_pct_change",
+            "us10y_delta",
+            "delta_dxy",
+            "dxy_zscore_60d",
+            "dxy_momentum_20d",
+            "delta_dxy_lag1",
+            "delta_dxy_lag5",
+            "delta_dxy_lag10",
+            "delta_us10y",
+            "us10y_30d_change",
+            "us10y_zscore_1y",
+            "delta_us10y_lag1",
+            "delta_us10y_lag5",
+            "delta_us10y_lag10",
+            "delta_usdjpy",
+            "usdjpy_zscore_60d",
+            "nff_ex_etf_vnd",
+            "etf_flow_vnd",
+            "total_mc",
+            "nff_ex_etf_rolling20d",
+            "nff_ex_etf_consecutive_sell_days",
+            "nff_ex_etf_q_sum",
+            "etf_flow_q_sum",
+            "nff_ex_etf_q_ytd",
+            "corr_delta_dxy_60d",
+            "corr_delta_us10y_60d",
+            "median_pe",
+            "median_pb",
+            "headline_pe",
+            "headline_pb",
+            "ex_vingroup_pe",
+            "ex_vingroup_pb",
+            "drawdown_from_peak",
+            "margin_risk_score",
+            "rsi_14",
+            "macd_line",
+            "macd_signal",
+            "macd_hist",
+            "bb_pct",
+            "rvol_20d",
+            "log_return_lag1",
+            "log_return_lag5",
+            "price_vs_ma200",
+            "return_lag1",
+            "return_lag2",
+            "return_lag5",
+            "return_lag10",
+            "return_lag20",
+            "rvol_5d",
+            "rvol_10d",
+            "rvol_60d",
+            "ret_mom_5d",
+            "ret_mom_10d",
+            "ret_mom_20d",
+            "bb_upper",
+            "bb_lower",
+            "bb_mid",
+            "ema_20",
+            "ema_50",
+            "ema_cross",
+            "dxy_zscore_60d_lag1",
+            "dxy_zscore_60d_lag5",
+            "us10y_zscore_1y_lag1",
+            "us10y_zscore_1y_lag5",
+            "margin_risk_score_lag1"
+        ],
+        "mean_accuracy": 0.3642,
+        "std_accuracy": 0.1311,
+        "mean_f1": 0.3178,
+        "fold_metrics": [
+            {
+                "fold": 1,
+                "train_size": 581,
+                "test_size": 58,
+                "accuracy": 0.0862,
+                "f1_weighted": 0.041,
+                "precision": 0.1947
+            },
+            {
+                "fold": 2,
+                "train_size": 639,
+                "test_size": 58,
+                "accuracy": 0.3276,
+                "f1_weighted": 0.2782,
+                "precision": 0.4415
+            },
+            {
+                "fold": 3,
+                "train_size": 697,
+                "test_size": 58,
+                "accuracy": 0.4483,
+                "f1_weighted": 0.4619,
+                "precision": 0.511
+            },
+            {
+                "fold": 4,
+                "train_size": 755,
+                "test_size": 58,
+                "accuracy": 0.4828,
+                "f1_weighted": 0.4347,
+                "precision": 0.3969
+            },
+            {
+                "fold": 5,
+                "train_size": 813,
+                "test_size": 58,
+                "accuracy": 0.3448,
+                "f1_weighted": 0.2825,
+                "precision": 0.6709
+            },
+            {
+                "fold": 6,
+                "train_size": 871,
+                "test_size": 58,
+                "accuracy": 0.4655,
+                "f1_weighted": 0.3477,
+                "precision": 0.6494
+            },
+            {
+                "fold": 7,
+                "train_size": 929,
+                "test_size": 58,
+                "accuracy": 0.4483,
+                "f1_weighted": 0.3712,
+                "precision": 0.3167
+            },
+            {
+                "fold": 8,
+                "train_size": 987,
+                "test_size": 58,
+                "accuracy": 0.3103,
+                "f1_weighted": 0.3251,
+                "precision": 0.456
+            }
+        ],
+        "latest_pred_class": 0,
+        "latest_prediction": "NEUTRAL",
+        "latest_confidence": 0.7959
     },
-    {
-      "feature": "us10y_30d_change",
-      "importance": 0.021625133231282234,
-      "rank": 2
-    },
-    {
-      "feature": "macd_line",
-      "importance": 0.020277345553040504,
-      "rank": 3
-    },
-    {
-      "feature": "rvol_20d",
-      "importance": 0.01982829160988331,
-      "rank": 4
-    },
-    {
-      "feature": "headline_pb",
-      "importance": 0.019212756305933,
-      "rank": 5
-    },
-    {
-      "feature": "ema_20",
-      "importance": 0.018561437726020813,
-      "rank": 6
-    },
-    {
-      "feature": "bb_mid",
-      "importance": 0.018282150849699974,
-      "rank": 7
-    },
-    {
-      "feature": "rvol_60d",
-      "importance": 0.01735413260757923,
-      "rank": 8
-    },
-    {
-      "feature": "price_vs_ma200",
-      "importance": 0.017076000571250916,
-      "rank": 9
-    },
-    {
-      "feature": "ex_vingroup_pb",
-      "importance": 0.016939112916588783,
-      "rank": 10
-    },
-    {
-      "feature": "nff_ex_etf_q_sum",
-      "importance": 0.016844209283590317,
-      "rank": 11
-    },
-    {
-      "feature": "usdjpy_close",
-      "importance": 0.016484616324305534,
-      "rank": 12
-    },
-    {
-      "feature": "bb_upper",
-      "importance": 0.01610107161104679,
-      "rank": 13
-    },
-    {
-      "feature": "us10y_zscore_1y_lag1",
-      "importance": 0.016086935997009277,
-      "rank": 14
-    },
-    {
-      "feature": "headline_pe",
-      "importance": 0.01603168621659279,
-      "rank": 15
-    }
-  ]
+    "feature_importance": [
+        {
+            "feature": "ex_vingroup_pe",
+            "importance": 0.024160759523510933,
+            "rank": 1
+        },
+        {
+            "feature": "us10y_30d_change",
+            "importance": 0.021625133231282234,
+            "rank": 2
+        },
+        {
+            "feature": "macd_line",
+            "importance": 0.020277345553040504,
+            "rank": 3
+        },
+        {
+            "feature": "rvol_20d",
+            "importance": 0.01982829160988331,
+            "rank": 4
+        },
+        {
+            "feature": "headline_pb",
+            "importance": 0.019212756305933,
+            "rank": 5
+        },
+        {
+            "feature": "ema_20",
+            "importance": 0.018561437726020813,
+            "rank": 6
+        },
+        {
+            "feature": "bb_mid",
+            "importance": 0.018282150849699974,
+            "rank": 7
+        },
+        {
+            "feature": "rvol_60d",
+            "importance": 0.01735413260757923,
+            "rank": 8
+        },
+        {
+            "feature": "price_vs_ma200",
+            "importance": 0.017076000571250916,
+            "rank": 9
+        },
+        {
+            "feature": "ex_vingroup_pb",
+            "importance": 0.016939112916588783,
+            "rank": 10
+        },
+        {
+            "feature": "nff_ex_etf_q_sum",
+            "importance": 0.016844209283590317,
+            "rank": 11
+        },
+        {
+            "feature": "usdjpy_close",
+            "importance": 0.016484616324305534,
+            "rank": 12
+        },
+        {
+            "feature": "bb_upper",
+            "importance": 0.01610107161104679,
+            "rank": 13
+        },
+        {
+            "feature": "us10y_zscore_1y_lag1",
+            "importance": 0.016086935997009277,
+            "rank": 14
+        },
+        {
+            "feature": "headline_pe",
+            "importance": 0.01603168621659279,
+            "rank": 15
+        }
+    ]
 }

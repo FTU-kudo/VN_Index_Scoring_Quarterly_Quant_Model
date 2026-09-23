@@ -219,11 +219,12 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
     # ── JPY Carry Trade ───────────────────────────────────────────────────────
     jpy_z = df_latest.get("usdjpy_zscore_60d", np.nan)
     jpy_risk = df_latest.get("jpy_carry_risk", "neutral")
+    jpy_risk_str = jpy_risk if pd.notna(jpy_risk) else "neutral"
     if pd.notna(jpy_z):
         # Yen mạnh lên (Z âm) → Rủi ro Carry Trade Unwind → Điểm thấp
         jpy_score = _clamp_score(50 + jpy_z * 15)
         scores["jpy_score"] = jpy_score
-        details["jpy_carry"] = f"Z = {jpy_z:.2f} ({jpy_risk}) → score {jpy_score:.0f}"
+        details["jpy_carry"] = f"Z = {jpy_z:.2f} ({jpy_risk_str}) → score {jpy_score:.0f}"
     else:
         jpy_score = 50.0
         jpy_z = np.nan
