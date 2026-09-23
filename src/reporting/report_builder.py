@@ -202,6 +202,14 @@ _HTML_STYLE = """
 _JS_SCRIPT = """
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\\\(', '\\\\)']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
   // Real-time Clock
   function updateClock() {
     const now = new Date();
