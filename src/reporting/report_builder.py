@@ -902,22 +902,22 @@ def build_html_report(
           <ul style="margin-top: 0; margin-bottom: 20px; padding-left: 20px;">
             <li style="margin-bottom: 8px;">
               <strong>{t('Logarithmic Returns (VN-Index):', 'Lợi suất Logarit (VN-Index):')}</strong> 
-              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$R_t = \\ln(P_t / P_{{t-1}})$</code>
+              <div class="math-formula">$$ R_t = \\ln(P_t / P_{{t-1}}) $$</div>
               <br><em>{t('Used to calculate continuous returns, ensuring symmetric scaling for financial time series.', 'Sử dụng để tính lợi suất liên tục, đảm bảo tính đối xứng cho chuỗi thời gian tài chính.')}</em>
             </li>
             <li style="margin-bottom: 8px;">
               <strong>{t('Multiple Linear Regression (MLR):', 'Hồi quy Tuyến tính Đa biến (MLR):')}</strong> 
-              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$\\hat{{Y}} = \\beta_0 + \\sum_{{i=1}}^{{n}} \\beta_i X_i + \\epsilon$</code>
+              <div class="math-formula">$$ \\hat{{Y}} = \\beta_0 + \\sum_{{i=1}}^{{n}} \\beta_i X_i + \\epsilon $$</div>
               <br><em>{t('Estimates the beta coefficients (impact weights) of macroeconomic variables on VN-Index returns.', 'Ước lượng hệ số Beta (trọng số tác động) của các biến số vĩ mô lên lợi suất VN-Index.')}</em>
             </li>
             <li style="margin-bottom: 8px;">
               <strong>{t('Vector Autoregression (VAR):', 'Tự Hồi quy Vector (VAR):')}</strong> 
-              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$Y_t = \\alpha + \\sum_{{i=1}}^{{p}} \\Phi_i Y_{{t-i}} + \\epsilon_t$</code>
+              <div class="math-formula">$$ Y_t = \\alpha + \\sum_{{i=1}}^{{p}} \\Phi_i Y_{{t-i}} + \\epsilon_t $$</div>
               <br><em>{t('Analyzes the dynamic impact of random disturbances on the system of variables (Granger Causality).', 'Phân tích tác động động của các cú sốc ngẫu nhiên lên hệ thống biến số (Kiểm định Granger Causality).')}</em>
             </li>
             <li style="margin-bottom: 8px;">
               <strong>{t('Z-Score Normalization:', 'Chuẩn hóa Z-Score:')}</strong> 
-              <br><code style="background: var(--bg-color); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-size: 14px;">$Z = (X - \\mu) / \\sigma$</code>
+              <div class="math-formula">$$ Z = (X - \\mu) / \\sigma $$</div>
               <br><em>{t('Normalizes disparate fundamental data into a unified 0-100 scoring scale.', 'Chuẩn hóa dữ liệu cơ bản khác biệt về thang điểm 0-100 thống nhất.')}</em>
             </li>
           </ul>
