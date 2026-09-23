@@ -90,6 +90,9 @@ jobs:
           fi
           echo "Running: $CMD"
           $CMD
+          
+          echo "Rebuilding all HTML reports to sync chart history..."
+          python scripts/rebuild_html.py
 
       # ── 6. Upload artifacts ────────────────────────────────────────────────
       - name: "📤 Upload HTML report"
