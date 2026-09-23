@@ -32,6 +32,7 @@ jobs:
     timeout-minutes: 180 # Cho phép chạy tối đa 3 tiếng
     permissions:
       contents: write
+      actions: write
 
     steps:
       - name: "📁 Checkout repository"
@@ -95,3 +96,11 @@ jobs:
           echo "## ✅ Batch Run Completed" >> $GITHUB_STEP_SUMMARY
           echo "Đã chạy thành công từ năm ${{ github.event.inputs.start_year }} đến ${{ github.event.inputs.end_year }}." >> $GITHUB_STEP_SUMMARY
           echo "Vui lòng kiểm tra tab Actions hoặc nhánh main để xem dữ liệu mới nhất." >> $GITHUB_STEP_SUMMARY
+
+      - name: "🚀 Trigger Deploy to GitHub Pages"
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering deploy_pages.yml..."
+          gh workflow run deploy_pages.yml
