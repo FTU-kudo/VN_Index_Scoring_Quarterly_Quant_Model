@@ -1029,7 +1029,7 @@ def build_html_report(
         {interpretation_html}
       </div>
       
-      <div id="tab-references" class="tab-content" style="display: none;">
+      <div id="tab-references" class="tab-content">
         {references_html}
       </div>
       
