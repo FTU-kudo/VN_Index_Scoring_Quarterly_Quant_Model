@@ -51,7 +51,7 @@
                 "dxy": "Z = 0.33 → score 43",
                 "us10y": "1.51% → score 70",
                 "nff_ex_etf": "<MISSING> Not enough data for Z-score (2021) → default 50",
-                "jpy_carry": "Z = 1.82 (neutral) → score 77"
+                "jpy_carry": "Z = 1.82 (Neutral) → score 77"
             },
             "valuation_leverage": {
                 "pe_zscore": "<MISSING> N/A → default 50",

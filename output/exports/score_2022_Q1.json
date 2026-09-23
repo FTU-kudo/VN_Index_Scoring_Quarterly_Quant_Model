@@ -52,7 +52,7 @@
                 "us10y": "2.33% → score 53",
                 "nff_ex_etf": "Z = 0.50 (Neutral) → score 57",
                 "nff_ex_etf_q_ytd": "-0.00% of Market Cap (YTD in Q)",
-                "jpy_carry": "Z = 2.24 (neutral) → score 84"
+                "jpy_carry": "Z = 2.24 (Neutral) → score 84"
             },
             "valuation_leverage": {
                 "pe_zscore": "<MISSING> N/A → default 50",

@@ -52,7 +52,7 @@
                 "us10y": "3.82% → score 24",
                 "nff_ex_etf": "Z = 0.33 (Neutral) → score 55",
                 "nff_ex_etf_q_ytd": "-0.00% of Market Cap (YTD in Q)",
-                "jpy_carry": "Z = 2.05 (neutral) → score 81"
+                "jpy_carry": "Z = 2.05 (Neutral) → score 81"
             },
             "valuation_leverage": {
                 "pe_zscore": "P/E Headline: 6.22 | Median: 8.98 | Ex-VG: 6.23<br>Z = 0.06 (FAIR VALUE) → score 49",
