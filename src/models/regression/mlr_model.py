@@ -166,6 +166,16 @@ class MLRModel:
         y = sub[self.target_col]
         return X, y
 
+    def _drop_collinear_features(self, X: pd.DataFrame, threshold: float = 0.9) -> pd.DataFrame:
+        """Loại bỏ các biến có độ tương quan cao để tránh ma trận suy biến."""
+        corr_matrix = X.corr().abs()
+        upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+        to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
+        if to_drop:
+            logger.warning(f"[MLR] Loại bỏ các biến do đa cộng tuyến (corr > {threshold}): {to_drop}")
+            return X.drop(columns=to_drop)
+        return X
+
     def fit(self, df: pd.DataFrame) -> "MLRModel":
         """
         Huấn luyện mô hình MLR.
@@ -185,6 +195,8 @@ class MLRModel:
             raise
 
         X, y = self._prepare_data(df)
+        X = self._drop_collinear_features(X)
+        
         n = len(X)
         split = int(n * self.train_ratio)
 
@@ -203,15 +215,8 @@ class MLRModel:
                     cov_kwds={"maxlags": self.max_lags_nw}
                 )
             except Exception as e:
-                logger.warning(f"[MLR] Lỗi ma trận suy biến: {e}. Đang thêm nhiễu (noise) để khắc phục...")
-                import numpy as np
-                noise = np.random.normal(0, 1e-6, X_train_const.shape)
-                X_train_const_noisy = X_train_const + noise
-                ols = sm.OLS(y_train, X_train_const_noisy)
-                self.model_ = ols.fit(
-                    cov_type="HAC",
-                    cov_kwds={"maxlags": self.max_lags_nw}
-                )
+                logger.error(f"[MLR] Lỗi ma trận suy biến không thể khắc phục: {e}. Vui lòng kiểm tra lại tập dữ liệu.")
+                raise
 
         # Lưu kết quả
         self.coefs_   = dict(self.model_.params.drop("const", errors="ignore"))

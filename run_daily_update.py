@@ -18,6 +18,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.utils.config import LOG_FILE, LOG_LEVEL
+from src.data.fetcher import (
+    fetch_vnindex_ohlcv, compute_vni_returns,
+    fetch_foreign_flows, fetch_global_indicators
+)
+import pandas as pd
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -37,16 +42,13 @@ def run_daily() -> None:
     logger.info(f"{'='*50}")
 
     # 1. Tải VNI mới nhất (force refresh)
-    from src.data.fetcher import (
-        fetch_vnindex_ohlcv, compute_vni_returns,
-        fetch_foreign_flows, fetch_global_indicators
-    )
+
     df_vni    = fetch_vnindex_ohlcv(use_cache=False)
     df_vni    = compute_vni_returns(df_vni)
     df_ff     = fetch_foreign_flows(use_cache=False)
     df_global = fetch_global_indicators(use_cache=False)
 
-    import pandas as pd
+
 
     # 2. Cảnh báo nhanh: VNI change, NFF, DXY
     if len(df_vni) > 1:

@@ -24,7 +24,28 @@ from datetime import datetime
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.utils.config import LOG_FILE, LOG_LEVEL
+from src.utils.config import LOG_FILE, LOG_LEVEL, VAR_VARIABLES, SCORES_DIR
+from src.data.fetcher import (
+    fetch_vnindex_ohlcv, compute_vni_returns,
+    fetch_foreign_flows, fetch_macro_sbv_manual,
+    fetch_usdvnd_proxy, fetch_global_indicators,
+    fetch_margin_debt_manual, fetch_m2_credit_manual,
+    fetch_vietnam_bonds
+)
+from src.features.macro_features import build_macro_features
+from src.features.global_features import build_global_features
+from src.features.valuation_features import build_valuation_leverage_features
+from src.features.technical_features import add_technical_indicators
+from src.models.regression.mlr_model import MLRModel
+from src.models.var.var_model import VARModel
+from src.models.ml.ml_model import (
+    build_ml_features, create_target_variable,
+    evaluate_wfv, get_feature_importance
+)
+from src.scoring.quarterly_scorer import compute_quarterly_score
+from src.reporting.report_builder import build_html_report, export_score_json
+import pandas as pd
+import subprocess
 
 # ── Logging Setup ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -81,13 +102,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     # ── Step 1: Fetch dữ liệu ─────────────────────────────────────────────────
     logger.info("[1/7] Fetching dữ liệu...")
-    from src.data.fetcher import (
-        fetch_vnindex_ohlcv, compute_vni_returns,
-        fetch_foreign_flows, fetch_macro_sbv_manual,
-        fetch_usdvnd_proxy, fetch_global_indicators,
-        fetch_margin_debt_manual, fetch_m2_credit_manual,
-        fetch_vietnam_bonds
-    )
+
 
     df_vni     = fetch_vnindex_ohlcv(use_cache=use_cache)
     df_vni     = compute_vni_returns(df_vni)
@@ -101,16 +116,14 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     # ── Step 2: Feature Engineering ───────────────────────────────────────────
     logger.info("[2/7] Feature engineering...")
-    from src.features.macro_features import build_macro_features
-    from src.features.global_features import build_global_features
-    from src.features.valuation_features import build_valuation_leverage_features
+
 
     df_macro_feat = build_macro_features(df_vni, df_macro, df_fx, df_m2, df_bonds=df_bonds)
     df_global_feat = build_global_features(df_vni, df_global, df_ff)
     df_val_feat = build_valuation_leverage_features(df_vni, df_margin)
 
     # Merge tất cả features
-    import pandas as pd
+
     df_all = df_vni.copy()
     for df_feat in [df_macro_feat, df_global_feat, df_val_feat]:
         feat_cols = [c for c in df_feat.columns if c != "date"]
@@ -135,7 +148,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     df_all = df_all.dropna(subset=["log_return"]).reset_index(drop=True)
 
-    from src.features.technical_features import add_technical_indicators
+
     df_all = add_technical_indicators(df_all)
     if "net_foreign_flow_b_vnd" in df_all.columns and "net_foreign_flow" not in df_all.columns:
         df_all["net_foreign_flow"] = df_all["net_foreign_flow_b_vnd"]
@@ -156,7 +169,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     mlr_adj_r2   = None
 
     try:
-        from src.models.regression.mlr_model import MLRModel
+
         mlr = MLRModel()
         mlr.fit(df_all)
 
@@ -183,8 +196,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     if not args.skip_var:
         logger.info("[4/7] Fitting VAR model...")
         try:
-            from src.models.var.var_model import VARModel
-            from src.utils.config import VAR_VARIABLES
+
 
             df_var_input = df_all.copy()
             df_var_input = df_var_input.rename(columns={"log_return": "vni_return"})
@@ -221,10 +233,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     if not args.skip_ml:
         logger.info("[5/7] Running ML Walk-Forward Validation...")
         try:
-            from src.models.ml.ml_model import (
-                build_ml_features, create_target_variable,
-                evaluate_wfv, get_feature_importance
-            )
+
 
             df_ml = build_ml_features(df_all)
             df_ml = create_target_variable(df_ml)
@@ -263,10 +272,10 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     # ── Step 6: Quarterly Scoring ─────────────────────────────────────────────
     logger.info("[6/7] Computing quarterly score...")
-    from src.scoring.quarterly_scorer import compute_quarterly_score
+
 
     # Lấy giá trị indicators mới nhất
-    latest = df_all.iloc[-1].copy() if len(df_all) > 0 else pd.Series()
+    latest = df_all.iloc[-1].copy() if len(df_all) > 0 else pd.Series(dtype=float)
 
     # ── Xác định tình trạng FTSE theo lịch sử (nếu auto) ─────────────────────
     if args.ftse_status == "auto":
@@ -299,10 +308,10 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     # ── Step 7: Build Reports ─────────────────────────────────────────────────
     logger.info("[7/7] Building reports...")
-    from src.reporting.report_builder import build_html_report, export_score_json
+
 
     # Load score history
-    from src.utils.config import SCORES_DIR
+
     history_path = SCORES_DIR / "quarterly_scores_history.parquet"
     score_history = None
     if history_path.exists():
@@ -342,7 +351,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     # ── Auto-update README with latest results ─────────────────────────────
     try:
-        import subprocess
+
         subprocess.run(
             [sys.executable, str(PROJECT_ROOT / "scripts" / "update_readme_results.py")],
             cwd=str(PROJECT_ROOT), check=True
