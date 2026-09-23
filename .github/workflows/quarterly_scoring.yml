@@ -38,6 +38,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+      actions: write
 
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────
@@ -137,3 +138,12 @@ jobs:
           " 2>/dev/null || echo "Score data not available")
             echo "$SCORE" >> $GITHUB_STEP_SUMMARY
           fi
+
+      # ── 9. Trigger Deploy ───────────────────────────────────────────────────
+      - name: "🚀 Trigger Deploy to GitHub Pages"
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering deploy_pages.yml..."
+          gh workflow run deploy_pages.yml
