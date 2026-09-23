@@ -1,14 +1,14 @@
 {
   "metadata": {
     "quarter": "2021-Q2",
-    "generated_at": "2026-09-23T15:26:08.591394",
+    "generated_at": "2026-09-24T03:05:27.342664",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2021-Q2",
-    "date_computed": "2026-09-23 15:26",
-    "total_score": 52.59,
+    "date_computed": "2026-09-24 03:05",
+    "total_score": 52.19,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
@@ -35,8 +35,8 @@
         "weighted_score": 3.18
       },
       "market_structure": {
-        "raw_score": 56.0,
-        "weighted_score": 5.6
+        "raw_score": 52.0,
+        "weighted_score": 5.2
       }
     },
     "group_details": {
@@ -50,7 +50,7 @@
       "global_intermarket": {
         "dxy": "Z = 1.96 → score 11",
         "us10y": "1.44% → score 71",
-        "nff": "<MISSING> N/A → default 50",
+        "nff_ex_etf": "<MISSING> Not enough data for Z-score (2021) → default 50",
         "jpy_carry": "Z = 1.50 (neutral) → score 72"
       },
       "valuation_leverage": {
@@ -70,16 +70,17 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50"
+        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
+        "etf_flow": "<MISSING> Not enough data for Z-score (2021) → default 50"
       }
     },
     "group_rationale": {
       "macro_monetary": "Macro: NEUTRAL — USD/VND z=0.2 (stable)",
-      "global_intermarket": "Global: Incomplete data — need DXY, US10Y, NFF, JPY",
+      "global_intermarket": "Global: DXY=2.0σ | US10Y=1.44% | JPY-Z=1.5σ",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=62 | VAR=49 | R²=0.243 | Granger=0",
       "ml_forecast": "ML: Forecast: DOWN (conf=74%) | Quality=43",
-      "market_structure": "FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index"
+      "market_structure": "FTSE: UNKNOWN"
     }
   },
   "mlr_regression": [

@@ -1,14 +1,14 @@
 {
   "metadata": {
     "quarter": "2022-Q3",
-    "generated_at": "2026-09-23T15:32:33.022373",
+    "generated_at": "2026-09-24T03:08:33.032945",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2022-Q3",
-    "date_computed": "2026-09-23 15:32",
-    "total_score": 44.6,
+    "date_computed": "2026-09-24 03:08",
+    "total_score": 44.29,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
@@ -19,8 +19,8 @@
         "weighted_score": 9.34
       },
       "global_intermarket": {
-        "raw_score": 40.78,
-        "weighted_score": 8.16
+        "raw_score": 42.31,
+        "weighted_score": 8.46
       },
       "valuation_leverage": {
         "raw_score": 48.99,
@@ -35,8 +35,8 @@
         "weighted_score": 3.5
       },
       "market_structure": {
-        "raw_score": 56.0,
-        "weighted_score": 5.6
+        "raw_score": 49.94,
+        "weighted_score": 4.99
       }
     },
     "group_details": {
@@ -50,7 +50,8 @@
       "global_intermarket": {
         "dxy": "Z = 1.68 → score 16",
         "us10y": "3.80% → score 24",
-        "nff": "<MISSING> N/A → default 50",
+        "nff_ex_etf": "Z = 0.41 (Neutral) → score 56",
+        "nff_ex_etf_q_ytd": "0.00% of Market Cap (YTD in Q)",
         "jpy_carry": "Z = 1.52 (neutral) → score 73"
       },
       "valuation_leverage": {
@@ -70,16 +71,18 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50"
+        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
+        "etf_flow": "Z = -0.41 (Neutral) → score 44",
+        "etf_flow_q_ytd": "-0.00% of Market Cap (YTD in Q)"
       }
     },
     "group_rationale": {
       "macro_monetary": "Macro: UNFAVORABLE — VN1Y rate 4.06% (elevated) | SBV proxy hikes short-term rate (Δ=0.20%) | USD/VND z=2.8 (pressure) | VN10Y 4.67% (Spread 0.60%)",
-      "global_intermarket": "Global: Incomplete data — need DXY, US10Y, NFF, JPY",
+      "global_intermarket": "Global: DXY=1.7σ | US10Y=3.80% | NFF-Z=0.4σ | JPY-Z=1.5σ",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=48 | VAR=51 | R²=0.244 | Granger=1",
       "ml_forecast": "ML: Forecast: DOWN (conf=85%) | Quality=41",
-      "market_structure": "FTSE Secondary EM upgrade is creating a structural tailwind for VN-Index"
+      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.4σ"
     }
   },
   "mlr_regression": [
