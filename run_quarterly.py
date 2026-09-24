@@ -352,16 +352,22 @@ def run_pipeline(args: argparse.Namespace) -> None:
     logger.info(f"JSON export : {json_path}")
     logger.info(f"{'='*60}")
 
-    # ── Auto-update README with latest results ─────────────────────────────
+    # ── Auto-update README and Sync all HTML reports ───────────────────────────
     try:
-
         subprocess.run(
             [sys.executable, str(PROJECT_ROOT / "scripts" / "update_readme_results.py")],
             cwd=str(PROJECT_ROOT), check=True
         )
         logger.info("[README] Auto-updated results section")
+        
+        # Đồng bộ lịch sử cho tất cả các HTML báo cáo cũ
+        subprocess.run(
+            [sys.executable, str(PROJECT_ROOT / "scripts" / "rebuild_html.py")],
+            cwd=str(PROJECT_ROOT), check=True
+        )
+        logger.info("[HTML] Auto-synced historical charts for all quarters")
     except Exception as e:
-        logger.warning(f"[README] Could not auto-update: {e}")
+        logger.warning(f"[AUTO-SYNC] Could not auto-sync files: {e}")
 
 
 if __name__ == "__main__":
