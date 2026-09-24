@@ -159,6 +159,46 @@ def build_jpy_features(df_global: pd.DataFrame) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 2.7. Brent Oil Features (Oil Shock)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def build_oil_features(df_oil: pd.DataFrame) -> pd.DataFrame:
+    """
+    Tạo features đo lường cú sốc giá dầu (địa chính trị)
+    - max_weekly_change: mức tăng 5 ngày lớn nhất trong quý
+    - n_shock_days: số ngày có |Δ 5 ngày| > threshold
+    """
+    df = df_oil.copy()
+    if "brent_close" not in df.columns:
+        logger.warning("[OIL] Không có cột brent_close — bỏ qua")
+        return df
+
+    df["brent_pct_change_5d"] = df["brent_close"].pct_change(5)
+
+    df["YQ"] = df["date"].dt.to_period("Q")
+    df["q_group"] = df["YQ"]
+
+    # YTD max 5-day change in the current quarter
+    df["oil_max_weekly_change_ytd"] = df.groupby("q_group")["brent_pct_change_5d"].cummax()
+    
+    # Threshold 5.5% (0.055) thay vì 8% để bắt được sự kiện 2024Q2 (max change ~ 5.68%)
+    threshold = 0.055
+    df["is_shock_day"] = (df["brent_pct_change_5d"] > threshold).astype(int)
+    df["oil_n_shock_days_ytd"] = df.groupby("q_group")["is_shock_day"].cumsum()
+    
+    df["oil_max_weekly_change_ytd"] = df["oil_max_weekly_change_ytd"].fillna(0)
+    
+    df["oil_shock_score_ytd"] = np.where(
+        df["oil_max_weekly_change_ytd"] > threshold,
+        (df["oil_max_weekly_change_ytd"] * 100) * 1.5 + df["oil_n_shock_days_ytd"] * 0.5,
+        0.0
+    )
+    
+    df = df.drop(columns=["YQ", "q_group", "is_shock_day"])
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 3. Net Foreign Flow Features
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -301,7 +341,8 @@ def compute_rolling_correlations(
 def build_global_features(
     df_vni: pd.DataFrame,
     df_global: pd.DataFrame,
-    df_ff: pd.DataFrame
+    df_ff: pd.DataFrame,
+    df_oil: pd.DataFrame = None
 ) -> pd.DataFrame:
     """
     Pipeline đầy đủ: tổng hợp tất cả global intermarket features.
@@ -311,6 +352,7 @@ def build_global_features(
     df_vni    : VNI OHLCV + returns (cột 'date', 'log_return')
     df_global : DXY + US10Y data
     df_ff     : Net Foreign Flows data
+    df_oil    : Brent Oil data
 
     Returns
     -------
@@ -349,6 +391,16 @@ def build_global_features(
             if col not in result.columns and col in df_jpy.columns:
                 result = result.merge(
                     df_jpy[["date", col]], on="date", how="left"
+                )
+
+    # 2.7 Brent Oil features
+    if df_oil is not None and not df_oil.empty and "brent_close" in df_oil.columns:
+        df_oil_feat = build_oil_features(df_oil)
+        oil_cols = [c for c in df_oil_feat.columns if "oil" in c or "brent" in c]
+        for col in oil_cols:
+            if col not in result.columns and col in df_oil_feat.columns:
+                result = result.merge(
+                    df_oil_feat[["date", col]], on="date", how="left"
                 )
 
     # 3. Net Foreign Flow features

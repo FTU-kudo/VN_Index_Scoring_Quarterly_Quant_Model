@@ -30,7 +30,7 @@ from src.data.fetcher import (
     fetch_foreign_flows, fetch_macro_sbv_manual,
     fetch_usdvnd_proxy, fetch_global_indicators,
     fetch_margin_debt_manual, fetch_m2_credit_manual,
-    fetch_vietnam_bonds
+    fetch_vietnam_bonds, fetch_brent_oil
 )
 from src.features.macro_features import build_macro_features
 from src.features.global_features import build_global_features
@@ -113,13 +113,14 @@ def run_pipeline(args: argparse.Namespace) -> None:
     df_margin  = fetch_margin_debt_manual()
     df_m2      = fetch_m2_credit_manual()
     df_bonds   = fetch_vietnam_bonds()
+    df_oil     = fetch_brent_oil(use_cache=use_cache)
 
     # ── Step 2: Feature Engineering ───────────────────────────────────────────
     logger.info("[2/7] Feature engineering...")
 
 
     df_macro_feat = build_macro_features(df_vni, df_macro, df_fx, df_m2, df_bonds=df_bonds)
-    df_global_feat = build_global_features(df_vni, df_global, df_ff)
+    df_global_feat = build_global_features(df_vni, df_global, df_ff, df_oil)
     df_val_feat = build_valuation_leverage_features(df_vni, df_margin)
 
     # Merge tất cả features

@@ -230,7 +230,25 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
         jpy_z = np.nan
         details["jpy_carry"] = "<MISSING> N/A → default 50"
 
-    raw = np.mean([dxy_score, us10y_score, nff_score, jpy_score])
+    # ── Oil Shock (Geopolitical risk) ────────────────────────────────────────
+    oil_shock = df_latest.get("oil_shock_score_ytd", np.nan)
+    if pd.notna(oil_shock) and oil_shock > 0:
+        # Nếu có sốc, trừ điểm. Thang oil_shock > 0
+        # Trọng số khiêm tốn: score giảm tương ứng với shock
+        oil_score = _clamp_score(100 - oil_shock) # Nếu shock=45 -> score 55. Nếu shock=0 -> score 100 (tuy nhiên ta chỉ tính khi có shock)
+        scores["oil_score"] = oil_score
+        max_c = df_latest.get("oil_max_weekly_change_ytd", 0)
+        details["oil_shock"] = f"Oil Shock Score = {oil_shock:.1f} (Max Δ5d = {max_c:.1%}) → score {oil_score:.0f}"
+    else:
+        oil_score = 50.0
+        details["oil_shock"] = "No Geopolitical Oil Shock Detected (Score = 0)"
+
+    # Trọng số khiêm tốn cho Oil: ta sẽ trung bình nó với các biến chính nếu có shock
+    components = [dxy_score, us10y_score, nff_score, jpy_score]
+    if pd.notna(oil_shock) and oil_shock > 0:
+        components.append(oil_score)
+        
+    raw = np.mean(components)
     
     # Áp dụng ngưỡng cảnh báo (cap) nếu JPY giảm sốc (Carry Trade Unwind)
     if pd.notna(jpy_z) and jpy_z < -2.0:
@@ -244,6 +262,7 @@ def score_global_intermarket(df_latest: pd.Series) -> Dict[str, Any]:
     if pd.notna(us10y): rat_parts.append(f"US10Y={us10y:.2f}%")
     if pd.notna(nff_z): rat_parts.append(f"NFF-Z={nff_z:.1f}σ")
     if pd.notna(jpy_z): rat_parts.append(f"JPY-Z={jpy_z:.1f}σ")
+    if pd.notna(oil_shock) and oil_shock > 0: rat_parts.append(f"OIL-SHOCK={oil_shock:.1f}")
 
     return {
         "group":          "global_intermarket",
