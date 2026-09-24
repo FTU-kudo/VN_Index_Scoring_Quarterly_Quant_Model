@@ -197,25 +197,6 @@
       };
     </script>
     
-        <script>
-          window.chartDataLine = {
-            labels: ["2021-Q1", "2021-Q2", "2021-Q3", "2021-Q4", "2022-Q1", "2022-Q2", "2022-Q3", "2022-Q4", "2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"],
-            datasets: [{
-              label: 'Total Score',
-              data: [58.69, 54.64, 55.48, 54.45, 56.37, 52.400000000000006, 49.01, 47.4, 52.45, 55.09, 58.39, 53.949999999999996, 51.44999999999999, 54.660000000000004, 52.190000000000005, 55.730000000000004, 50.14, 52.39, 52.120000000000005, 49.49, 52.49, 48.61, 53.099999999999994, 53.76],
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              borderWidth: 3,
-              pointBackgroundColor: '#3b82f6',
-              pointBorderColor: '#fff',
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              fill: true,
-              tension: 0.3
-            }]
-          };
-        </script>
-        
       
       <div id="tab-overview" class="tab-content active">
         
@@ -360,146 +341,11 @@
       
       <div id="tab-models" class="tab-content">
         
-        <div class="section">
-          <h2>📐 <span class="lang-en">Multiple Linear Regression (MLR) Results</span><span class="lang-vi">Kết quả Hồi quy Đa biến (MLR)</span></h2>
-          <div class="math-formula">
-            R_VNI = α + β₁·ΔVN1Y + β₂·ΔDXY + β₃·NFF + β₄·Z(PE) + β₅·ΔMrg + β₆·ΔUS10Y + β₇·ΔUSD/JPY + ε
-          </div>
-          <div class="table-responsive">
-          <table>
-            <thead><tr>
-              <th><span class="lang-en">Variable</span><span class="lang-vi">Biến độc lập</span></th><th>Beta (β)</th><th>P-value</th>
-              <th><span class="lang-en">Sign Expected</span><span class="lang-vi">Dấu kỳ vọng</span></th><th><span class="lang-en">Sign Actual</span><span class="lang-vi">Dấu thực tế</span></th><th><span class="lang-en">Sign OK</span><span class="lang-vi">Đúng kỳ vọng?</span></th>
-            </tr></thead>
-            <tbody><tr>
-              <td>delta_dxy</td>
-              <td style="font-weight:700;">-0.046305</td>
-              <td style="color:var(--text-muted);">0.5788 </td>
-              <td>-</td>
-              <td>-</td>
-              <td><span class="badge badge-ok">✅</span></td>
-            </tr><tr>
-              <td>delta_us10y</td>
-              <td style="font-weight:700;">0.017134</td>
-              <td style="color:var(--color-blue);">0.0151 **</td>
-              <td>-</td>
-              <td>+</td>
-              <td><span class="badge badge-fail">❌</span></td>
-            </tr><tr>
-              <td>delta_usdjpy</td>
-              <td style="font-weight:700;">0.039659</td>
-              <td style="color:var(--text-muted);">0.5561 </td>
-              <td>+</td>
-              <td>+</td>
-              <td><span class="badge badge-ok">✅</span></td>
-            </tr><tr>
-              <td>usd_vnd_pct_change</td>
-              <td style="font-weight:700;">0.025635</td>
-              <td style="color:var(--text-muted);">0.6755 </td>
-              <td>?</td>
-              <td>+</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>rsi_14</td>
-              <td style="font-weight:700;">0.000027</td>
-              <td style="color:var(--text-muted);">0.6919 </td>
-              <td>?</td>
-              <td>+</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>macd_hist</td>
-              <td style="font-weight:700;">-0.000613</td>
-              <td style="color:var(--color-green);">0.0 ***</td>
-              <td>?</td>
-              <td>-</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>bb_pct</td>
-              <td style="font-weight:700;">0.027181</td>
-              <td style="color:var(--color-green);">0.0 ***</td>
-              <td>?</td>
-              <td>+</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>rvol_20d</td>
-              <td style="font-weight:700;">0.028881</td>
-              <td style="color:var(--color-green);">0.0 ***</td>
-              <td>?</td>
-              <td>+</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>drawdown_from_peak</td>
-              <td style="font-weight:700;">0.015338</td>
-              <td style="color:var(--text-muted);">0.2221 </td>
-              <td>?</td>
-              <td>+</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>price_vs_ma200</td>
-              <td style="font-weight:700;">-0.015217</td>
-              <td style="color:var(--color-green);">0.0006 ***</td>
-              <td>?</td>
-              <td>-</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>log_return_lag1</td>
-              <td style="font-weight:700;">-0.126609</td>
-              <td style="color:var(--color-green);">0.0002 ***</td>
-              <td>?</td>
-              <td>-</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr><tr>
-              <td>log_return_lag5</td>
-              <td style="font-weight:700;">-0.051758</td>
-              <td style="color:var(--text-muted);">0.1646 </td>
-              <td>?</td>
-              <td>-</td>
-              <td><span class="badge badge-fail">—</span></td>
-            </tr></tbody>
-          </table>
-          </div>
-        </div>
         
-        <div class="section">
-          <h2>🔮 <span class="lang-en">VAR Granger Causality Tests</span><span class="lang-vi">Kiểm định VAR Granger Causality</span></h2>
-          <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px; opacity:0.9;">
-            <span class="lang-en">H₀: Variable does not Granger-cause VNI_Return. If p-value < 0.05, we reject H₀ (i.e. the variable leads the VN-Index).</span><span class="lang-vi">H₀: Biến số không tác động nhân quả (Granger) lên lợi suất VNI. Nếu p-value < 0.05, bác bỏ H₀ (tức là biến có tính dẫn dắt VN-Index).</span>
-          </p>
-          <div class="table-responsive">
-          <table>
-            <thead><tr>
-              <th><span class="lang-en">Variable</span><span class="lang-vi">Biến số</span></th><th><span class="lang-en">F-Statistic</span><span class="lang-vi">Thống kê F</span></th><th>P-value</th>
-              <th><span class="lang-en">Causes VNI?</span><span class="lang-vi">Dẫn dắt VNI?</span></th>
-            </tr></thead>
-            <tbody><tr>
-              <td>delta_dxy</td>
-              <td style="font-weight:700;">13.0239</td>
-              <td style="color:var(--color-green);">0.0 ***</td>
-              <td><span class="badge badge-ok">✅ Yes</span></td>
-            </tr><tr>
-              <td>delta_usdjpy</td>
-              <td style="font-weight:700;">0.359</td>
-              <td style="color:var(--text-muted);">0.6984 </td>
-              <td><span class="badge badge-fail">❌ No</span></td>
-            </tr><tr>
-              <td>delta_us10y</td>
-              <td style="font-weight:700;">0.3548</td>
-              <td style="color:var(--text-muted);">0.7014 </td>
-              <td><span class="badge badge-fail">❌ No</span></td>
-            </tr></tbody>
-          </table>
-          </div>
-        </div>
       </div>
       
       <div id="tab-history" class="tab-content">
         
-        <div class="section">
-          <h2>📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
-          <div class="chart-container" style="height: 300px;">
-            <canvas id="lineChart"></canvas>
-          </div>
-        </div>
       </div>
       
       
@@ -697,7 +543,7 @@
 
       <div class="disclaimer">
         <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
-        Generated at: 2026-09-24 22:54:10
+        Generated at: 2026-09-24 23:32:50
       </div>
     </div>
   </div>
