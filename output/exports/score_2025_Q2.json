@@ -1,69 +1,69 @@
 {
   "metadata": {
     "quarter": "2025-Q2",
-    "generated_at": "2026-09-24T22:21:31.733244",
+    "generated_at": "2026-09-24T22:53:48.122659",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2025-Q2",
-    "date_computed": "2026-09-24 22:21",
-    "total_score": 51.95,
+    "date_computed": "2026-09-24 22:53",
+    "total_score": 52.39,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "quant_model",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 53.56,
-        "weighted_score": 13.39
+        "raw_score": 58.31,
+        "weighted_score": 14.58
       },
       "global_intermarket": {
-        "raw_score": 56.9,
-        "weighted_score": 11.38
+        "raw_score": 53.47,
+        "weighted_score": 10.69
       },
       "valuation_leverage": {
-        "raw_score": 40.54,
-        "weighted_score": 8.11
+        "raw_score": 39.91,
+        "weighted_score": 7.98
       },
       "quant_model": {
-        "raw_score": 59.93,
-        "weighted_score": 8.99
+        "raw_score": 60.48,
+        "weighted_score": 9.07
       },
       "ml_forecast": {
         "raw_score": 50.0,
         "weighted_score": 5.0
       },
       "market_structure": {
-        "raw_score": 50.79,
-        "weighted_score": 5.08
+        "raw_score": 50.75,
+        "weighted_score": 5.07
       }
     },
     "group_details": {
       "macro_monetary": {
-        "vn1y_yield": "2.43% → score 80",
-        "ir_trend": "Δ VN1Y = 0.0871 (→ Hold) → score 41",
-        "usd_vnd": "Z-score = 1.10 → score 33",
+        "vn1y_yield": "2.09% → score 85",
+        "ir_trend": "Δ VN1Y = -0.0019 (→ Hold) → score 50",
+        "usd_vnd": "Z-score = 0.92 → score 36",
         "m2_yoy_growth": "<MISSING> N/A → default 50",
-        "vn_bonds": "VN10Y 2.96% | Spread 0.47% → score 63"
+        "vn_bonds": "VN10Y 2.88% | Spread 0.69% → score 70"
       },
       "global_intermarket": {
-        "dxy": "Z = -2.04 → score 91",
-        "us10y": "4.23% → score 15",
+        "dxy": "Z = -1.19 → score 74",
+        "us10y": "4.25% → score 15",
         "nff_ex_etf": "Z = 0.24 (Neutral) → score 54",
         "nff_ex_etf_q_ytd": "-0.00% of Market Cap (YTD in Q)",
-        "jpy_carry": "Z = 0.11 (Neutral) → score 52",
-        "oil_shock": "Oil Shock Score = 27.0 (Max Δ5d = 14.3%) → score 73"
+        "jpy_carry": "Z = -0.80 (Neutral) → score 38",
+        "oil_shock": "Oil Shock Score = 13.1 (Max Δ5d = 7.7%) → score 87"
       },
       "valuation_leverage": {
-        "pe_zscore": "P/E Headline: 9.09 | Median: 10.56 | Ex-VG: 9.11<br>Z = 1.49 (FAIR VALUE) → score 13",
-        "pb_zscore": "Z = 1.67 (OVERVALUED) → score 8",
-        "margin_risk": "Risk = 0/100 (SAFE) → score 100"
+        "pe_zscore": "P/E Headline: 8.93 | Median: 10.69 | Ex-VG: 8.93<br>Z = 1.45 (FAIR VALUE) → score 14",
+        "pb_zscore": "Z = 1.62 (OVERVALUED) → score 9",
+        "margin_risk": "Risk = 10/100 (SAFE) → score 90"
       },
       "quant_model": {
-        "mlr_forecast": "Forecast log-return = 0.0029 → score 59",
-        "var_forecast": "VAR T+5 return = 0.0006 → score 52",
-        "mlr_adj_r2": "Adj-R² = 0.1651 → confidence bonus 1.7",
+        "mlr_forecast": "Forecast log-return = 0.0041 → score 62",
+        "var_forecast": "VAR T+5 return = -0.0002 → score 49",
+        "mlr_adj_r2": "Adj-R² = 0.1693 → confidence bonus 1.7",
         "granger_leaders": "1 vars Granger-cause VNI (p<5%)"
       },
       "ml_forecast": {
@@ -74,24 +74,24 @@
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
         "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
-        "etf_flow": "Z = -0.24 (Neutral) → score 46",
+        "etf_flow": "Z = -0.25 (Neutral) → score 46",
         "etf_flow_q_ytd": "-0.00% of Market Cap (YTD in Q)"
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.43% (low/favorable) | USD/VND z=1.1 (pressure) | VN10Y 2.96% (Spread 0.47%)",
-      "global_intermarket": "Global: DXY=-2.0σ | US10Y=4.23% | NFF-Z=0.2σ | JPY-Z=0.1σ | OIL-SHOCK=27.0",
+      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.09% (low/favorable) | USD/VND z=0.9 (stable) | VN10Y 2.88% (Spread 0.69%)",
+      "global_intermarket": "Global: DXY=-1.2σ | US10Y=4.25% | NFF-Z=0.2σ | JPY-Z=-0.8σ | OIL-SHOCK=13.1",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
-      "quant_model": "MLR=59 | VAR=52 | R²=0.165 | Granger=1",
+      "quant_model": "MLR=62 | VAR=49 | R²=0.169 | Granger=1",
       "ml_forecast": "ML: ML prediction not run | Quality=50",
-      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.2σ"
+      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
     }
   },
   "mlr_regression": [
     {
       "Variable": "delta_dxy",
-      "Beta (β)": -0.013596,
-      "P-value": 0.8833,
+      "Beta (β)": -0.005266,
+      "P-value": 0.9554,
       "Sign Expected": "-",
       "Sign Actual": "-",
       "Sign OK": "✅",
@@ -99,17 +99,17 @@
     },
     {
       "Variable": "delta_us10y",
-      "Beta (β)": 0.018536,
-      "P-value": 0.0169,
+      "Beta (β)": 0.020984,
+      "P-value": 0.0083,
       "Sign Expected": "-",
       "Sign Actual": "+",
       "Sign OK": "❌",
-      "Significance": "**"
+      "Significance": "***"
     },
     {
       "Variable": "delta_usdjpy",
-      "Beta (β)": 0.075226,
-      "P-value": 0.3,
+      "Beta (β)": 0.099483,
+      "P-value": 0.1847,
       "Sign Expected": "+",
       "Sign Actual": "+",
       "Sign OK": "✅",
@@ -117,8 +117,8 @@
     },
     {
       "Variable": "usd_vnd_pct_change",
-      "Beta (β)": 0.02614,
-      "P-value": 0.6896,
+      "Beta (β)": 0.027961,
+      "P-value": 0.6684,
       "Sign Expected": "?",
       "Sign Actual": "+",
       "Sign OK": "—",
@@ -126,7 +126,7 @@
     },
     {
       "Variable": "rsi_14",
-      "Beta (β)": 0.000502,
+      "Beta (β)": 0.00053,
       "P-value": 0.0,
       "Sign Expected": "?",
       "Sign Actual": "+",
@@ -135,8 +135,8 @@
     },
     {
       "Variable": "macd_hist",
-      "Beta (β)": -0.000108,
-      "P-value": 0.3749,
+      "Beta (β)": -0.000134,
+      "P-value": 0.2837,
       "Sign Expected": "?",
       "Sign Actual": "-",
       "Sign OK": "—",
@@ -144,8 +144,8 @@
     },
     {
       "Variable": "rvol_20d",
-      "Beta (β)": 0.028078,
-      "P-value": 0.0,
+      "Beta (β)": 0.02613,
+      "P-value": 0.0001,
       "Sign Expected": "?",
       "Sign Actual": "+",
       "Sign OK": "—",
@@ -153,8 +153,8 @@
     },
     {
       "Variable": "drawdown_from_peak",
-      "Beta (β)": 0.013071,
-      "P-value": 0.2909,
+      "Beta (β)": 0.009,
+      "P-value": 0.4706,
       "Sign Expected": "?",
       "Sign Actual": "+",
       "Sign OK": "—",
@@ -162,8 +162,8 @@
     },
     {
       "Variable": "price_vs_ma200",
-      "Beta (β)": -0.018023,
-      "P-value": 0.0003,
+      "Beta (β)": -0.01794,
+      "P-value": 0.0004,
       "Sign Expected": "?",
       "Sign Actual": "-",
       "Sign OK": "—",
@@ -171,8 +171,8 @@
     },
     {
       "Variable": "log_return_lag1",
-      "Beta (β)": -0.096334,
-      "P-value": 0.0044,
+      "Beta (β)": -0.09772,
+      "P-value": 0.0043,
       "Sign Expected": "?",
       "Sign Actual": "-",
       "Sign OK": "—",
@@ -180,8 +180,8 @@
     },
     {
       "Variable": "log_return_lag5",
-      "Beta (β)": -0.074068,
-      "P-value": 0.0672,
+      "Beta (β)": -0.076562,
+      "P-value": 0.06,
       "Sign Expected": "?",
       "Sign Actual": "-",
       "Sign OK": "—",
@@ -191,22 +191,22 @@
   "granger_causality": [
     {
       "causing_variable": "delta_dxy",
-      "test_statistic": 13.0104,
+      "test_statistic": 12.1649,
       "p_value": 0.0,
       "granger_causes_vni": true,
       "significance": "***"
     },
     {
       "causing_variable": "delta_us10y",
-      "test_statistic": 0.4595,
-      "p_value": 0.6316,
+      "test_statistic": 0.2964,
+      "p_value": 0.7435,
       "granger_causes_vni": false,
       "significance": ""
     },
     {
       "causing_variable": "delta_usdjpy",
-      "test_statistic": 0.0691,
-      "p_value": 0.9332,
+      "test_statistic": 0.1982,
+      "p_value": 0.8202,
       "granger_causes_vni": false,
       "significance": ""
     }

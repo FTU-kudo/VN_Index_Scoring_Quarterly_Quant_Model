@@ -136,14 +136,16 @@ def run_pipeline(args: argparse.Namespace) -> None:
     if "date" in df_all.columns:
         df_all = df_all[df_all["date"] >= "2012-01-01"].reset_index(drop=True)
 
-    # Lọc dữ liệu đến hết quý đang chạy (Tránh Data Leakage)
+    # Lọc dữ liệu đến trước quý đang chạy (Tránh Data Leakage)
     try:
         y_str, q_str = quarter.split("-Q")
-        m_end = int(q_str) * 3
-        # Lấy ngày cuối cùng của tháng cuối quý
-        end_date = pd.to_datetime(f"{y_str}-{m_end:02d}-01") + pd.offsets.MonthEnd(1)
+        # Lấy ngày đầu tiên của quý dự báo
+        m_start = (int(q_str) - 1) * 3 + 1
+        start_date = pd.to_datetime(f"{y_str}-{m_start:02d}-01")
+        # Cut-off data là ngày cuối cùng của quý liền trước
+        end_date = start_date - pd.Timedelta(days=1)
         df_all = df_all[df_all["date"] <= end_date].reset_index(drop=True)
-        logger.info(f"[DATA] Lọc dữ liệu đến {end_date.date()} (Cuối {quarter})")
+        logger.info(f"[DATA] Lọc dữ liệu đến {end_date.date()} (Cut-off cho dự báo {quarter})")
     except Exception as e:
         logger.warning(f"[DATA] Không thể parse quarter {quarter}, dùng toàn bộ dữ liệu. Lỗi: {e}")
 
