@@ -292,8 +292,53 @@ def fetch_usdvnd_proxy(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 4. Global Indicators — DXY, US10Y (qua yfinance)
+# 4. Global Indicators — DXY, US10Y, Brent Oil (qua yfinance)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+def fetch_brent_oil(
+    start: str = HISTORY_START,
+    end:   str = HISTORY_END,
+    use_cache: bool = True
+) -> pd.DataFrame:
+    """
+    Tải dữ liệu giá dầu Brent (BZ=F) từ yfinance làm proxy đo lường cú sốc địa chính trị.
+    Returns
+    -------
+    DataFrame: date, brent_close
+    """
+    cache_path = RAW_DIR / "brent_oil.parquet"
+    if use_cache and cache_path.exists():
+        df = pd.read_parquet(cache_path)
+        logger.info(f"[OIL] Dùng cache Brent Oil ({len(df)} rows)")
+        return df
+
+    logger.info("[OIL] Đang tải Brent Oil từ yfinance...")
+    try:
+        import yfinance as yf
+        raw = yf.download("BZ=F", start=start, end=end, interval="1d",
+                          progress=False, auto_adjust=True)
+        if raw.empty:
+            raise ValueError("yfinance trả về dữ liệu trống cho BZ=F")
+
+        df = raw[["Close"]].copy()
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.droplevel(1)
+        df.columns = ["brent_close"]
+        df.index = pd.to_datetime(df.index).tz_localize(None)
+        
+        df = df.reset_index().rename(columns={"index": "date", "Date": "date"})
+        df = df.sort_values("date").reset_index(drop=True)
+        df.to_parquet(cache_path, index=False)
+        logger.info(f"[OIL] Đã tải {len(df)} phiên giá dầu Brent")
+    except ImportError:
+        logger.warning("[OIL] yfinance chưa cài đặt")
+        df = pd.DataFrame(columns=["date", "brent_close"])
+    except Exception as e:
+        logger.error(f"[OIL] Lỗi khi tải giá dầu: {e}")
+        df = pd.DataFrame(columns=["date", "brent_close"])
+
+    return df
+
 
 def fetch_global_indicators(
     start: str = HISTORY_START,
@@ -302,6 +347,7 @@ def fetch_global_indicators(
 ) -> pd.DataFrame:
     """
     Tải DXY, US10Y Yield, và USD/JPY từ yfinance.
+
 
     Mã yfinance:
       - DX-Y.NYB : US Dollar Index (proxy cho DXY)

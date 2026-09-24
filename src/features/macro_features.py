@@ -221,7 +221,49 @@ def build_vietnam_bond_features(df_bonds: pd.DataFrame) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 6. Pipeline Tổng hợp Macro Features
+# 6. Global & Intermarket: Brent Oil Shock Features
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def build_oil_shock_features(df_oil: pd.DataFrame) -> pd.DataFrame:
+    """
+    Tính biến oil_shock_score để đo lường cú sốc địa chính trị (cú sốc cung).
+    Tính theo rolling 60 phiên (tương đương 1 quý giao dịch) để tránh look-ahead bias
+    và phản ứng realtime khi có sự kiện.
+    """
+    df = df_oil.copy()
+    if df.empty or "brent_close" not in df.columns:
+        logger.warning("[OIL] DataFrame rỗng hoặc thiếu cột — bỏ qua")
+        return df
+
+    df["oil_pct_change_5d"] = df["brent_close"].pct_change(5)
+    threshold = 0.08
+    
+    # max_weekly_change rolling 60 ngày
+    df["oil_max_5d_change_60d"] = df["oil_pct_change_5d"].rolling(60, min_periods=20).max()
+    
+    # n_shock_weeks (số ngày vượt ngưỡng)
+    shock_flag = (df["oil_pct_change_5d"] > threshold).astype(int)
+    df["oil_n_shock_days_60d"] = shock_flag.rolling(60, min_periods=20).sum()
+    
+    def calc_score(row):
+        max_c = row["oil_max_5d_change_60d"]
+        n_days = row["oil_n_shock_days_60d"]
+        if pd.isna(max_c) or max_c <= threshold:
+            return 0.0
+        # Tính điểm = max_change * 100 * 1.5 + n_days * 0.5
+        # Không mang dấu (-1) cố định vì ta chỉ trừ điểm khi có sốc giá tăng đột ngột (max > 8%)
+        # Không phạt các đợt tăng đều do phục hồi kinh tế.
+        return (max_c * 100) * 1.5 + (n_days * 0.5)
+        
+    df["oil_shock_score"] = df.apply(calc_score, axis=1)
+    
+    # Create lag features
+    df = create_lag_features(df, ["oil_pct_change_5d", "oil_shock_score"], lags=[1, 5, 10])
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 7. Pipeline Tổng hợp Macro Features
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def build_macro_features(
@@ -229,7 +271,8 @@ def build_macro_features(
     df_macro_sbv: pd.DataFrame,
     df_fx: pd.DataFrame,
     df_m2: pd.DataFrame,
-    df_bonds: pd.DataFrame = None
+    df_bonds: pd.DataFrame = None,
+    df_oil: pd.DataFrame = None
 ) -> pd.DataFrame:
     """
     Pipeline đầy đủ: merge tất cả macro features theo ngày giao dịch VNI.
@@ -275,6 +318,15 @@ def build_macro_features(
         for col in bond_cols:
             if col in result.columns:
                 result[col] = result[col].ffill(limit=3)
+
+    # 5. Global & Intermarket: Brent Oil Shock features
+    if df_oil is not None and not df_oil.empty:
+        df_oil_feat = build_oil_shock_features(df_oil)
+        oil_cols = [c for c in df_oil_feat.columns if c != "date"]
+        result = result.merge(df_oil_feat[["date"] + oil_cols], on="date", how="left")
+        for col in oil_cols:
+            if col in result.columns:
+                result[col] = result[col].ffill(limit=5)
 
     # Lưu cache
     out_path = FEATURES_DIR / "macro_features.parquet"
