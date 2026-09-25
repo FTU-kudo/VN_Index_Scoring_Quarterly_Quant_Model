@@ -95,7 +95,7 @@ def patch_html():
               display: true, 
               position: 'top', 
               align: 'end',
-              labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor, filter: function(item, data) { if (item.datasetIndex === 1) return !data.datasets[1].hidden; return true; } }
+              labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor, filter: function(item, data) { return !data.datasets[item.datasetIndex].hidden; } }
             },
             tooltip: {
               backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
