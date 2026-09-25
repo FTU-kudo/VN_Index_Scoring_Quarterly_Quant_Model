@@ -31,17 +31,37 @@ def patch_html():
 
         # 4. Chart options
         match = re.search(r'lineChartInstance = new Chart\(lineCtx, \{.*?\}\);', html, re.DOTALL)
-        if match and 'drawTime: \'beforeDraw\'' not in html:
+        if match:
             old_chart = match.group(0)
             new_chart = '''// MUTATE SCORE DATASET
       if (window.chartDataLine && window.chartDataLine.datasets && window.chartDataLine.datasets.length > 0) {
-          window.chartDataLine.datasets[0].borderColor = '#2563eb';
-          window.chartDataLine.datasets[0].pointBackgroundColor = '#2563eb';
           window.chartDataLine.datasets[0].borderWidth = 3;
           window.chartDataLine.datasets[0].pointRadius = 4;
-          window.chartDataLine.datasets[0].tension = 0.25;
+          window.chartDataLine.datasets[0].tension = 0.3;
           window.chartDataLine.datasets[0].order = 1;
+          window.chartDataLine.datasets[0].fill = false;
           window.chartDataLine.datasets[0].label = document.body.classList.contains('lang-vi-active') ? 'Điểm tổng hợp' : 'Composite Score';
+          
+          // Dynamic coloring based on score zones
+          window.chartDataLine.datasets[0].segment = {
+              borderColor: ctx => {
+                  const val = ctx.p1.parsed.y;
+                  if (val >= 80) return '#22c55e'; // BUY
+                  if (val >= 65) return '#3b82f6'; // ACCUMULATE
+                  if (val >= 50) return '#eab308'; // HOLD
+                  if (val >= 35) return '#f97316'; // REDUCE
+                  return '#ef4444'; // SELL
+              }
+          };
+          window.chartDataLine.datasets[0].pointBackgroundColor = ctx => {
+              const val = ctx.raw;
+              if (val >= 80) return '#22c55e';
+              if (val >= 65) return '#3b82f6';
+              if (val >= 50) return '#eab308';
+              if (val >= 35) return '#f97316';
+              return '#ef4444';
+          };
+          window.chartDataLine.datasets[0].pointBorderColor = '#fff';
       }
       
       lineChartInstance = new Chart(lineCtx, {
@@ -50,22 +70,22 @@ def patch_html():
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          animation: { duration: 800, easing: 'easeOutQuart' },
+          animation: { duration: 1000, easing: 'easeOutQuart' },
           interaction: { mode: 'index', intersect: false },
           scales: {
             x: { 
-              grid: { color: gridColor }, 
+              grid: { display: false }, 
               ticks: { color: 'var(--text-muted)', font: { size: 11 } } 
             },
             y: { 
               type: 'linear', display: true, position: 'left', 
-              grid: { color: 'var(--border-color)' }, 
+              grid: { display: false }, 
               ticks: { color: textColor }, min: 0, max: 100,
               title: { display: true, text: 'Composite Score (0–100)', color: textColor, font: { weight: 'bold' } }
             },
             y1: { 
               type: 'linear', display: false, position: 'right', 
-              grid: { drawOnChartArea: false }, 
+              grid: { display: false }, 
               ticks: { color: textColor },
               title: { display: true, text: 'VN-Index', color: textColor, font: { weight: 'bold' } }
             }
@@ -75,7 +95,7 @@ def patch_html():
               display: true, 
               position: 'top', 
               align: 'end',
-              labels: { usePointStyle: true, pointStyle: 'line', font: { size: 12, weight: '600' }, color: textColor }
+              labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor }
             },
             tooltip: {
               backgroundColor: 'var(--bg-card)',
@@ -102,11 +122,11 @@ def patch_html():
             },
             annotation: {
               annotations: {
-                box1: { type: 'box', yMin: 80, yMax: 100, backgroundColor: 'rgba(34, 197, 94, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box2: { type: 'box', yMin: 65, yMax: 80, backgroundColor: 'rgba(59, 130, 246, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box3: { type: 'box', yMin: 50, yMax: 65, backgroundColor: 'rgba(234, 179, 8, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box4: { type: 'box', yMin: 35, yMax: 50, backgroundColor: 'rgba(249, 115, 22, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box5: { type: 'box', yMin: 0, yMax: 35, backgroundColor: 'rgba(239, 68, 68, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' }
+                box1: { type: 'box', yMin: 80, yMax: 100, backgroundColor: 'rgba(34, 197, 94, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box2: { type: 'box', yMin: 65, yMax: 80, backgroundColor: 'rgba(59, 130, 246, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box3: { type: 'box', yMin: 50, yMax: 65, backgroundColor: 'rgba(234, 179, 8, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box4: { type: 'box', yMin: 35, yMax: 50, backgroundColor: 'rgba(249, 115, 22, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box5: { type: 'box', yMin: 0, yMax: 35, backgroundColor: 'rgba(239, 68, 68, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' }
               }
             }
           }
@@ -115,9 +135,15 @@ def patch_html():
             html = html.replace(old_chart, new_chart)
 
         # 5. Injection dataset props
-        html = html.replace("borderColor: '#10b981',", "borderColor: '#64748b',")
-        if 'borderDash: [5, 3]' not in html:
-            html = html.replace("pointRadius: 0,", "pointRadius: 3,\n                borderDash: [5, 3],\n                tension: 0.25,\n                order: 2,")
+        # We need to make VN-Index an area chart (mountain)
+        html = re.sub(r"borderColor: '#64748b',.*?hidden: true", 
+                      "borderColor: '#94a3b8',\n                backgroundColor: 'rgba(148, 163, 184, 0.15)',\n                borderWidth: 2,\n                fill: true,\n                pointRadius: 0,\n                tension: 0.3,\n                order: 2,\n                pointHoverRadius: 4,\n                yAxisID: 'y1',\n                hidden: true", 
+                      html, flags=re.DOTALL)
+        
+        # In case it hasn't been patched by the first regex due to state, let's also catch the original
+        html = re.sub(r"borderColor: '#10b981',.*?hidden: true", 
+                      "borderColor: '#94a3b8',\n                backgroundColor: 'rgba(148, 163, 184, 0.15)',\n                borderWidth: 2,\n                fill: true,\n                pointRadius: 0,\n                tension: 0.3,\n                order: 2,\n                pointHoverRadius: 4,\n                yAxisID: 'y1',\n                hidden: true", 
+                      html, flags=re.DOTALL)
             
         with open(path, 'w', encoding='utf-8') as f:
             f.write(html)
