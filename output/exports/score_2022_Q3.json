@@ -1,88 +1,88 @@
 {
   "metadata": {
     "quarter": "2022-Q3",
-    "generated_at": "2026-09-24T22:52:27.160833",
+    "generated_at": "2026-09-25T12:11:45.309571",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2022-Q3",
-    "date_computed": "2026-09-24 22:52",
-    "total_score": 49.01,
+    "date_computed": "2026-09-25 12:11",
+    "total_score": 48.85,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "valuation_leverage",
+    "most_divergent_pillar": "ml_forecast",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 45.95,
-        "weighted_score": 11.49
+        "raw_score": 37.36,
+        "weighted_score": 9.34
       },
       "global_intermarket": {
-        "raw_score": 56.16,
-        "weighted_score": 11.23
+        "raw_score": 50.37,
+        "weighted_score": 10.07
       },
       "valuation_leverage": {
-        "raw_score": 42.5,
-        "weighted_score": 8.5
+        "raw_score": 48.99,
+        "weighted_score": 9.8
       },
       "quant_model": {
-        "raw_score": 52.06,
-        "weighted_score": 7.81
+        "raw_score": 49.84,
+        "weighted_score": 7.48
       },
       "ml_forecast": {
-        "raw_score": 50.0,
-        "weighted_score": 5.0
+        "raw_score": 71.65,
+        "weighted_score": 7.17
       },
       "market_structure": {
-        "raw_score": 49.77,
-        "weighted_score": 4.98
+        "raw_score": 49.94,
+        "weighted_score": 4.99
       }
     },
     "group_details": {
       "macro_monetary": {
-        "vn1y_yield": "<MISSING> N/A → default 50",
-        "ir_trend": "<MISSING> N/A → default 50",
-        "usd_vnd": "Z-score = 1.35 → score 30",
+        "vn1y_yield": "4.06% → score 57",
+        "ir_trend": "Δ VN1Y = 0.2023 (↑ Hike) → score 30",
+        "usd_vnd": "Z-score = 2.82 → score 8",
         "m2_yoy_growth": "<MISSING> N/A → default 50",
-        "vn_bonds": "<MISSING> N/A → default 50"
+        "vn_bonds": "VN10Y 4.67% | Spread 0.60% → score 42"
       },
       "global_intermarket": {
-        "dxy": "Z = 1.18 → score 26",
-        "us10y": "2.97% → score 41",
-        "nff_ex_etf": "Z = 0.45 (Neutral) → score 57",
-        "nff_ex_etf_q_ytd": "0.00% of Market Cap (YTD in Q)",
-        "jpy_carry": "Z = 1.87 (Neutral) → score 78",
-        "oil_shock": "Oil Shock Score = 21.1 (Max Δ5d = 11.1%) → score 79"
+        "dxy": "Z = 1.68 → score 16",
+        "us10y": "3.80% → score 24",
+        "nff_ex_etf": "Z = 0.41 (Neutral) → score 56",
+        "nff_ex_etf_q_ytd": "0.03% of Market Cap (YTD in Q)",
+        "jpy_carry": "Z = 1.52 (Neutral) → score 73",
+        "oil_shock": "Oil Shock Score = 17.4 (Max Δ5d = 8.9%) → score 83"
       },
       "valuation_leverage": {
         "pe_zscore": "<MISSING> N/A → default 50",
-        "margin_risk": "Risk = 80/100 (DANGER) → score 20"
+        "margin_risk": "Risk = 54/100 (WARNING) → score 46"
       },
       "quant_model": {
         "mlr_forecast": "Forecast log-return = -0.0017 → score 45",
-        "var_forecast": "VAR T+5 return = -0.0005 → score 48",
+        "var_forecast": "<MISSING> No VAR forecast",
         "mlr_adj_r2": "Adj-R² = 0.2360 → confidence bonus 2.4",
-        "granger_leaders": "1 vars Granger-cause VNI (p<5%)"
+        "granger_leaders": "<MISSING> N/A"
       },
       "ml_forecast": {
-        "model_quality": "<MISSING> N/A",
-        "ml_signal": "<MISSING> ML prediction not run"
+        "model_quality": "Accuracy=45.0% F1=0.393 → quality 42",
+        "ml_signal": "Forecast: UP (conf=69%)"
       },
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
         "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
-        "etf_flow": "Z = -0.45 (Neutral) → score 43",
-        "etf_flow_q_ytd": "0.00% of Market Cap (YTD in Q)"
+        "etf_flow": "Z = -0.41 (Neutral) → score 44",
+        "etf_flow_q_ytd": "-0.03% of Market Cap (YTD in Q)"
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — USD/VND z=1.3 (pressure)",
-      "global_intermarket": "Global: DXY=1.2σ | US10Y=2.97% | NFF-Z=0.4σ | JPY-Z=1.9σ | OIL-SHOCK=21.1",
+      "macro_monetary": "Macro: UNFAVORABLE — VN1Y rate 4.06% (elevated) | SBV proxy hikes short-term rate (Δ=0.20%) | USD/VND z=2.8 (pressure) | VN10Y 4.67% (Spread 0.60%)",
+      "global_intermarket": "Global: DXY=1.7σ | US10Y=3.80% | NFF-Z=0.4σ | JPY-Z=1.5σ | OIL-SHOCK=17.4",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
-      "quant_model": "MLR=45 | VAR=48 | R²=0.236 | Granger=1",
-      "ml_forecast": "ML: ML prediction not run | Quality=50",
+      "quant_model": "MLR=45 | VAR=50 | R²=0.236 | Granger=N/A",
+      "ml_forecast": "ML: Forecast: UP (conf=69%) | Quality=42",
       "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.4σ"
     }
   },
@@ -196,29 +196,233 @@
       "Significance": ""
     }
   ],
-  "granger_causality": [
+  "granger_causality": null,
+  "ml_walk_forward_validation": {
+    "model_type": "xgboost",
+    "n_folds": 8,
+    "n_features": 72,
+    "features_used": [
+      "usd_vnd_close",
+      "usd_vnd_pct_change",
+      "usd_vnd_zscore",
+      "fx_5d_change",
+      "fx_devaluation_flag",
+      "usd_vnd_pct_change_lag1",
+      "usd_vnd_pct_change_lag5",
+      "usd_vnd_pct_change_lag10",
+      "usd_vnd_zscore_lag1",
+      "usd_vnd_zscore_lag5",
+      "usd_vnd_zscore_lag10",
+      "dxy_close",
+      "us10y_yield",
+      "usdjpy_close",
+      "dxy_pct_change",
+      "us10y_delta",
+      "delta_dxy",
+      "dxy_zscore_60d",
+      "dxy_momentum_20d",
+      "delta_dxy_lag1",
+      "delta_dxy_lag5",
+      "delta_dxy_lag10",
+      "delta_us10y",
+      "us10y_30d_change",
+      "us10y_zscore_1y",
+      "delta_us10y_lag1",
+      "delta_us10y_lag5",
+      "delta_us10y_lag10",
+      "delta_usdjpy",
+      "usdjpy_zscore_60d",
+      "brent_close",
+      "brent_pct_change_5d",
+      "oil_max_weekly_change_ytd",
+      "oil_n_shock_days_ytd",
+      "oil_shock_score_ytd",
+      "corr_delta_dxy_60d",
+      "corr_delta_us10y_60d",
+      "median_pe",
+      "median_pb",
+      "drawdown_from_peak",
+      "margin_risk_score",
+      "rsi_14",
+      "macd_line",
+      "macd_signal",
+      "macd_hist",
+      "bb_pct",
+      "rvol_20d",
+      "log_return_lag1",
+      "log_return_lag5",
+      "price_vs_ma200",
+      "return_lag1",
+      "return_lag2",
+      "return_lag5",
+      "return_lag10",
+      "return_lag20",
+      "rvol_5d",
+      "rvol_10d",
+      "rvol_60d",
+      "ret_mom_5d",
+      "ret_mom_10d",
+      "ret_mom_20d",
+      "bb_upper",
+      "bb_lower",
+      "bb_mid",
+      "ema_20",
+      "ema_50",
+      "ema_cross",
+      "dxy_zscore_60d_lag1",
+      "dxy_zscore_60d_lag5",
+      "us10y_zscore_1y_lag1",
+      "us10y_zscore_1y_lag5",
+      "margin_risk_score_lag1"
+    ],
+    "mean_accuracy": 0.45,
+    "std_accuracy": 0.0906,
+    "mean_f1": 0.3934,
+    "fold_metrics": [
+      {
+        "fold": 1,
+        "train_size": 399,
+        "test_size": 40,
+        "accuracy": 0.425,
+        "f1_weighted": 0.4084,
+        "precision": 0.3942
+      },
+      {
+        "fold": 2,
+        "train_size": 439,
+        "test_size": 40,
+        "accuracy": 0.575,
+        "f1_weighted": 0.5705,
+        "precision": 0.783
+      },
+      {
+        "fold": 3,
+        "train_size": 479,
+        "test_size": 40,
+        "accuracy": 0.6,
+        "f1_weighted": 0.5238,
+        "precision": 0.4887
+      },
+      {
+        "fold": 4,
+        "train_size": 519,
+        "test_size": 40,
+        "accuracy": 0.375,
+        "f1_weighted": 0.3374,
+        "precision": 0.4141
+      },
+      {
+        "fold": 5,
+        "train_size": 559,
+        "test_size": 40,
+        "accuracy": 0.35,
+        "f1_weighted": 0.3535,
+        "precision": 0.3811
+      },
+      {
+        "fold": 6,
+        "train_size": 599,
+        "test_size": 40,
+        "accuracy": 0.45,
+        "f1_weighted": 0.317,
+        "precision": 0.3684
+      },
+      {
+        "fold": 7,
+        "train_size": 639,
+        "test_size": 40,
+        "accuracy": 0.425,
+        "f1_weighted": 0.381,
+        "precision": 0.6357
+      },
+      {
+        "fold": 8,
+        "train_size": 679,
+        "test_size": 40,
+        "accuracy": 0.4,
+        "f1_weighted": 0.2558,
+        "precision": 0.6192
+      }
+    ],
+    "latest_pred_class": 1,
+    "latest_prediction": "UP",
+    "latest_confidence": 0.6857
+  },
+  "feature_importance": [
     {
-      "causing_variable": "delta_dxy",
-      "test_statistic": 5.3401,
-      "p_value": 0.0048,
-      "granger_causes_vni": true,
-      "significance": "***"
+      "feature": "dxy_close",
+      "importance": 0.029479648917913437,
+      "rank": 1
     },
     {
-      "causing_variable": "delta_us10y",
-      "test_statistic": 1.0759,
-      "p_value": 0.3411,
-      "granger_causes_vni": false,
-      "significance": ""
+      "feature": "median_pb",
+      "importance": 0.027921510860323906,
+      "rank": 2
     },
     {
-      "causing_variable": "delta_usdjpy",
-      "test_statistic": 0.0638,
-      "p_value": 0.9382,
-      "granger_causes_vni": false,
-      "significance": ""
+      "feature": "ema_50",
+      "importance": 0.024655841290950775,
+      "rank": 3
+    },
+    {
+      "feature": "ema_20",
+      "importance": 0.024321088567376137,
+      "rank": 4
+    },
+    {
+      "feature": "oil_n_shock_days_ytd",
+      "importance": 0.022246303036808968,
+      "rank": 5
+    },
+    {
+      "feature": "rvol_60d",
+      "importance": 0.020706864073872566,
+      "rank": 6
+    },
+    {
+      "feature": "usd_vnd_zscore",
+      "importance": 0.020594196394085884,
+      "rank": 7
+    },
+    {
+      "feature": "price_vs_ma200",
+      "importance": 0.01973101682960987,
+      "rank": 8
+    },
+    {
+      "feature": "macd_signal",
+      "importance": 0.019699012860655785,
+      "rank": 9
+    },
+    {
+      "feature": "macd_line",
+      "importance": 0.019360484555363655,
+      "rank": 10
+    },
+    {
+      "feature": "bb_lower",
+      "importance": 0.018927153199911118,
+      "rank": 11
+    },
+    {
+      "feature": "rvol_10d",
+      "importance": 0.01871594414114952,
+      "rank": 12
+    },
+    {
+      "feature": "dxy_zscore_60d_lag5",
+      "importance": 0.01853921264410019,
+      "rank": 13
+    },
+    {
+      "feature": "usd_vnd_zscore_lag10",
+      "importance": 0.01839618571102619,
+      "rank": 14
+    },
+    {
+      "feature": "ret_mom_20d",
+      "importance": 0.017580153420567513,
+      "rank": 15
     }
-  ],
-  "ml_walk_forward_validation": null,
-  "feature_importance": null
+  ]
 }
