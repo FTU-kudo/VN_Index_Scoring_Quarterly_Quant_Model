@@ -518,7 +518,13 @@
       <div id="tab-history" class="tab-content">
         
         <div class="section">
-          <h2>📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin-bottom: 0;">📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
+              <input type="checkbox" id="toggleVNIndex" style="width:16px; height:16px;">
+              <span class="lang-en">Show VN-Index</span><span class="lang-vi">Hiện VN-Index</span>
+            </label>
+          </div>
           <div class="chart-container" style="height: 300px;">
             <canvas id="lineChart"></canvas>
           </div>
@@ -902,7 +908,8 @@ window.MathJax = {
           maintainAspectRatio: false,
           scales: {
             x: { grid: { color: gridColor }, ticks: { color: textColor } },
-            y: { grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 }
+            y: { type: 'linear', display: true, position: 'left', grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 },
+            y1: { type: 'linear', display: false, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor } }
           },
           plugins: { legend: { display: false } }
         }
@@ -975,6 +982,40 @@ window.MathJax = {
     document.addEventListener("DOMContentLoaded", () => {
       if (typeof renderCharts === 'function') renderCharts();
     });
+  </script>
+
+  <script>
+    // Inject VN-Index dataset
+    if (typeof window !== 'undefined' && window.chartDataLine && window.chartDataLine.datasets) {
+        if (window.chartDataLine.datasets.length === 1) {
+            window.chartDataLine.datasets.push({
+                label: 'VN-Index',
+                data: [1191.44, 1408.55, 1342.06, 1498.28, 1492.15, 1197.6, 1132.11, 1007.09, 1064.64, 1120.18, 1154.15, 1129.93, 1284.09, 1245.32, 1287.94, 1266.78, 1306.86, 1376.07, 1661.7, 1784.49, 1674.49, 1860.01, 1816.93, 1816.93],
+                borderColor: '#10b981',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                yAxisID: 'y1',
+                hidden: true
+            });
+        }
+    }
+    
+    // Toggle VN-Index logic
+    const toggle = document.getElementById('toggleVNIndex');
+    if (toggle) {
+        toggle.addEventListener('change', function(e) {
+            if (typeof lineChartInstance !== 'undefined' && lineChartInstance) {
+                const isChecked = e.target.checked;
+                if (lineChartInstance.data.datasets.length > 1) {
+                    lineChartInstance.data.datasets[1].hidden = !isChecked;
+                    lineChartInstance.options.scales.y1.display = isChecked;
+                    lineChartInstance.update();
+                }
+            }
+        });
+    }
   </script>
 </body>
 </html>
