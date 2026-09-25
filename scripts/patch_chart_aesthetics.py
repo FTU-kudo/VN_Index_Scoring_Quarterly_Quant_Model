@@ -98,10 +98,10 @@ def patch_html():
               labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor, filter: function(item, data) { if (item.datasetIndex === 1) return !data.datasets[1].hidden; return true; } }
             },
             tooltip: {
-              backgroundColor: 'var(--bg-card)',
-              titleColor: 'var(--text-main)',
-              bodyColor: 'var(--text-main)',
-              borderColor: 'var(--border-color)',
+              backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: document.body.classList.contains('dark-mode') ? '#f1f5f9' : '#0f172a',
+              bodyColor: document.body.classList.contains('dark-mode') ? '#f1f5f9' : '#0f172a',
+              borderColor: document.body.classList.contains('dark-mode') ? '#334155' : '#e2e8f0',
               borderWidth: 1,
               callbacks: {
                  label: function(context) {
