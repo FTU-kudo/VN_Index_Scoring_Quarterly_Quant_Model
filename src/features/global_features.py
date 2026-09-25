@@ -217,15 +217,23 @@ def build_foreign_flow_features(df_ff: pd.DataFrame, df_pepb: pd.DataFrame = Non
         return df
 
     # Normalize theo market cap
+    # LƯU Ý ĐƠN VỊ:
+    #   - nff_ex_etf_vnd, etf_flow_vnd : tỷ VND (billion VND)
+    #   - total_mc từ load_market_pepb_history(): VND (raw, không phải tỷ)
+    # → Phải chuyển đổi total_mc sang tỷ VND (chia cho 1e9) trước khi chia
     if df_pepb is not None and "total_mc" in df_pepb.columns:
         df = df.merge(df_pepb[["date", "total_mc"]], on="date", how="left")
         df["total_mc"] = df["total_mc"].ffill()
+        # Chuyển total_mc từ VND sang tỷ VND để đồng đơn vị với nff/etf flows
+        df["total_mc_b"] = df["total_mc"] / 1e9  # tỷ VND
     else:
-        df["total_mc"] = 1.0 # fallback
+        # Fallback: VN-Index market cap ~ 6,000,000 tỷ VND (6e6 tỷ)
+        # Dùng giá trị xấp xỉ để tránh kết quả ~0 khi không có dữ liệu
+        df["total_mc_b"] = 6_000_000.0  # tỷ VND
 
     # Tính theo % market cap (VD: % vốn hóa HOSE)
-    df["nff_ex_etf_pct"] = df["nff_ex_etf_vnd"] / df["total_mc"]
-    df["etf_flow_pct"] = df["etf_flow_vnd"] / df["total_mc"]
+    df["nff_ex_etf_pct"] = df["nff_ex_etf_vnd"] / df["total_mc_b"]
+    df["etf_flow_pct"] = df["etf_flow_vnd"] / df["total_mc_b"]
 
     # ── Daily Rolling Features (cho ML) ──
     for col in ["nff_ex_etf_pct", "etf_flow_pct"]:
@@ -250,7 +258,7 @@ def build_foreign_flow_features(df_ff: pd.DataFrame, df_pepb: pd.DataFrame = Non
             df[f"{prefix}_lag{lag}"] = df[col].shift(lag)
 
     # ── Quarterly Resampling & Expanding Z-score ──
-    df_q = df.set_index("date").resample("Q")[["nff_ex_etf_pct", "etf_flow_pct"]].sum().reset_index()
+    df_q = df.set_index("date").resample("QE")[["nff_ex_etf_pct", "etf_flow_pct"]].sum().reset_index()
     df_q = df_q.rename(columns={
         "nff_ex_etf_pct": "nff_ex_etf_q_sum",
         "etf_flow_pct": "etf_flow_q_sum"

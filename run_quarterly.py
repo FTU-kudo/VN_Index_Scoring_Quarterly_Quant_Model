@@ -136,34 +136,76 @@ def run_pipeline(args: argparse.Namespace) -> None:
     if "date" in df_all.columns:
         df_all = df_all[df_all["date"] >= "2012-01-01"].reset_index(drop=True)
 
-    # Lọc dữ liệu đến trước quý đang chạy (Tránh Data Leakage)
+    # ── Xử lý Data Leakage đúng cách ─────────────────────────────────────────
+    # df_train  : Dữ liệu đến cuối quý TRƯỚC — dùng để train ML (không leakage)
+    # df_latest_full : Dữ liệu đến hiện tại — dùng để lấy latest indicators
+    #   bao gồm cả dữ liệu YTD trong quý đang chạy (NFF, ETF, Oil...)
+    # NOTE: Trước commit b549352, end_date là cuối quý đang chạy → df_all.iloc[-1]
+    # là ngày trong quý hiện tại → NFF q_ytd và scoring đều đúng.
+    # Sau b549352: end_date = ngày trước khi quý bắt đầu → df_all.iloc[-1] là
+    # ngày cuối quý TRƯỚC → NFF q_ytd ≈ 0 (sai quý), ML không đủ data (2021).
     try:
         y_str, q_str = quarter.split("-Q")
-        # Lấy ngày đầu tiên của quý dự báo
-        m_start = (int(q_str) - 1) * 3 + 1
-        start_date = pd.to_datetime(f"{y_str}-{m_start:02d}-01")
-        # Cut-off data là ngày cuối cùng của quý liền trước
-        end_date = start_date - pd.Timedelta(days=1)
-        df_all = df_all[df_all["date"] <= end_date].reset_index(drop=True)
-        logger.info(f"[DATA] Lọc dữ liệu đến {end_date.date()} (Cut-off cho dự báo {quarter})")
+        q_int = int(q_str)
+        m_start = (q_int - 1) * 3 + 1
+        # Ngày đầu tiên của quý dự báo
+        q_start_date = pd.to_datetime(f"{y_str}-{m_start:02d}-01")
+        # Ngày cuối quý trước (cut-off không leakage cho training)
+        train_end_date = q_start_date - pd.Timedelta(days=1)
+        # Ngày cuối quý hiện tại (để lấy latest indicators)
+        m_end = q_int * 3
+        q_end_date = pd.to_datetime(f"{y_str}-{m_end:02d}-01") + pd.offsets.MonthEnd(1)
+        logger.info(
+            f"[DATA] Training cut-off: đến {train_end_date.date()} (Không leakage)\n"
+            f"[DATA] Latest indicators: đến {q_end_date.date()} (YTD trong {quarter})"
+        )
     except Exception as e:
-        logger.warning(f"[DATA] Không thể parse quarter {quarter}, dùng toàn bộ dữ liệu. Lỗi: {e}")
+        logger.warning(f"[DATA] Không thể parse quarter {quarter}: {e}")
+        train_end_date = None
+        q_end_date = None
 
-    df_all = df_all.dropna(subset=["log_return"]).reset_index(drop=True)
+    # df_train: không chứa dữ liệu của quý đang dự báo → no leakage
+    if train_end_date is not None:
+        df_train = df_all[df_all["date"] <= train_end_date].reset_index(drop=True)
+    else:
+        df_train = df_all.copy()
 
+    # df_latest_full: giữ đến cuối quý hiện tại để lấy latest indicators
+    if q_end_date is not None:
+        df_latest_full = df_all[df_all["date"] <= q_end_date].reset_index(drop=True)
+    else:
+        df_latest_full = df_all.copy()
 
-    df_all = add_technical_indicators(df_all)
-    if "net_foreign_flow_b_vnd" in df_all.columns and "net_foreign_flow" not in df_all.columns:
-        df_all["net_foreign_flow"] = df_all["net_foreign_flow_b_vnd"]
-    if "delta_margin_debt_pct" in df_all.columns and "delta_margin_debt" not in df_all.columns:
-        df_all["delta_margin_debt"] = df_all["delta_margin_debt_pct"]
-    # Điền khuyết an toàn (ffill causal) và cập nhật chuẩn Pandas 2.1.0+
-    numeric_cols = [c for c in df_all.columns if c not in ("date", "open", "high", "low", "close", "volume") and pd.api.types.is_numeric_dtype(df_all[c])]
-    if numeric_cols:
-        df_all[numeric_cols] = df_all[numeric_cols].ffill()
-        df_all[numeric_cols] = df_all[numeric_cols].infer_objects(copy=False)
+    df_train = df_train.dropna(subset=["log_return"]).reset_index(drop=True)
+    df_latest_full = df_latest_full.dropna(subset=["log_return"]).reset_index(drop=True)
 
-    logger.info(f"[FE] Master dataset: {len(df_all)} rows × {len(df_all.columns)} cols")
+    # Apply technical indicators và feature engineering lên cả 2 dataframe
+    df_train = add_technical_indicators(df_train)
+    df_latest_full = add_technical_indicators(df_latest_full)
+
+    for df_ in [df_train, df_latest_full]:
+        if "net_foreign_flow_b_vnd" in df_.columns and "net_foreign_flow" not in df_.columns:
+            df_["net_foreign_flow"] = df_["net_foreign_flow_b_vnd"]
+        if "delta_margin_debt_pct" in df_.columns and "delta_margin_debt" not in df_.columns:
+            df_["delta_margin_debt"] = df_["delta_margin_debt_pct"]
+
+    # Điền khuyết an toàn (ffill causal)
+    for df_ in [df_train, df_latest_full]:
+        numeric_cols = [
+            c for c in df_.columns
+            if c not in ("date", "open", "high", "low", "close", "volume")
+            and pd.api.types.is_numeric_dtype(df_[c])
+        ]
+        if numeric_cols:
+            df_[numeric_cols] = df_[numeric_cols].ffill()
+            df_[numeric_cols] = df_[numeric_cols].infer_objects(copy=False)
+
+    # df_all vẫn trỏ về df_train cho backward-compat với steps MLR/VAR
+    df_all = df_train
+    logger.info(
+        f"[FE] df_train: {len(df_train)} rows × {len(df_train.columns)} cols (no leakage)\n"
+        f"[FE] df_latest_full: {len(df_latest_full)} rows (incl. current Q YTD)"
+    )
 
     # ── Step 3: MLR Model ─────────────────────────────────────────────────────
     logger.info("[3/7] Fitting MLR model...")
@@ -228,19 +270,22 @@ def run_pipeline(args: argparse.Namespace) -> None:
         logger.info("[4/7] Skip VAR (--skip-var flag)")
 
     # ── Step 5: ML Walk-Forward Validation ───────────────────────────────────
+    # QUAN TRỌNG: ML train trên df_train (no leakage), KHÔNG phải df_latest_full.
+    # Dự báo latest_pred được thực hiện trên điểm dữ liệu cuối cùng của df_train.
     wfv_summary = None
     fi_df       = None
     ml_pred_class = None
     ml_confidence = None
 
     if not args.skip_ml:
-        logger.info("[5/7] Running ML Walk-Forward Validation...")
+        logger.info("[5/7] Running ML Walk-Forward Validation (on df_train, no leakage)...")
         try:
-
-
-            df_ml = build_ml_features(df_all)
+            import traceback as _tb
+            # Build ML features từ df_train (không leakage)
+            df_ml = build_ml_features(df_train)
             df_ml = create_target_variable(df_ml)
 
+            logger.info(f"[ML] df_ml sau build_ml_features: {len(df_ml)} rows, {len(df_ml.columns)} cols")
 
             # Lấy danh sách feature columns cho ML
             exclude = {"date", "open", "high", "low", "close", "volume",
@@ -250,6 +295,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
                             if c not in exclude
                             and df_ml[c].dtype in ["float64", "float32", "int64", "int32"]
                             and float(pd.to_numeric(df_ml[c], errors="coerce").std(skipna=True) or 0) > 1e-10]
+
+            logger.info(f"[ML] Feature cols: {len(feature_cols)} cols eligible for WFV")
 
             if len(feature_cols) > 5:
                 wfv_summary = evaluate_wfv(
@@ -265,20 +312,44 @@ def run_pipeline(args: argparse.Namespace) -> None:
                 if wfv_summary:
                     ml_pred_class = wfv_summary.get("latest_pred_class")
                     ml_confidence = wfv_summary.get("latest_confidence")
+                    logger.info(
+                        f"[ML] WFV OK: accuracy={wfv_summary.get('mean_accuracy', 'N/A'):.1%} "
+                        f"f1={wfv_summary.get('mean_f1', 'N/A'):.4f} "
+                        f"pred={wfv_summary.get('latest_prediction', 'N/A')}"
+                    )
+                else:
+                    logger.error(
+                        f"[ML] evaluate_wfv trả về dict rỗng cho {quarter}! "
+                        f"n_rows={len(df_ml)}, n_features={len(feature_cols)}. "
+                        f"Kiểm tra log [ML-WFV] phía trên để biết nguyên nhân."
+                    )
             else:
-                logger.warning(f"[ML] Chỉ có {len(feature_cols)} features — bỏ qua WFV")
+                logger.error(
+                    f"[ML] Chỉ có {len(feature_cols)} features hợp lệ (cần >5) — bỏ qua WFV. "
+                    f"Danh sách features có: {feature_cols}"
+                )
 
         except Exception as e:
-            logger.warning(f"[ML] Bỏ qua do lỗi: {e}", exc_info=True)
+            # LOG ĐẦY ĐỦ TRACEBACK — không được nuốt lỗi trong im lặng
+            logger.error(
+                f"[ML] EXCEPTION khi chạy Walk-Forward Validation cho {quarter}:\n"
+                f"{_tb.format_exc()}"
+            )
     else:
         logger.info("[5/7] Skip ML (--skip-ml flag)")
 
     # ── Step 6: Quarterly Scoring ─────────────────────────────────────────────
     logger.info("[6/7] Computing quarterly score...")
 
-
-    # Lấy giá trị indicators mới nhất
-    latest = df_all.iloc[-1].copy() if len(df_all) > 0 else pd.Series(dtype=float)
+    # Lấy giá trị indicators mới nhất từ df_latest_full
+    # (bao gồm dữ liệu YTD trong quý hiện tại — NFF q_ytd, ETF q_ytd, Oil shock...)
+    # KHÔNG dùng df_train.iloc[-1] vì df_train chỉ có dữ liệu đến cuối quý TRƯỚC.
+    latest = df_latest_full.iloc[-1].copy() if len(df_latest_full) > 0 else pd.Series(dtype=float)
+    logger.info(
+        f"[SCORE] Lấy latest từ df_latest_full: ngày {latest.get('date', 'N/A')} "
+        f"| nff_ex_etf_q_ytd={latest.get('nff_ex_etf_q_ytd', 'N/A')} "
+        f"| etf_flow_q_ytd={latest.get('etf_flow_q_ytd', 'N/A')}"
+    )
 
     # ── Xác định tình trạng FTSE theo lịch sử (nếu auto) ─────────────────────
     if args.ftse_status == "auto":
@@ -308,6 +379,30 @@ def run_pipeline(args: argparse.Namespace) -> None:
         ml_confidence=ml_confidence,
         ftse_upgrade_status=actual_ftse_status,
     )
+
+    # ── ASSERT chặn tái diễn lỗi ML "not run" ────────────────────────────────
+    # Đây là lần thứ 2 lỗi ML không chạy bị publish report mà không ai biết.
+    # Nếu ML bị missing, fail loudly thay vì âm thầm publish report sai.
+    ml_forecast_details = score_record.get("group_details", {}).get("ml_forecast", {})
+    ml_signal_val = ml_forecast_details.get("ml_signal", "")
+    ml_quality_val = ml_forecast_details.get("model_quality", "")
+    if "<MISSING>" in str(ml_signal_val) or "<MISSING>" in str(ml_quality_val):
+        logger.error(
+            f"[ASSERT FAIL] ML Forecast bị MISSING cho {quarter}!\n"
+            f"  ml_signal   = {ml_signal_val!r}\n"
+            f"  model_quality = {ml_quality_val!r}\n"
+            f"Kiểm tra traceback [ML] EXCEPTION ở trên. Workflow sẽ FAIL để ngăn publish report sai."
+        )
+        # Raise để GitHub Actions workflow fail với exit code != 0
+        raise RuntimeError(
+            f"[ML ASSERT] ML Forecast not run for {quarter}. "
+            f"ml_signal={ml_signal_val!r}. See [ML] EXCEPTION log above."
+        )
+    else:
+        logger.info(
+            f"[ASSERT PASS] ML Forecast OK cho {quarter}: "
+            f"signal={ml_signal_val!r} | quality={ml_quality_val!r}"
+        )
 
     # ── Step 7: Build Reports ─────────────────────────────────────────────────
     logger.info("[7/7] Building reports...")

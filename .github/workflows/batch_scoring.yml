@@ -64,9 +64,24 @@ jobs:
               echo "=========================================================="
               echo "Running pipeline for $QUARTER..."
               echo "=========================================================="
-              python run_quarterly.py --quarter $QUARTER --ftse-status $FTSE_STATUS || echo "Failed to process $QUARTER, continuing..."
+              # Không dùng || echo vì sẽ nuốt lỗi ML ASSERT
+              # Thay bằng: capture exit code, log rõ ràng, continue nhưng mark failed
+              python run_quarterly.py --quarter $QUARTER --ftse-status $FTSE_STATUS
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -ne 0 ]; then
+                echo "::error::❌ Pipeline FAILED for $QUARTER (exit code $EXIT_CODE)"
+                echo "FAILED: $QUARTER" >> /tmp/batch_failures.txt
+              else
+                echo "✅ Pipeline OK for $QUARTER"
+              fi
             done
           done
+          # Report tổng kết failures
+          if [ -f /tmp/batch_failures.txt ]; then
+            echo "::error::Batch có quý bị lỗi:"
+            cat /tmp/batch_failures.txt
+            exit 1
+          fi
 
       - name: "📤 Upload Artifacts"
         uses: actions/upload-artifact@v4

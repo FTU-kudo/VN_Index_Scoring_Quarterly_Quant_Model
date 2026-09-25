@@ -80,6 +80,7 @@ jobs:
       - name: "🚀 Run quarterly scoring pipeline"
         env:
           VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
+          PYTHONUTF8: 1
         run: |
           QUARTER="${{ steps.set-quarter.outputs.quarter }}"
           FTSE_STATUS="${{ github.event.inputs.ftse_status || 'auto' }}"

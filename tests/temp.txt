@@ -1,0 +1,1 @@
+{"vn1y_yield": "3.76% \u2192 score 61", "ir_trend": "\u0394 VN1Y = -0.0903 (\u2192 Hold) \u2192 score 59", "usd_vnd": "Z-score = -1.26 \u2192 score 69", "m2_yoy_growth": "<MISSING> N/A \u2192 default 50", "vn_bonds": "VN10Y 4.49% | Spread 0.62% \u2192 score 45"}
