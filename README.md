@@ -25,6 +25,7 @@ Hệ thống được thiết kế đáp ứng trọn vẹn **5 Tiêu chuẩn V�
 ---
 
 ## ✨ CÁC TÍNH NĂNG NỔI BẬT GẦN ĐÂY (LATEST UPDATES)
+- **🔴 Fix ML Regression + NFF Unit Mismatch (25/09/2026)**: Khắc phục hoàn toàn 3 lỗi nghiêm trọng tích lũy sau commit `b549352`: *(1)* ML Forecast bị `<MISSING>` trên tất cả 24+ quý do kiến trúc cắt dữ liệu sai khiến `df.iloc[-1]` trỏ vào quý trước thay vì quý đang chấm điểm; *(2)* NFF luôn hiển thị `-0.00%` do lỗi đơn vị nghiêm trọng (`nff_vnd [tỷ VND] / total_mc [VND raw]` ≈ 1e-12); *(3)* Mục "Data Sources & Integrity" mô tả sai nguồn NFF (vẫn ghi "vnstock API" dù đã chuyển sang VNDirect). Sau fix, 24 quý tính lại đều **ASSERT PASS**: ML accuracy 36–51%, NFF dao động từ -0.58% đến +0.53% Market Cap phản ánh đúng thực tế dòng tiền khối ngoại.
 - **Minh bạch hóa Dữ liệu (No Hallucination)**: Các biến số định lượng khi thiếu hụt dữ liệu (VD: OMO, ADTV) sẽ được gắn cờ đỏ `<MISSING>` trong báo cáo HTML thay vì âm thầm sử dụng giá trị default, đảm bảo quỹ đầu tư nhận diện chính xác chất lượng tín hiệu.
 - **Báo cáo VAR Granger Causality Mở rộng**: Tích hợp p-value chi tiết của từng biến vĩ mô dẫn dắt VN-Index, cung cấp góc nhìn kinh tế lượng sâu sắc.
 - **Khắc phục Data Leakage (Nhân bản dữ liệu P/E Median)**: Chuyển đổi kiến trúc tính toán sang `ticker_history.parquet`, hiển thị cả *Headline P/E* và *Median P/E* nhằm nhận diện chính xác các nhịp kéo trụ Mega-Cap (ví dụ: nhóm VIC).
@@ -113,7 +114,7 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q4
-     Generated: 2026-09-24T22:54:32.873026
+     Generated: 2026-09-25T12:24:19.141268
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
@@ -126,20 +127,20 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
   • R-squared              : N/A (R-adj = N/A)
 
 [MACHINE LEARNING: WALK-FORWARD VALIDATION]
-  • XGBoost Accuracy       : N/A
-  • N Folds (WFV)          : N/A
-  • Latest Prediction      : N/A
+  • XGBoost Accuracy       : 0.4659
+  • N Folds (WFV)          : 8
+  • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score            : 53.76 / 100
+  • Total Score            : 50.33 / 100
   • Classification         : 🟡 HOLD — Neutral — Await confirming signals
 
 [GROUP BREAKDOWN]
   • macro_monetary                : raw=  56.9  weight=14.23
   • global_intermarket            : raw=  37.8  weight=7.56
   • valuation_leverage            : raw=  57.2  weight=11.43
-  • quant_model                   : raw=  61.0  weight=9.15
-  • ml_forecast                   : raw=  50.0  weight=5.0
+  • quant_model                   : raw=  53.3  weight=7.99
+  • ml_forecast                   : raw=  27.3  weight=2.73
   • market_structure              : raw=  63.9  weight=6.39
 ======================================================================
 ```
