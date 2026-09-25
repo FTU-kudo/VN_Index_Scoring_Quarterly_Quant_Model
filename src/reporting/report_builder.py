@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from src.utils.config import REPORTS_DIR, EXPORTS_DIR
+from src.utils.config import SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label
 
 logger = logging.getLogger(__name__)
 
@@ -425,6 +426,107 @@ def t(en_text: str, custom_vi: str = None) -> str:
     return f'<span class="lang-en">{en_text}</span><span class="lang-vi">{vi_text}</span>'
 
 
+def _build_percentile_dispersion_html(score_record: dict, t) -> str:
+    """
+    Tạo HTML hiển thị:
+    - Fix #2: Nhãn percentile động (song song với nhãn cố định)
+    - Fix #3: Chỉ số độ phân tán giữa 6 pillar
+    """
+    pct_label     = score_record.get("percentile_label", None)
+    pct_p15       = score_record.get("percentile_p15", None)
+    pct_p85       = score_record.get("percentile_p85", None)
+    disp_level    = score_record.get("dispersion_level", "MEDIUM")
+    pillar_std    = score_record.get("pillar_std", None)
+    pillar_range  = score_record.get("pillar_range", None)
+
+    # ── Percentile label block ──────────────────────────────────────────────
+    if pct_label and pct_p15 is not None:
+        pct_color = {
+            "BUY/ACCUMULATE": "var(--color-green, #22c55e)",
+            "REDUCE/SELL":    "var(--color-red,   #ef4444)",
+            "HOLD":           "var(--color-yellow, #eab308)",
+        }.get(pct_label, "var(--text-muted)")
+        pct_icon = {
+            "BUY/ACCUMULATE": "📈",
+            "REDUCE/SELL":    "📉",
+            "HOLD":           "➡️",
+        }.get(pct_label, "➡️")
+        pct_vi = {
+            "BUY/ACCUMULATE": "MUA / TÍCH LŨY",
+            "REDUCE/SELL":    "GIẢM / BÁN",
+            "HOLD":           "GIỮ",
+        }.get(pct_label, "GIỮ")
+        pct_html = f"""
+      <div style="margin-top:12px; padding:10px 16px; border-radius:8px;
+                  background:color-mix(in srgb, {pct_color} 12%, transparent);
+                  border:1px solid color-mix(in srgb, {pct_color} 35%, transparent);">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">
+          {pct_icon} {t('Percentile Signal (Expanding Window)', 'Tín hiệu Phân vị Động')}
+          <span style="font-size:11px; opacity:.7;">
+            — {t('Top/Bot 15% vs history', 'Top/Đáy 15% so với lịch sử')}
+          </span>
+        </div>
+        <div style="font-size:15px; font-weight:700; color:{pct_color};">
+          {pct_icon} {t(pct_label, pct_vi)}
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">
+          {t(f'Historical thresholds: BUY ≥ {pct_p85:.1f} | REDUCE ≤ {pct_p15:.1f}',
+             f'Ngưỡng lịch sử: MUA ≥ {pct_p85:.1f} | GIẢM ≤ {pct_p15:.1f}')}
+        </div>
+      </div>"""
+    else:
+        pct_html = f"""
+      <div style="margin-top:12px; padding:8px 16px; border-radius:8px;
+                  background:rgba(128,128,128,.1); border:1px solid rgba(128,128,128,.2);
+                  font-size:12px; color:var(--text-muted);">
+        {t('Percentile Signal: Insufficient history (< 4 quarters)', 
+           'Tín hiệu Phân vị: Chưa đủ lịch sử (< 4 quý)')}
+      </div>"""
+
+    # ── Dispersion block ────────────────────────────────────────────────────
+    if pillar_std is not None:
+        disp_color = {
+            "HIGH":   "var(--color-orange, #f97316)",
+            "MEDIUM": "var(--color-blue,   #3b82f6)",
+            "LOW":    "var(--color-green,  #22c55e)",
+        }.get(disp_level, "var(--text-muted)")
+        disp_icon = {"HIGH": "⚠️", "MEDIUM": "📊", "LOW": "✅"}.get(disp_level, "📊")
+        disp_vi   = {"HIGH": "CAO", "MEDIUM": "TRUNG BÌNH", "LOW": "THẤP"}.get(disp_level, "TRUNG BÌNH")
+        disp_msg_en = {
+            "HIGH":   "Pillars disagree strongly — study Pillars Analysis before acting",
+            "MEDIUM": "Moderate disagreement between pillars",
+            "LOW":    "Pillars show broad consensus — signal more reliable",
+        }.get(disp_level, "")
+        disp_msg_vi = {
+            "HIGH":   "Các trụ cột đang bất đồng mạnh — xem kỹ Pillars Analysis trước khi hành động",
+            "MEDIUM": "Các trụ cột có sự khác biệt ở mức trung bình",
+            "LOW":    "Các trụ cột đồng thuận rộng rãi — tín hiệu đáng tin cậy hơn",
+        }.get(disp_level, "")
+        std_str   = f"{pillar_std:.1f}" if pillar_std is not None else "N/A"
+        range_str = f"{pillar_range:.1f}" if pillar_range is not None else "N/A"
+        disp_html = f"""
+      <div style="margin-top:8px; padding:10px 16px; border-radius:8px;
+                  background:color-mix(in srgb, {disp_color} 10%, transparent);
+                  border:1px solid color-mix(in srgb, {disp_color} 30%, transparent);">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">
+          {disp_icon} {t('Pillar Dispersion', 'Độ Phân Tán Giữa Các Trụ Cột')}
+          <span style="font-size:11px; opacity:.7;">
+            (σ={std_str} | range={range_str})
+          </span>
+        </div>
+        <div style="font-size:14px; font-weight:700; color:{disp_color};">
+          {disp_icon} {t(disp_level, disp_vi)}
+          <span style="font-weight:400; font-size:12px;">
+            — {t(disp_msg_en, disp_msg_vi)}
+          </span>
+        </div>
+      </div>"""
+    else:
+        disp_html = ""
+
+    return pct_html + disp_html
+
+
 def build_html_report(
     score_record: Dict[str, Any],
     quarter:      str,
@@ -485,6 +587,8 @@ def build_html_report(
         {t("Leading Indicator", "Nhóm dẫn dắt")}:
         <span class="leading-badge">{t(leading.replace('_', ' ').title())}</span>
       </div>
+
+      {_build_percentile_dispersion_html(score_record, t)}
     </div>
     """
 
@@ -776,12 +880,11 @@ def build_html_report(
 
       <h3 style="margin-top: 16px; color: var(--color-blue);">{t('4. Asset Allocation Recommendations', '4. Khuyến nghị Phân bổ Tài sản')}</h3>
       <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
-        {t('Based on the composite score, the model outputs 5 strategic recommendations:', 'Dựa trên điểm số tổng hợp, mô hình đưa ra 5 mức khuyến nghị chiến lược:')}
-        <br>• <strong>80-100:</strong> {t('Strong Buy (85-100% Equities)', 'Rất hấp dẫn (85-100% Cổ phiếu)')}
-        <br>• <strong>65-79:</strong> {t('Accumulate (70-85% Equities)', 'Hấp dẫn / Tích lũy (70-85% Cổ phiếu)')}
-        <br>• <strong>50-64:</strong> {t('Neutral (40-60% Equities)', 'Trung lập (40-60% Cổ phiếu)')}
-        <br>• <strong>35-49:</strong> {t('Reduce (20-40% Equities)', 'Kém hấp dẫn / Giảm tỷ trọng (20-40% Cổ phiếu)')}
-        <br>• <strong>0-34:</strong> {t('Defensive (0-20% Equities)', 'Phòng thủ / Tiền mặt (0-20% Cổ phiếu)')}
+        {t('Based on the composite score, the model outputs 5 strategic recommendations (sourced from config.py SCORE_LABELS — single source of truth):', 'Dựa trên điểm số tổng hợp, mô hình đưa ra 5 mức khuyến nghị chiến lược (từ config.py SCORE_LABELS — nguồn sự thật duy nhất):')}
+        {"".join(
+            f"<br>• <strong>{lo}–{hi}:</strong> {lbl} {em} — {alloc}"
+            for (lo, hi), (lbl, em, desc, alloc) in sorted(SCORE_LABEL_RANGES, key=lambda x: x[0][0], reverse=True)
+        )}
       </p>
 
       <h3 style="margin-top: 24px; color: var(--color-blue); border-top: 1px solid var(--border-color); padding-top: 16px;">{t('5. Academic References & Citations', '5. Tài liệu tham khảo & Nền tảng học thuật')}</h3>

@@ -1,18 +1,25 @@
 {
   "metadata": {
     "quarter": "2021-Q1",
-    "generated_at": "2026-09-25T12:07:38.706546",
+    "generated_at": "2026-09-25T22:01:44.104858",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2021-Q1",
-    "date_computed": "2026-09-25 12:07",
-    "total_score": 57.52,
+    "date_computed": "2026-09-25 22:01",
+    "total_score": 57.54,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "ml_forecast",
+    "percentile_label": "HOLD",
+    "percentile_p15": null,
+    "percentile_p85": null,
+    "pillar_std": 11.45,
+    "pillar_range": 32.49,
+    "dispersion_level": "MEDIUM",
+    "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
         "raw_score": 48.19,
@@ -27,8 +34,8 @@
         "weighted_score": 12.32
       },
       "quant_model": {
-        "raw_score": 58.8,
-        "weighted_score": 8.82
+        "raw_score": 58.96,
+        "weighted_score": 8.84
       },
       "ml_forecast": {
         "raw_score": 80.68,
@@ -60,9 +67,9 @@
       },
       "quant_model": {
         "mlr_forecast": "Forecast log-return = 0.0043 → score 63",
-        "var_forecast": "<MISSING> No VAR forecast",
+        "var_forecast": "VAR T+5 return = 0.0001 → score 50",
         "mlr_adj_r2": "Adj-R² = 0.2390 → confidence bonus 2.4",
-        "granger_leaders": "<MISSING> N/A"
+        "granger_leaders": "0 vars Granger-cause VNI (p<5%)"
       },
       "ml_forecast": {
         "model_quality": "Accuracy=40.8% F1=0.378 → quality 39",
@@ -79,7 +86,7 @@
       "macro_monetary": "Macro: NEUTRAL — USD/VND z=0.6 (stable)",
       "global_intermarket": "Global: DXY=2.4σ | US10Y=1.75% | JPY-Z=1.9σ | OIL-SHOCK=19.9",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
-      "quant_model": "MLR=63 | VAR=50 | R²=0.239 | Granger=N/A",
+      "quant_model": "MLR=63 | VAR=50 | R²=0.239 | Granger=0",
       "ml_forecast": "ML: Forecast: UP (conf=97%) | Quality=39",
       "market_structure": "FTSE: UNKNOWN"
     }
@@ -194,7 +201,29 @@
       "Significance": ""
     }
   ],
-  "granger_causality": null,
+  "granger_causality": [
+    {
+      "causing_variable": "delta_dxy",
+      "test_statistic": 2.8512,
+      "p_value": 0.0914,
+      "granger_causes_vni": false,
+      "significance": "*"
+    },
+    {
+      "causing_variable": "delta_us10y",
+      "test_statistic": 2.566,
+      "p_value": 0.1093,
+      "granger_causes_vni": false,
+      "significance": ""
+    },
+    {
+      "causing_variable": "delta_usdjpy",
+      "test_statistic": 2.1394,
+      "p_value": 0.1437,
+      "granger_causes_vni": false,
+      "significance": ""
+    }
+  ],
   "ml_walk_forward_validation": {
     "model_type": "xgboost",
     "n_folds": 8,

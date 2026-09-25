@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 from src.utils.config import (
-    SCORING_WEIGHTS, SCORE_LABELS,
+    SCORING_WEIGHTS, SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label,
     PE_ZSCORE_OVERBOUGHT, PE_ZSCORE_OVERSOLD,
     PB_ZSCORE_OVERBOUGHT, PB_ZSCORE_OVERSOLD,
     SCORES_DIR, FTSE_PASSIVE_INFLOW_BASE_USD
@@ -699,12 +699,9 @@ def compute_quarterly_score(
     total_weighted = sum(g["weighted_score"] for g in groups)
     total_raw_avg  = np.mean([g["raw_score"] for g in groups])
 
-    # ── Phân loại ────────────────────────────────────────────────────────────
-    label, emoji, label_desc = "HOLD", "🟡", "Trung lập"
-    for (lo, hi), (lbl, em, desc) in SCORE_LABELS.items():
-        if lo <= total_weighted <= hi:
-            label, emoji, label_desc = lbl, em, desc
-            break
+    # ── Phân loại (Single Source of Truth: get_score_label() từ config.py) ──────
+    # KHÔNG hardcode ngưỡng ở đây — chỉ gọi get_score_label() duy nhất
+    label, emoji, label_desc, label_alloc = get_score_label(total_weighted)
 
     # ── Most Divergent Pillar ──────────────────────────────────────────────────
     # NOTE: This is a simple heuristic — the pillar whose raw score deviates
@@ -712,6 +709,47 @@ def compute_quarterly_score(
     # Granger tests are used separately in the VAR model for variable ranking.
     group_raw = {g["group"]: g["raw_score"] for g in groups}
     most_divergent_pillar = max(group_raw, key=lambda k: abs(group_raw[k] - 50))
+
+    # ── Pillar Dispersion (Fix #3) ────────────────────────────────────────────
+    # Độ lệch chuẩn giữa 6 raw_score — đo lường "sự bất đồng" giữa các trụ cột
+    raw_scores_arr = np.array([g["raw_score"] for g in groups])
+    pillar_std   = float(np.std(raw_scores_arr, ddof=1))   # sample std
+    pillar_range = float(np.max(raw_scores_arr) - np.min(raw_scores_arr))
+
+    # ── Percentile Label (expanding window, Fix #2) ────────────────────────────
+    # Đọc lịch sử hiện có để tính percentile expanding (không nhìn tương lai)
+    history_path = SCORES_DIR / "quarterly_scores_history.parquet"
+    _percentile_label = "HOLD"     # default trước khi đủ dữ liệu
+    _dispersion_level = "MEDIUM"   # default
+    _percentile_p15   = None
+    _percentile_p85   = None
+    if history_path.exists():
+        _hist = pd.read_parquet(history_path)
+        # Expanding: chỉ nhìn các quý TRƯỚC quý hiện tại
+        _hist = _hist[_hist["quarter"] < quarter].sort_values("quarter")
+        if len(_hist) >= 4:  # Cần ít nhất 4 điểm để percentile có ý nghĩa
+            _scores_hist = _hist["total_score"].values
+            _percentile_p15 = float(np.percentile(_scores_hist, 15))
+            _percentile_p85 = float(np.percentile(_scores_hist, 85))
+            if total_weighted >= _percentile_p85:
+                _percentile_label = "BUY/ACCUMULATE"
+            elif total_weighted <= _percentile_p15:
+                _percentile_label = "REDUCE/SELL"
+            else:
+                _percentile_label = "HOLD"
+
+            # Dispersion percentile (expanding window)
+            if "pillar_std" in _hist.columns:
+                _disp_hist = _hist["pillar_std"].dropna().values
+                if len(_disp_hist) >= 4:
+                    _disp_p33 = float(np.percentile(_disp_hist, 33))
+                    _disp_p67 = float(np.percentile(_disp_hist, 67))
+                    if pillar_std >= _disp_p67:
+                        _dispersion_level = "HIGH"
+                    elif pillar_std <= _disp_p33:
+                        _dispersion_level = "LOW"
+                    else:
+                        _dispersion_level = "MEDIUM"
 
     # ── Lưu lịch sử ──────────────────────────────────────────────────────────
     score_record = {
@@ -722,6 +760,16 @@ def compute_quarterly_score(
         "emoji":                 emoji,
         "label_description":     label_desc,
         "most_divergent_pillar": most_divergent_pillar,
+        # Fix #2: Nhãn percentile động (expanding window)
+        "percentile_label":      _percentile_label,
+        "percentile_p15":        _percentile_p15,
+        "percentile_p85":        _percentile_p85,
+        # Fix #3: Độ phân tán giữa 6 pillar
+        "pillar_std":            round(pillar_std, 2),
+        "pillar_range":          round(pillar_range, 2),
+        "dispersion_level":      _dispersion_level,
+        # Allocation gợi ý từ SCORE_LABELS
+        "label_allocation":      label_alloc,
         "group_scores": {
             g["group"]: {
                 "raw_score":      g["raw_score"],
@@ -736,23 +784,25 @@ def compute_quarterly_score(
         }
     }
 
-    # Append vào lịch sử JSON
-    history_path = SCORES_DIR / "quarterly_scores_history.parquet"
+    # Append vào lịch sử parquet (gồm cả cột percentile + dispersion mới)
     new_row = pd.DataFrame([{
-        "quarter": quarter,
-        "date_computed": score_record["date_computed"],
-        "total_score": total_weighted,
-        "label": label,
+        "quarter":          quarter,
+        "date_computed":    score_record["date_computed"],
+        "total_score":      total_weighted,
+        "label":            label,
+        "percentile_label": _percentile_label,
+        "pillar_std":       round(pillar_std, 2),
+        "pillar_range":     round(pillar_range, 2),
+        "dispersion_level": _dispersion_level,
         **{f"score_{g['group']}": g["weighted_score"] for g in groups}
     }])
     if history_path.exists():
         existing = pd.read_parquet(history_path)
-        # Xóa record cũ cho quý này nếu có
         existing = existing[existing["quarter"] != quarter]
         combined = pd.concat([existing, new_row], ignore_index=True)
     else:
         combined = new_row
-        
+
     combined = combined.sort_values("quarter").reset_index(drop=True)
     combined.to_parquet(history_path, index=False)
 

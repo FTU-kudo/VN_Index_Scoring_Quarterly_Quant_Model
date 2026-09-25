@@ -187,13 +187,40 @@ SCORING_WEIGHTS = {
 assert abs(sum(SCORING_WEIGHTS.values()) - 1.0) < 1e-9, "Tổng trọng số phải = 1.0"
 
 # Thang điểm phân loại tổng hợp
+# NGUỒN SỰ THẬT DUY NHẤT (Single Source of Truth) cho phân loại điểm.
+# CẢNH BÁO: Chỉ sửa ở đây — report_builder.py PHẢI đọc từ dict này,
+# KHÔNG được hardcode lại ngưỡng ở bất kỳ nơi nào khác.
+# Test tự động `test_score_label_sync` sẽ FAIL nếu có sai lệch.
 SCORE_LABELS = {
-    (80, 100): ("BUY",        "🟢", "Highly favorable environment — Increase exposure aggressively"),
-    (60,  79): ("ACCUMULATE", "🔵", "Gradually accumulate — Controllable risks"),
-    (40,  59): ("HOLD",       "🟡", "Neutral — Await confirming signals"),
-    (20,  39): ("REDUCE",     "🟠", "Reduce exposure — Increasing pressure"),
-    ( 0,  19): ("SELL",       "🔴", "Defensive — Unfavorable environment"),
+    (80, 100): ("BUY",        "🟢", "Highly favorable environment — Increase exposure aggressively",       "85–100% Equities"),
+    (65,  79): ("ACCUMULATE", "🔵", "Gradually accumulate — Controllable risks",                         "70–85% Equities"),
+    (50,  64): ("HOLD",       "🟡", "Neutral — Await confirming signals",                                "40–60% Equities"),
+    (35,  49): ("REDUCE",     "🟠", "Reduce exposure — Increasing pressure",                             "20–40% Equities"),
+    ( 0,  34): ("SELL",       "🔴", "Defensive — Unfavorable environment",                               "0–20% Equities"),
 }
+
+# Tuple đã sắp xếp để get_score_label() duyệt từ cao xuống thấp
+SCORE_LABEL_RANGES = tuple(sorted(SCORE_LABELS.items(), key=lambda x: x[0][0], reverse=True))
+
+
+def get_score_label(score: float):
+    """Trả về (label, emoji, description, allocation) cho điểm số.
+
+    Nguồn sự thật duy nhất — mọi nơi cần gán nhãn PHẢI gọi hàm này.
+
+    Parameters
+    ----------
+    score : float — tổng điểm 0-100
+
+    Returns
+    -------
+    tuple: (label_str, emoji_str, description_str, allocation_str)
+    """
+    for (lo, hi), values in SCORE_LABEL_RANGES:
+        if lo <= score <= hi:
+            return values
+    # Fallback (score ngoài [0, 100] do lỗi numeric)
+    return ("HOLD", "🟡", "Neutral — Await confirming signals", "40–60% Equities")
 
 # ── Ngưỡng cảnh báo margin call ───────────────────────────────────────────────
 # Khi VN-Index giảm quá mức này (%), margin call rủi ro cao

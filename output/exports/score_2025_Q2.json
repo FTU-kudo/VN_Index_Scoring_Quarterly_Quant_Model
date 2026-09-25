@@ -1,18 +1,25 @@
 {
   "metadata": {
     "quarter": "2025-Q2",
-    "generated_at": "2026-09-25T12:19:35.037767",
+    "generated_at": "2026-09-25T22:21:52.143154",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2025-Q2",
-    "date_computed": "2026-09-25 12:19",
-    "total_score": 51.49,
+    "date_computed": "2026-09-25 22:21",
+    "total_score": 51.89,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "valuation_leverage",
+    "most_divergent_pillar": "quant_model",
+    "percentile_label": "HOLD",
+    "percentile_p15": 49.263999999999996,
+    "percentile_p85": 57.406,
+    "pillar_std": 6.96,
+    "pillar_range": 19.94,
+    "dispersion_level": "LOW",
+    "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
         "raw_score": 53.56,
@@ -27,8 +34,8 @@
         "weighted_score": 8.11
       },
       "quant_model": {
-        "raw_score": 57.83,
-        "weighted_score": 8.67
+        "raw_score": 60.48,
+        "weighted_score": 9.07
       },
       "ml_forecast": {
         "raw_score": 48.6,
@@ -62,9 +69,9 @@
       },
       "quant_model": {
         "mlr_forecast": "Forecast log-return = 0.0041 → score 62",
-        "var_forecast": "<MISSING> No VAR forecast",
+        "var_forecast": "VAR T+5 return = -0.0002 → score 49",
         "mlr_adj_r2": "Adj-R² = 0.1693 → confidence bonus 1.7",
-        "granger_leaders": "<MISSING> N/A"
+        "granger_leaders": "1 vars Granger-cause VNI (p<5%)"
       },
       "ml_forecast": {
         "model_quality": "Accuracy=36.0% F1=0.317 → quality 34",
@@ -82,7 +89,7 @@
       "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.43% (low/favorable) | USD/VND z=1.1 (pressure) | VN10Y 2.96% (Spread 0.47%)",
       "global_intermarket": "Global: DXY=-2.0σ | US10Y=4.23% | NFF-Z=0.2σ | JPY-Z=0.1σ | OIL-SHOCK=27.0",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
-      "quant_model": "MLR=62 | VAR=50 | R²=0.169 | Granger=N/A",
+      "quant_model": "MLR=62 | VAR=49 | R²=0.169 | Granger=1",
       "ml_forecast": "ML: Forecast: NEUTRAL | Quality=34",
       "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.2σ"
     }
@@ -188,7 +195,29 @@
       "Significance": "*"
     }
   ],
-  "granger_causality": null,
+  "granger_causality": [
+    {
+      "causing_variable": "delta_dxy",
+      "test_statistic": 12.1649,
+      "p_value": 0.0,
+      "granger_causes_vni": true,
+      "significance": "***"
+    },
+    {
+      "causing_variable": "delta_us10y",
+      "test_statistic": 0.2964,
+      "p_value": 0.7435,
+      "granger_causes_vni": false,
+      "significance": ""
+    },
+    {
+      "causing_variable": "delta_usdjpy",
+      "test_statistic": 0.1982,
+      "p_value": 0.8202,
+      "granger_causes_vni": false,
+      "significance": ""
+    }
+  ],
   "ml_walk_forward_validation": {
     "model_type": "xgboost",
     "n_folds": 8,
