@@ -520,8 +520,8 @@
         <div class="section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="margin-bottom: 0;">📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
-            <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
-              <input type="checkbox" id="toggleVNIndex" style="width:16px; height:16px;">
+            <label style="cursor:pointer; display:flex; align-items:center; justify-content: flex-end; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
+              <input type="checkbox" id="toggleVNIndex" style="width:16px; height:16px; accent-color: var(--color-blue);">
               <span class="lang-en">Show VN-Index</span><span class="lang-vi">Hiện VN-Index</span>
             </label>
           </div>
@@ -729,6 +729,7 @@
   </div>
   
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
 <script>
 window.MathJax = {
   tex: {
@@ -900,18 +901,83 @@ window.MathJax = {
     const lineCtx = document.getElementById('lineChart');
     if (lineCtx && window.chartDataLine) {
       if (lineChartInstance) lineChartInstance.destroy();
+      // MUTATE SCORE DATASET
+      if (window.chartDataLine && window.chartDataLine.datasets && window.chartDataLine.datasets.length > 0) {
+          window.chartDataLine.datasets[0].borderColor = '#2563eb';
+          window.chartDataLine.datasets[0].pointBackgroundColor = '#2563eb';
+          window.chartDataLine.datasets[0].borderWidth = 3;
+          window.chartDataLine.datasets[0].pointRadius = 4;
+          window.chartDataLine.datasets[0].tension = 0.25;
+          window.chartDataLine.datasets[0].order = 1;
+          window.chartDataLine.datasets[0].label = document.body.classList.contains('lang-vi-active') ? 'Điểm tổng hợp' : 'Composite Score';
+      }
+      
       lineChartInstance = new Chart(lineCtx, {
         type: 'line',
         data: window.chartDataLine,
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: { duration: 800, easing: 'easeOutQuart' },
+          interaction: { mode: 'index', intersect: false },
           scales: {
-            x: { grid: { color: gridColor }, ticks: { color: textColor } },
-            y: { type: 'linear', display: true, position: 'left', grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 },
-            y1: { type: 'linear', display: false, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor } }
+            x: { 
+              grid: { color: gridColor }, 
+              ticks: { color: 'var(--text-muted)', font: { size: 11 } } 
+            },
+            y: { 
+              type: 'linear', display: true, position: 'left', 
+              grid: { color: 'var(--border-color)' }, 
+              ticks: { color: textColor }, min: 0, max: 100,
+              title: { display: true, text: 'Composite Score (0–100)', color: textColor, font: { weight: 'bold' } }
+            },
+            y1: { 
+              type: 'linear', display: false, position: 'right', 
+              grid: { drawOnChartArea: false }, 
+              ticks: { color: textColor },
+              title: { display: true, text: 'VN-Index', color: textColor, font: { weight: 'bold' } }
+            }
           },
-          plugins: { legend: { display: false } }
+          plugins: { 
+            legend: { 
+              display: true, 
+              position: 'top', 
+              align: 'end',
+              labels: { usePointStyle: true, pointStyle: 'line', font: { size: 12, weight: '600' }, color: textColor }
+            },
+            tooltip: {
+              backgroundColor: 'var(--bg-card)',
+              titleColor: 'var(--text-main)',
+              bodyColor: 'var(--text-main)',
+              borderColor: 'var(--border-color)',
+              borderWidth: 1,
+              callbacks: {
+                 label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) { label += ': '; }
+                    if (context.parsed.y !== null) { label += context.parsed.y; }
+                    if (context.datasetIndex === 0) {
+                       let score = context.parsed.y;
+                       if (score >= 80) label += ' (BUY)';
+                       else if (score >= 65) label += ' (ACCUMULATE)';
+                       else if (score >= 50) label += ' (HOLD)';
+                       else if (score >= 35) label += ' (REDUCE)';
+                       else label += ' (SELL)';
+                    }
+                    return label;
+                 }
+              }
+            },
+            annotation: {
+              annotations: {
+                box1: { type: 'box', yMin: 80, yMax: 100, backgroundColor: 'rgba(34, 197, 94, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box2: { type: 'box', yMin: 65, yMax: 80, backgroundColor: 'rgba(59, 130, 246, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box3: { type: 'box', yMin: 50, yMax: 65, backgroundColor: 'rgba(234, 179, 8, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box4: { type: 'box', yMin: 35, yMax: 50, backgroundColor: 'rgba(249, 115, 22, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' },
+                box5: { type: 'box', yMin: 0, yMax: 35, backgroundColor: 'rgba(239, 68, 68, 0.05)', borderWidth: 0, drawTime: 'beforeDraw' }
+              }
+            }
+          }
         }
       });
     }
@@ -991,10 +1057,13 @@ window.MathJax = {
             window.chartDataLine.datasets.push({
                 label: 'VN-Index',
                 data: [1191.44, 1408.55, 1342.06, 1498.28, 1492.15, 1197.6, 1132.11, 1007.09, 1064.64, 1120.18, 1154.15, 1129.93, 1284.09, 1245.32, 1287.94, 1266.78, 1306.86, 1376.07, 1661.7, 1784.49, 1674.49, 1860.01, 1816.93, 1816.93],
-                borderColor: '#10b981',
+                borderColor: '#64748b',
                 backgroundColor: 'transparent',
                 borderWidth: 2,
-                pointRadius: 0,
+                pointRadius: 3,
+                borderDash: [5, 3],
+                tension: 0.25,
+                order: 2,
                 pointHoverRadius: 4,
                 yAxisID: 'y1',
                 hidden: true
