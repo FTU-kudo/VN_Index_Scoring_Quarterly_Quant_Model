@@ -12,23 +12,28 @@ def get_vnindex_quarterly_prices():
     scores = pd.read_parquet('data/scores/quarterly_scores_history.parquet')
     scores = scores[scores['quarter'] != '2099-Q1']
     
+    max_date = ohlcv['date'].max()
     prices = []
     for q in scores['quarter']:
         y, qn = q.split('-Q')
         y, qn = int(y), int(qn)
         m = qn * 3
         d = 31 if m in (3,12) else 30
+        start_date = pd.Timestamp(f'{y}-{m-2:02d}-01')
         end_date = pd.Timestamp(f'{y}-{m:02d}-{d:02d}')
-        valid = ohlcv[ohlcv['date'] <= end_date]
-        if len(valid) > 0:
-            if q == '2026-Q4':
-                p = 'null'
-            elif q == '2026-Q3':
-                p = 1785.10
-            else:
-                p = round(float(valid.iloc[-1]['close']), 2)
-        else:
+        
+        if max_date < start_date:
             p = 'null'
+        else:
+            valid = ohlcv[(ohlcv['date'] >= start_date) & (ohlcv['date'] <= end_date)]
+            if len(valid) > 0:
+                p = round(float(valid.iloc[-1]['close']), 2)
+            else:
+                valid_before = ohlcv[ohlcv['date'] <= end_date]
+                if len(valid_before) > 0:
+                    p = round(float(valid_before.iloc[-1]['close']), 2)
+                else:
+                    p = 'null'
         prices.append(p)
     return prices
 
