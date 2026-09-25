@@ -983,7 +983,7 @@ window.MathJax = {
               display: true, 
               position: 'top', 
               align: 'end',
-              labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor }
+              labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor, filter: function(item, data) { if (item.datasetIndex === 1) return !data.datasets[1].hidden; return true; } }
             },
             tooltip: {
               backgroundColor: 'var(--bg-card)',
@@ -995,7 +995,7 @@ window.MathJax = {
                  label: function(context) {
                     let label = context.dataset.label || '';
                     if (label) { label += ': '; }
-                    if (context.parsed.y !== null) { label += context.parsed.y; }
+                    if (context.parsed.y !== null) { label += context.parsed.y.toFixed(1); }
                     if (context.datasetIndex === 0) {
                        let score = context.parsed.y;
                        if (score >= 80) label += ' (BUY)';
