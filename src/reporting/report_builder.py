@@ -383,7 +383,46 @@ window.MathJax = {
             x: { grid: { color: gridColor }, ticks: { color: textColor } },
             y: { grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 }
           },
-          plugins: { legend: { display: false } }
+          plugins: { 
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const isVi = document.body.classList.contains('lang-vi-active');
+                  const labelPrefix = isVi ? 'Tổng điểm: ' : (context.dataset.label + ': ') || '';
+                  let label = labelPrefix;
+                  if (context.parsed.y !== null) {
+                    label += context.parsed.y;
+                  }
+                  if (context.dataset.percentile_label) {
+                    const pct = context.dataset.percentile_label[context.dataIndex];
+                    const disp = context.dataset.dispersion_level ? context.dataset.dispersion_level[context.dataIndex] : 'N/A';
+                    if (pct && pct !== 'N/A') {
+                      let pctTrans = pct;
+                      if (isVi) {
+                         if (pct === 'BUY/ACCUMULATE') pctTrans = 'MUA / TÍCH LŨY';
+                         else if (pct === 'REDUCE/SELL') pctTrans = 'GIẢM / BÁN';
+                         else if (pct === 'HOLD') pctTrans = 'GIỮ';
+                      }
+
+                      let dispTrans = disp;
+                      if (isVi) {
+                         if (disp === 'HIGH') dispTrans = 'CAO';
+                         else if (disp === 'MEDIUM') dispTrans = 'TRUNG BÌNH';
+                         else if (disp === 'LOW') dispTrans = 'THẤP';
+                      }
+
+                      const pctText = isVi ? 'Phân vị' : 'Percentile';
+                      const dispText = isVi ? 'Phân tán' : 'Dispersion';
+
+                      label += ' | ' + pctText + ': ' + pctTrans + ' | ' + dispText + ': ' + dispTrans;
+                    }
+                  }
+                  return label;
+                }
+              }
+            }
+          }
         }
       });
     }
@@ -818,6 +857,20 @@ def build_html_report(
         qtrs = score_history["quarter"].tolist()
         scores_list = score_history["total_score"].tolist()
         
+        pct_labels = score_history["percentile_label"].fillna("N/A").tolist() if "percentile_label" in score_history.columns else ["N/A"] * len(qtrs)
+        disp_levels = score_history["dispersion_level"].fillna("N/A").tolist() if "dispersion_level" in score_history.columns else ["N/A"] * len(qtrs)
+        
+        point_colors = []
+        for pct in pct_labels:
+            if pct == "BUY/ACCUMULATE":
+                point_colors.append("#22c55e")
+            elif pct == "REDUCE/SELL":
+                point_colors.append("#ef4444")
+            elif pct == "HOLD":
+                point_colors.append("#eab308")
+            else:
+                point_colors.append("#3b82f6")
+                
         chart_js_data += f"""
         <script>
           window.chartDataLine = {{
@@ -825,10 +878,12 @@ def build_html_report(
             datasets: [{{
               label: 'Total Score',
               data: {json.dumps(scores_list)},
+              percentile_label: {json.dumps(pct_labels)},
+              dispersion_level: {json.dumps(disp_levels)},
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               borderWidth: 3,
-              pointBackgroundColor: '#3b82f6',
+              pointBackgroundColor: {json.dumps(point_colors)},
               pointBorderColor: '#fff',
               pointRadius: 5,
               pointHoverRadius: 7,
@@ -1112,7 +1167,7 @@ def build_html_report(
     
     <div class="main-content">
       <h1>📊 {t('VN-Index Quantitative Scoring Model', 'Hệ thống Chấm điểm Định lượng VN-Index')}
-        <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">{quarter} Report</span>
+        <span class="report-badge" style="font-size:18px; color:var(--text-muted); font-weight:400; margin-left: 10px;">{t(f'{quarter} Report', f'Báo cáo {quarter}')}</span>
       </h1>
       {chart_js_data}
       
