@@ -77,11 +77,11 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 
 | Khoảng Điểm | Xếp Hạng Khuyến Nghị | Tỷ Trọng Cổ Phiếu (% NAV) | Tỷ Trọng Tiền Mặt / Trái Phiếu | Chiến Lược Quản Trị Rủi Ro |
 |:---:|:---:|:---:|:---:|---|
-| **80 – 100** | 🟢 **RẤT HẤP DẪN (STRONG BUY)** | 85% – 100% | 0% – 15% | • Full vị thế cổ phiếu dẫn dắt (VN30)<br>• Cân nhắc sử dụng Margin chọn lọc |
-| **65 – 79** | 🟡 **HẤP DẪN (BUY / ACCUMULATE)** | 70% – 85% | 15% – 30% | • Tích lũy cổ phiếu cơ bản tốt khi có điều chỉnh<br>• Duy trì đòn bẩy an toàn |
-| **50 – 64** | ⚪ **TRUNG LẬP (NEUTRAL)** | 40% – 60% | 40% – 60% | • Cân bằng danh mục, tập trung cổ phiếu trả cổ tức cao<br>• Tuyệt đối không dùng margin cao |
-| **35 – 49** | 🟠 **KÉM HẤP DẪN (CAUTIOUS / REDUCE)** | 20% – 40% | 60% – 80% | • Hạ tỷ trọng cổ phiếu beta cao<br>• Đưa margin về 0, chốt lời từng phần |
-| **0 – 34** | 🔴 **TIÊU CỰC (DEFENSIVE / CASH)** | 0% – 20% | 80% – 100% | • Giữ tối đa tiền mặt / chứng chỉ tiền gửi<br>• Mở vị thế short phái sinh VN30F để hedge |
+| **80 – 100** | 🟢 **MUA (BUY)** | 85% – 100% | 0% – 15% | • Full vị thế cổ phiếu dẫn dắt (VN30)<br>• Cân nhắc sử dụng Margin chọn lọc |
+| **65 – 79** | 🔵 **TÍCH LŨY (ACCUMULATE)** | 70% – 85% | 15% – 30% | • Tích lũy cổ phiếu cơ bản tốt khi có điều chỉnh<br>• Duy trì đòn bẩy an toàn |
+| **50 – 64** | 🟡 **NẮM GIỮ (HOLD)** | 40% – 60% | 40% – 60% | • Cân bằng danh mục, tập trung cổ phiếu trả cổ tức cao<br>• Tuyệt đối không dùng margin cao |
+| **35 – 49** | 🟠 **GIẢM TỶ TRỌNG (REDUCE)** | 20% – 40% | 60% – 80% | • Hạ tỷ trọng cổ phiếu beta cao<br>• Đưa margin về 0, chốt lời từng phần |
+| **0 – 34** | 🔴 **BÁN (SELL)** | 0% – 20% | 80% – 100% | • Giữ tối đa tiền mặt / chứng chỉ tiền gửi<br>• Mở vị thế short phái sinh VN30F để hedge |
 
 ---
 
