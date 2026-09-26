@@ -1,13 +1,13 @@
 {
   "metadata": {
     "quarter": "2026-Q3",
-    "generated_at": "2026-09-27T02:40:46.673104",
+    "generated_at": "2026-09-27T02:56:50.666540",
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
   },
   "quarterly_score": {
     "quarter": "2026-Q3",
-    "date_computed": "2026-09-27 02:40",
+    "date_computed": "2026-09-27 02:56",
     "total_score": 53.9,
     "label": "HOLD",
     "emoji": "🟡",

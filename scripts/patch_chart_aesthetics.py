@@ -41,26 +41,6 @@ def patch_html():
           window.chartDataLine.datasets[0].order = 1;
           window.chartDataLine.datasets[0].fill = false;
           window.chartDataLine.datasets[0].label = document.body.classList.contains('lang-vi-active') ? 'Điểm tổng hợp' : 'Composite Score';
-          
-          // Dynamic coloring based on score zones
-          window.chartDataLine.datasets[0].segment = {
-              borderColor: ctx => {
-                  const val = ctx.p1.parsed.y;
-                  if (val >= 80) return '#22c55e'; // BUY
-                  if (val >= 65) return '#3b82f6'; // ACCUMULATE
-                  if (val >= 50) return '#eab308'; // HOLD
-                  if (val >= 35) return '#f97316'; // REDUCE
-                  return '#ef4444'; // SELL
-              }
-          };
-          window.chartDataLine.datasets[0].pointBackgroundColor = ctx => {
-              const val = ctx.raw;
-              if (val >= 80) return '#22c55e';
-              if (val >= 65) return '#3b82f6';
-              if (val >= 50) return '#eab308';
-              if (val >= 35) return '#f97316';
-              return '#ef4444';
-          };
           window.chartDataLine.datasets[0].pointBorderColor = '#fff';
       }
       
@@ -135,13 +115,25 @@ def patch_html():
               }
             },
             annotation: {
-              annotations: {
-                box1: { type: 'box', yMin: 80, yMax: 100, backgroundColor: 'rgba(34, 197, 94, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box2: { type: 'box', yMin: 65, yMax: 80, backgroundColor: 'rgba(59, 130, 246, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box3: { type: 'box', yMin: 50, yMax: 65, backgroundColor: 'rgba(234, 179, 8, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box4: { type: 'box', yMin: 35, yMax: 50, backgroundColor: 'rgba(249, 115, 22, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' },
-                box5: { type: 'box', yMin: 0, yMax: 35, backgroundColor: 'rgba(239, 68, 68, 0.03)', borderWidth: 0, drawTime: 'beforeDraw' }
-              }
+              annotations: (function() {
+                 let annotations = {};
+                 if (window.chartDataLine.datasets[0].percentile_label) {
+                    let labels = window.chartDataLine.datasets[0].percentile_label;
+                    for (let i = 0; i < labels.length; i++) {
+                       if (labels[i] === 'REDUCE/SELL') {
+                          annotations['box' + i] = {
+                             type: 'box',
+                             xMin: i - 0.5,
+                             xMax: i + 0.5,
+                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                             borderWidth: 0,
+                             drawTime: 'beforeDraw'
+                          };
+                       }
+                    }
+                 }
+                 return annotations;
+              })()
             }
           }
         }
