@@ -25,7 +25,7 @@ jobs:
       - name: "📦 Install core dependencies"
         run: |
           pip install --upgrade pip
-          pip install -U --extra-index-url https://vnstocks.com/api/simple pandas numpy pyarrow vnstock vnai python-dotenv requests
+          pip install -r requirements.txt
 
       - name: "📊 Run daily update"
         env:
