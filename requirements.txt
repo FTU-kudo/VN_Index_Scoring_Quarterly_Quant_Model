@@ -18,7 +18,7 @@ xgboost==2.0.0            # XGBoost classifier
 lightgbm==4.0.0           # LightGBM classifier
 
 # ── Global market data (DXY, US10Y) ─────────────────────────────────────────
-yfinance==0.2.28          # Yahoo Finance data (DXY proxy, US10Y)
+yfinance>=0.2.50          # Yahoo Finance data (DXY proxy, US10Y)
 
 # ── Utilities ────────────────────────────────────────────────────────────────
 python-dotenv==1.0.0      # .env loading
