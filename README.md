@@ -18,18 +18,9 @@
 Hệ thống được thiết kế đáp ứng trọn vẹn **5 Tiêu chuẩn Vàng**:
 1. **Xác định toàn diện các biến số**: Tích hợp 4 trụ cột định lượng (Vĩ mô & Tiền tệ, Định giá lịch sử, Dòng tiền & Margin, Động lượng Kỹ thuật).
 2. **Định lượng hóa chặt chẽ**: Ứng dụng Hồi quy Đa biến (MLR với Newey-West HAC robust errors), Mô hình Tự hồi quy Vectơ (VAR với Granger Causality & IRF), và Machine Learning (XGBoost / Random Forest).
-3. **Thu thập dữ liệu tự động & thực tế**: Tích hợp trực tiếp với API `vnstock` thế hệ mới (`Quote`, `Listing`) và `yfinance`.
+3. **Thu thập dữ liệu tự động & thực tế**: Tích hợp trực tiếp với API `vnstock` thế hệ mới (`Quote`, `Listing`) và API VNDirect.
 4. **Tự động hóa 100%**: Sẵn sàng với CI/CD GitHub Actions chạy tự động vào đầu mỗi quý và tự động Deploy Báo cáo HTML lên GitHub Pages.
-5. **Kiểm định thực nghiệm nghiêm ngặt (Backtest & WFV)**: Áp dụng phương pháp Walk-Forward Validation (WFV) trượt tránh rò rỉ thông tin tương lai. Mô hình đã được backtest thành công trên **23 quý liên tiếp (Q1/2021 đến Q3/2026)**.
-
----
-
-## ✨ CÁC TÍNH NĂNG NỔI BẬT GẦN ĐÂY (LATEST UPDATES)
-- **🔴 Fix ML Regression + NFF Unit Mismatch (25/09/2026)**: Khắc phục hoàn toàn 3 lỗi nghiêm trọng tích lũy sau commit `b549352`: *(1)* ML Forecast bị `<MISSING>` trên tất cả 24+ quý do kiến trúc cắt dữ liệu sai khiến `df.iloc[-1]` trỏ vào quý trước thay vì quý đang chấm điểm; *(2)* NFF luôn hiển thị `-0.00%` do lỗi đơn vị nghiêm trọng (`nff_vnd [tỷ VND] / total_mc [VND raw]` ≈ 1e-12); *(3)* Mục "Data Sources & Integrity" mô tả sai nguồn NFF (vẫn ghi "vnstock API" dù đã chuyển sang VNDirect). Sau fix, 24 quý tính lại đều **ASSERT PASS**: ML accuracy 36–51%, NFF dao động từ -0.58% đến +0.53% Market Cap phản ánh đúng thực tế dòng tiền khối ngoại.
-- **Minh bạch hóa Dữ liệu (No Hallucination)**: Các biến số định lượng khi thiếu hụt dữ liệu (VD: OMO, ADTV) sẽ được gắn cờ đỏ `<MISSING>` trong báo cáo HTML thay vì âm thầm sử dụng giá trị default, đảm bảo quỹ đầu tư nhận diện chính xác chất lượng tín hiệu.
-- **Báo cáo VAR Granger Causality Mở rộng**: Tích hợp p-value chi tiết của từng biến vĩ mô dẫn dắt VN-Index, cung cấp góc nhìn kinh tế lượng sâu sắc.
-- **Khắc phục Data Leakage (Nhân bản dữ liệu P/E Median)**: Chuyển đổi kiến trúc tính toán sang `ticker_history.parquet`, hiển thị cả *Headline P/E* và *Median P/E* nhằm nhận diện chính xác các nhịp kéo trụ Mega-Cap (ví dụ: nhóm VIC).
-- **Từ điển Biến số (Glossary & Rationale)**: Đã tích hợp Tab từ điển riêng trong UI báo cáo, giải thích chi tiết logic kinh tế của từng thông số (Δ VN1Y, Δ DXY, USD/VND...).
+5. **Kiểm định thực nghiệm nghiêm ngặt (Backtest & WFV)**: Áp dụng phương pháp Walk-Forward Validation (WFV) trượt tránh rò rỉ thông tin tương lai (Data Leakage). Mô hình đã được backtest thành công trên **24 quý liên tiếp (Q1/2021 đến Q4/2026)**.
 
 ---
 
@@ -40,7 +31,7 @@ Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa 
 | # | Trụ cột | Trọng số | Các chỉ báo chính | Ghi chú |
 |---|---------|:--------:|---------------------|---------|
 | 1 | **Macro & Monetary** | **25%** | VN1Y Yield, ΔIR, USD/VND Z-score, M2 YoY, VN10Y Yield, Yield Spread | Môi trường lãi suất & tiền tệ |
-| 2 | **Global & Intermarket** | **20%** | DXY Z-score, US10Y Yield, Net Foreign Flow Z-score | Áp lực toàn cầu & dòng vốn ngoại |
+| 2 | **Global & Intermarket** | **20%** | DXY Z-score, US10Y Yield, USD/JPY Z-score, Net Foreign Flow Z-score | Áp lực toàn cầu & dòng vốn ngoại |
 | 3 | **Valuation & Leverage** | **20%** | P/E Z-score 5Y, P/B Z-score 5Y, Margin Risk, Earnings Yield Gap | Định giá tương đối & rủi ro đòn bẩy |
 | 4 | **Quant Model (MLR + VAR)** | **15%** | MLR predicted return, VAR T+5 forecast, Adj-R², Granger leaders | Tín hiệu từ mô hình kinh tế lượng |
 | 5 | **ML Forecast** | **10%** | XGBoost WFV accuracy, F1-score, directional prediction | Tín hiệu Machine Learning |
@@ -77,17 +68,6 @@ $$
   - Khung thời gian huấn luyện trượt (Rolling Training Window = 250 - 500 phiên).
   - Kiểm tra hoàn toàn Out-Of-Sample (OOS) trên các chu kỳ tiếp theo, loại bỏ 100% rủi ro Look-ahead bias.
   - Trích xuất Feature Importance để đối chiếu với hệ số hồi quy của mô hình kinh tế lượng.
-
----
-
-## ⚡ CƠ CHẾ ĐỘT PHÁ: RỔ VN30 ĐỘNG (DYNAMIC VN30 RETRIEVAL)
-
-> **Vấn đề thực tế**: Rổ chỉ số VN30 được HOSE định kỳ tái cơ cấu 2 lần mỗi năm (vào tháng 1 và tháng 7). Nếu hardcode danh sách mã cổ phiếu trong mã nguồn, mô hình sẽ tính toán sai dòng tiền ngoại và độ rộng thị trường khi có các cổ phiếu bị loại bỏ hoặc thêm mới (ví dụ: NVL, REE, BVH, POW... đã được thay thế bởi BSR, GVR, LPB, MCH, TCX, VPL...).
-
-**Giải pháp của hệ thống**:
-- Xây dựng hàm [`get_vn30_tickers()`](src/utils/config.py) truy vấn trực tiếp từ API HOSE qua `vnstock.api.listing.Listing().symbols_by_group('VN30')`.
-- Tự động lưu cache JSON tại `data/raw/vn30_tickers.json` kèm metadata thời gian cập nhật.
-- Cơ chế Fallback 2 lớp: Tự động dùng cache gần nhất nếu mạng bị ngắt kết nối, và fallback về snapshot chính xác của HOSE nếu khởi tạo lần đầu khi offline.
 
 ---
 
@@ -155,6 +135,7 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 ├── .github/
 │   └── workflows/
 │       ├── quarterly_scoring.yml   # CI/CD: Chạy tự động đầu mỗi quý (01/01, 01/04, 01/07, 01/10)
+│       ├── batch_scoring.yml       # CI/CD: Chạy backtest quét toàn bộ 24 quý lịch sử
 │       └── validate_data.yml       # CI/CD: Kiểm định dữ liệu hàng ngày (Thứ 2 - Thứ 6)
 ├── data/
 │   ├── raw/                       # Chứa cache dữ liệu thô (vn30_tickers.json, macro_sbv.csv)
@@ -264,14 +245,16 @@ python run_daily_update.py
 
 ## 🤖 TỰ ĐỘNG HÓA CI/CD (GITHUB ACTIONS)
 
-Dự án tích hợp sẵn 3 workflows tự động trong `.github/workflows/`:
+Dự án tích hợp sẵn 4 workflows tự động trong `.github/workflows/`:
 1. **`quarterly_scoring.yml`**:
    - Tự động kích hoạt vào lúc 09:00 ICT ngày đầu tiên của mỗi quý (ngày 1 các tháng 1, 4, 7, 10).
    - Tự động fetch dữ liệu, tính điểm composite, xuất báo cáo HTML và lưu trữ Artifacts trên GitHub.
    - Hỗ trợ kích hoạt thủ công qua nút **Run workflow** trên giao diện GitHub Actions (`workflow_dispatch`).
-2. **`deploy_pages.yml`**:
+2. **`batch_scoring.yml`**:
+   - Tự động chạy quét backtest toàn bộ 24 quý lịch sử khi cần tính toán lại dữ liệu quy mô lớn, báo cáo tổng hợp các trường hợp fail.
+3. **`deploy_pages.yml`**:
    - Tự động publish toàn bộ thư mục `output/reports` lên Internet thông qua **GitHub Pages** mỗi khi có commit mới vào nhánh main, giúp nhà quản lý quỹ xem báo cáo mọi lúc mọi nơi.
-3. **`validate_data.yml`**:
+4. **`validate_data.yml`**:
    - Tự động kiểm tra chất lượng kết nối API và tính toàn vẹn dữ liệu từ Thứ 2 đến Thứ 6 hàng tuần.
 
 ---
