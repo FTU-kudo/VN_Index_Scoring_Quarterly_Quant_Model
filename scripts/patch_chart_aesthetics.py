@@ -105,16 +105,30 @@ def patch_html():
               borderWidth: 1,
               callbacks: {
                  label: function(context) {
+                    const isVi = document.body.classList.contains('lang-vi-active');
                     let label = context.dataset.label || '';
                     if (label) { label += ': '; }
                     if (context.parsed.y !== null) { label += context.parsed.y.toFixed(1); }
-                    if (context.datasetIndex === 0) {
-                       let score = context.parsed.y;
-                       if (score >= 80) label += ' (BUY)';
-                       else if (score >= 65) label += ' (ACCUMULATE)';
-                       else if (score >= 50) label += ' (HOLD)';
-                       else if (score >= 35) label += ' (REDUCE)';
-                       else label += ' (SELL)';
+                    if (context.datasetIndex === 0 && context.dataset.percentile_label) {
+                      const pct = context.dataset.percentile_label[context.dataIndex];
+                      const disp = context.dataset.dispersion_level ? context.dataset.dispersion_level[context.dataIndex] : 'N/A';
+                      if (pct && pct !== 'N/A') {
+                        let pctTrans = pct;
+                        if (isVi) {
+                           if (pct === 'BUY/ACCUMULATE') pctTrans = 'MUA / TÍCH LŨY';
+                           else if (pct === 'REDUCE/SELL') pctTrans = 'GIẢM / BÁN';
+                           else if (pct === 'HOLD') pctTrans = 'GIỮ';
+                        }
+                        let dispTrans = disp;
+                        if (isVi) {
+                           if (disp === 'HIGH') dispTrans = 'CAO';
+                           else if (disp === 'MEDIUM') dispTrans = 'TRUNG BÌNH';
+                           else if (disp === 'LOW') dispTrans = 'THẤP';
+                        }
+                        const pctText = isVi ? 'Phân vị' : 'Percentile';
+                        const dispText = isVi ? 'Phân tán' : 'Dispersion';
+                        label += ' | ' + pctText + ': ' + pctTrans + ' | ' + dispText + ': ' + dispTrans;
+                      }
                     }
                     return label;
                  }

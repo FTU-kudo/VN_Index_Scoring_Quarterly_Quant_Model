@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import pandas as pd
 import sys
+import subprocess
 sys.path.append(os.getcwd())
 from src.reporting.report_builder import build_html_report, build_root_index_html
 
@@ -31,3 +32,11 @@ for json_file in exports_dir.glob("score_*.json"):
     print(f"Rebuilt {quarter}")
 
 build_root_index_html()
+
+# Run post-processing UI injections
+try:
+    subprocess.run([sys.executable, "scripts/inject_vnindex_chart.py"], check=True)
+    subprocess.run([sys.executable, "scripts/patch_chart_aesthetics.py"], check=True)
+    print("Post-processing scripts executed successfully.")
+except Exception as e:
+    print(f"Error running post-processing scripts: {e}")
