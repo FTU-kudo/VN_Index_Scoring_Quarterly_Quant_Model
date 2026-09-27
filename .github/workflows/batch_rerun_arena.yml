@@ -42,14 +42,15 @@ jobs:
           VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
           PYTHONUTF8: 1
         run: |
+          set +e   # đừng thoát ngay khi 1 quý fail — chạy hết rồi tổng kết
           for YEAR in $(seq 2021 2026); do
             for Q in 1 2 3 4; do
               QUARTER="${YEAR}-Q${Q}"
               echo "=========================================================="
               echo "Running pipeline for $QUARTER..."
               echo "=========================================================="
-              python run_quarterly.py --quarter $QUARTER --ftse-status auto
-              EXIT_CODE=$?
+              python run_quarterly.py --quarter $QUARTER --ftse-status auto 2>&1 | tee -a /tmp/batch_full.log
+              EXIT_CODE=${PIPESTATUS[0]}
               if [ $EXIT_CODE -ne 0 ]; then
                 echo "::error::❌ Pipeline FAILED for $QUARTER (exit code $EXIT_CODE)"
                 echo "FAILED: $QUARTER" >> /tmp/batch_failures.txt
@@ -63,6 +64,25 @@ jobs:
             cat /tmp/batch_failures.txt
             exit 1
           fi
+
+      - name: "🩺 Dump debug log to branch on failure"
+        if: failure()
+        run: |
+          {
+            echo "===== BATCH DEBUG LOG (tail 400 lines) ====="
+            tail -400 /tmp/batch_full.log 2>/dev/null || echo "(no batch log)"
+            echo ""
+            echo "===== FAILURES ====="
+            cat /tmp/batch_failures.txt 2>/dev/null || echo "(none recorded)"
+            echo ""
+            echo "===== pipeline logs/ ====="
+            tail -200 logs/*.log 2>/dev/null || echo "(no logs dir)"
+          } > batch_debug.log
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add -f batch_debug.log
+          git commit -m "debug: batch rerun failure log [skip ci]"
+          git push
 
       - name: "📤 Upload Artifacts"
         uses: actions/upload-artifact@v4
