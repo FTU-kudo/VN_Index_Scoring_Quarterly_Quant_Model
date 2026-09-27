@@ -1,14 +1,17 @@
 """
-mlr_model.py — Mô hình Hồi quy Đa biến (Multiple Linear Regression)
-=====================================================================
-Phương trình hồi quy cốt lõi:
+mlr_model.py — Mô hình Hồi quy Đa biến DỰ BÁO FORWARD (Predictive MLR)
+=======================================================================
+Phương trình hồi quy cốt lõi (PREDICTIVE — không phải nowcast):
 
-  R_VNI,t = α + β₁·Δ IR_t + β₂·Δ DXY_t + β₃·NFF_t + β₄·ZPE_t
-                + β₅·Δ MRG_t + β₆·ΔUS10Y_t + ε_t
+  R̄_VNI,(t+1..t+h) = α + β₁·Δ IR_t + β₂·Δ DXY_t + β₃·NFF_t + β₄·ZPE_t
+                        + β₅·Δ MRG_t + β₆·ΔUS10Y_t + β₇·ΔUSDJPY_t + ε_t
 
 Trong đó:
-  R_VNI     = Log-return của VN-Index
-  Δ IR      = Thay đổi lãi suất OMO overnight
+  R̄_(t+1..t+h) = TRUNG BÌNH log-return/ngày của h phiên KẾ TIẾP
+                 (h = MLR_FORECAST_HORIZON_DAYS, mặc định 21 ~ 1 tháng).
+                 Features tại t chỉ dùng thông tin đã biết cuối phiên t
+                 → dự báo thuần túy, không look-ahead.
+  Δ IR      = Thay đổi lãi suất VN 1Y
   Δ DXY     = Pct thay đổi Dollar Index
   NFF       = Net Foreign Flow (tỷ VND)
   ZPE       = Z-score P/E (5Y rolling)
@@ -16,10 +19,11 @@ Trong đó:
   Δ US10Y   = Thay đổi lợi suất TPCP Mỹ 10Y
 
 Phương pháp:
-  - OLS (Ordinary Least Squares) với Newey-West standard errors (HAC)
-    để xử lý autocorrelation và heteroskedasticity trong chuỗi thời gian
+  - OLS với Newey-West HAC standard errors, maxlags ≥ horizon để xử lý
+    autocorrelation do overlapping forward windows
   - Kiểm định: ADF (stationary), Durbin-Watson (autocorr), VIF (multicollinearity)
   - Train/Test split: 75%/25% (không shuffle — tôn trọng tính thời gian)
+  - Đánh giá OUT-OF-SAMPLE trên 25% cuối: hit-rate (đúng dấu), OOS R²
 """
 
 import logging
@@ -29,7 +33,27 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from src.utils.config import MLR_FORECAST_HORIZON_DAYS
+
 logger = logging.getLogger(__name__)
+
+
+def make_forward_target(returns: pd.Series, horizon: int) -> pd.Series:
+    """
+    Tạo target dự báo forward: y_t = mean(r_{t+1}, ..., r_{t+horizon}).
+
+    Per-day scale (chia cho horizon) để giữ tương thích với hệ số quy đổi
+    điểm hiện hành. h hàng cuối sẽ là NaN (chưa biết tương lai) — bị loại
+    khỏi tập huấn luyện một cách tự nhiên qua dropna().
+
+    KHÔNG chứa r_t (return cùng ngày) — đây là điểm phân biệt then chốt
+    giữa mô hình DỰ BÁO và mô hình nowcast.
+    """
+    if horizon < 1:
+        raise ValueError(f"horizon phải ≥ 1, nhận {horizon}")
+    r = pd.to_numeric(returns, errors="coerce")
+    # shift(-h).rolling(h).sum() tại t = tổng r_{t+1..t+h} (xem ml_model.py)
+    return r.shift(-horizon).rolling(horizon).sum() / horizon
 
 # Tên biến cho mô hình MLR lõi (ưu tiên lý thuyết)
 CORE_FEATURES = [
@@ -92,12 +116,17 @@ class MLRModel:
         feature_cols: List[str] = None,
         target_col: str = "log_return",
         train_ratio: float = 0.75,
-        max_lags_nw: int = 5   # Newey-West lag truncation
+        max_lags_nw: int = 5,   # Newey-West lag truncation (floor)
+        horizon: int = MLR_FORECAST_HORIZON_DAYS,  # số phiên forward của target
     ):
         self.feature_cols = feature_cols or CORE_FEATURES
         self.target_col   = target_col
         self.train_ratio  = train_ratio
-        self.max_lags_nw  = max_lags_nw
+        self.horizon      = int(horizon)
+        # Overlapping forward windows tạo autocorrelation bậc (h-1) trong
+        # residuals → NW maxlags tối thiểu phải bằng horizon
+        self.max_lags_nw  = max(int(max_lags_nw), self.horizon)
+        self.oos_metrics_ = {}
 
         # Kết quả sau khi fit
         self.coefs_    = {}
@@ -142,7 +171,10 @@ class MLRModel:
         self, df: pd.DataFrame, min_obs: Optional[int] = None
     ) -> Tuple[pd.DataFrame, pd.Series]:
         """
-        Chuẩn bị X, y: chỉ dropna trên cột đã đủ coverage (không bắt P/E/NFF).
+        Chuẩn bị X, y cho hồi quy DỰ BÁO:
+          X_t = features đã biết cuối phiên t
+          y_t = mean log-return/ngày của {horizon} phiên KẾ TIẾP (t+1..t+h)
+        Chỉ dropna trên cột đã đủ coverage (không bắt P/E/NFF).
         """
         if self.target_col not in df.columns:
             raise ValueError(f"Target column '{self.target_col}' không tồn tại")
@@ -153,7 +185,10 @@ class MLRModel:
                 f"[MLR] Không đủ feature usable (cần ≥2). Có: {available}"
             )
 
-        sub = df[available + [self.target_col]].dropna()
+        fwd_col = "_forward_target"
+        sub = df[available].copy()
+        sub[fwd_col] = make_forward_target(df[self.target_col], self.horizon)
+        sub = sub.dropna()
         if min_obs is None:
             min_obs = MIN_MLR_OBS
         if len(sub) < min_obs:
@@ -163,7 +198,7 @@ class MLRModel:
             )
         self.feature_cols = available
         X = sub[available]
-        y = sub[self.target_col]
+        y = sub[fwd_col]
         return X, y
 
     def _drop_collinear_features(self, X: pd.DataFrame, threshold: float = 0.9) -> pd.DataFrame:
@@ -231,9 +266,33 @@ class MLRModel:
                 self.sign_ok_[feat] = (expected * beta > 0)
 
         self.residuals_ = self.model_.resid
+
+        # ── Đánh giá OUT-OF-SAMPLE trên 25% cuối (không dùng khi fit) ────────
+        # Đây là thước đo trung thực duy nhất về khả năng DỰ BÁO của model.
+        self.oos_metrics_ = {}
+        X_test, y_test = X.iloc[split:], y.iloc[split:]
+        if len(X_test) >= 10:
+            try:
+                X_test_const = sm.add_constant(X_test, has_constant="add")
+                X_test_const = X_test_const[list(self.model_.model.exog_names)]
+                y_hat = self.model_.predict(X_test_const)
+                ss_res = float(((y_test - y_hat) ** 2).sum())
+                ss_tot = float(((y_test - y_test.mean()) ** 2).sum())
+                oos_r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else np.nan
+                hit = float((np.sign(y_hat) == np.sign(y_test)).mean())
+                self.oos_metrics_ = {
+                    "oos_r2":       round(oos_r2, 4),
+                    "oos_hit_rate": round(hit, 4),
+                    "oos_n":        int(len(y_test)),
+                }
+            except Exception as e:
+                logger.warning(f"[MLR-OOS] Không tính được OOS metrics: {e}")
+
         logger.info(
-            f"[MLR] Fit xong. R² = {self.r2_:.4f}, Adj-R² = {self.adj_r2_:.4f}\n"
-            f"       Train size = {len(X_train)}, Test size = {n - split}"
+            f"[MLR] Fit xong (PREDICTIVE, horizon={self.horizon} phiên). "
+            f"R²-train = {self.r2_:.4f}, Adj-R² = {self.adj_r2_:.4f}\n"
+            f"       Train size = {len(X_train)}, Test size = {n - split} "
+            f"| OOS: {self.oos_metrics_ or 'N/A'}"
         )
         return self
 
@@ -274,6 +333,9 @@ class MLRModel:
             raise RuntimeError("Model chưa được fit")
 
         result = {}
+
+        # Out-of-sample (25% holdout) — thước đo khả năng dự báo trung thực
+        result["oos"] = dict(self.oos_metrics_)
 
         # Durbin-Watson
         try:

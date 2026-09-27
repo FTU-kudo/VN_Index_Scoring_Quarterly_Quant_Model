@@ -395,12 +395,14 @@ def score_quant_model(
     scores = {}
     details = {}
 
-    # ── MLR Prediction ────────────────────────────────────────────────────────
+    # ── MLR Prediction (forward: mean log-return/ngày của ~1 tháng kế tiếp) ──
     if mlr_pred is not None and pd.notna(mlr_pred):
-        # Chuẩn hóa: return +2% = điểm 80, -2% = điểm 20
+        # Chuẩn hóa per-day: +1%/ngày → 80, -1%/ngày → 20 (clamp 0-100)
         mlr_score = _clamp_score(50 + mlr_pred * 3000)
         scores["mlr_signal_score"] = mlr_score
-        details["mlr_forecast"] = f"Forecast log-return = {mlr_pred:.4f} → score {mlr_score:.0f}"
+        details["mlr_forecast"] = (
+            f"Forward log-return/day (next ~1M) = {mlr_pred:.4f} → score {mlr_score:.0f}"
+        )
     else:
         mlr_score = 50.0
         details["mlr_forecast"] = "<MISSING> No MLR forecast"

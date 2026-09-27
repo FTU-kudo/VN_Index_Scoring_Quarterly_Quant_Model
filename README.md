@@ -55,7 +55,9 @@ Thiết lập phương trình dự báo lợi suất VN-Index chu kỳ tiếp th
 $$
 R_{t+h} = \alpha + \beta_1 \Delta \text{VN1Y}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE-Zscore}_t + \beta_6 \Delta \text{Margin}_t + \beta_7 \Delta \text{USD/JPY}_t + \epsilon_t
 $$
-- **Newey-West HAC Standard Errors**: Tự động hiệu chỉnh sai số nhằm giải quyết hiện tượng phương sai thay đổi (Heteroskedasticity) và tự tương quan (Autocorrelation).
+- **Dự báo thuần túy (Predictive, không nowcast)**: Biến phụ thuộc là **trung bình log-return/ngày của $h = 21$ phiên kế tiếp** ($t+1 \dots t+h$, ~1 tháng giao dịch); biến giải thích chỉ dùng thông tin đã biết tại cuối phiên $t$ — không chứa return cùng ngày.
+- **Newey-West HAC Standard Errors**: Tự động hiệu chỉnh sai số nhằm giải quyết hiện tượng phương sai thay đổi (Heteroskedasticity) và tự tương quan (Autocorrelation); `maxlags ≥ h` để xử lý autocorrelation phát sinh từ overlapping forward windows.
+- **Đánh giá Out-of-Sample**: Model được đánh giá trên 25% dữ liệu cuối (holdout, không shuffle) với hit-rate (đúng dấu) và OOS R² — thước đo trung thực về khả năng dự báo, tách biệt với R² in-sample.
 - **Phân tích độ nhạy**: Đánh giá chính xác $p$-value và hệ số $\beta$ chuẩn hóa để xếp hạng mức độ ảnh hưởng của từng biến số.
 
 ### 2. Mô hình Tự Hồi quy Vectơ (Vector Autoregression - VAR)

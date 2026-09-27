@@ -231,11 +231,15 @@ def run_pipeline(args: argparse.Namespace) -> None:
         diag = mlr.diagnostics()
         mlr_adj_r2 = mlr.adj_r2_
 
-        # Dự báo trên 30 ngày cuối
-        mlr_preds = mlr.predict(df_all.tail(30))
+        # DỰ BÁO FORWARD thật: features tại các phiên cuối cùng TRƯỚC quý mới
+        # (point-in-time) → dự báo mean log-return/ngày của ~1 tháng giao dịch
+        # kế tiếp. Lấy trung bình 5 phiên cuối để giảm nhiễu 1 phiên đơn lẻ.
+        mlr_preds = mlr.predict(df_all.tail(5))
         mlr_pred  = float(mlr_preds.mean()) if len(mlr_preds) > 0 else None
 
-        logger.info(f"[MLR] Adj-R² = {mlr_adj_r2:.4f}")
+        logger.info(f"[MLR] Adj-R² (train) = {mlr_adj_r2:.4f} | horizon = {mlr.horizon} phiên")
+        logger.info(f"[MLR] OOS (25% holdout) = {diag.get('oos', 'N/A')}")
+        logger.info(f"[MLR] Forward forecast (log-return/ngày) = {mlr_pred}")
         logger.info(f"[MLR] Durbin-Watson = {diag.get('durbin_watson', 'N/A')}")
         logger.info(f"[MLR] ADF residuals p-value = {diag.get('adf_residuals_pvalue', 'N/A')}")
 
