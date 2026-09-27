@@ -12,7 +12,7 @@
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "ml_forecast",
+    "most_divergent_pillar": "macro_monetary",
     "percentile_label": "REDUCE/SELL",
     "percentile_p15": 51.69,
     "percentile_p85": 56.49,

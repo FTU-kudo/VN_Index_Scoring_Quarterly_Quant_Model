@@ -707,7 +707,8 @@ def compute_quarterly_score(
     # NOTE: This is a simple heuristic — the pillar whose raw score deviates
     # most from neutral (50). This is NOT based on Granger causality or IRF.
     # Granger tests are used separately in the VAR model for variable ranking.
-    group_raw = {g["group"]: g["raw_score"] for g in groups}
+    # We exclude 'quant_model' and 'ml_forecast' as they are models, not fundamental indicators.
+    group_raw = {g["group"]: g["raw_score"] for g in groups if g["group"] not in ["quant_model", "ml_forecast"]}
     most_divergent_pillar = max(group_raw, key=lambda k: abs(group_raw[k] - 50))
 
     # ── Pillar Dispersion (Fix #3) ────────────────────────────────────────────

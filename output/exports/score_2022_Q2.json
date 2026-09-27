@@ -12,7 +12,7 @@
     "label": "REDUCE",
     "emoji": "🟠",
     "label_description": "Reduce exposure — Increasing pressure",
-    "most_divergent_pillar": "ml_forecast",
+    "most_divergent_pillar": "valuation_leverage",
     "percentile_label": "REDUCE/SELL",
     "percentile_p15": 53.456,
     "percentile_p85": 56.7,

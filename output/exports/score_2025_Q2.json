@@ -12,7 +12,7 @@
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "quant_model",
+    "most_divergent_pillar": "valuation_leverage",
     "percentile_label": "HOLD",
     "percentile_p15": 49.263999999999996,
     "percentile_p85": 57.406,
