@@ -172,7 +172,6 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 ├── .gitignore                     # Đã cấu hình loại trừ file nhạy cảm và handoff notes
 ├── LICENSE                        # Giấy phép mã nguồn mở GNU AGPL v3.0
 ├── requirements.txt               # Danh sách gói phụ thuộc tương thích Python 3.11 - 3.14
-├── live_scoring_Q3_2026.py        # Script chạy độc lập toàn diện nhanh (20 - 30 giây)
 ├── run_quarterly.py               # Entrypoint chính thức chạy pipeline theo quý
 └── run_daily_update.py            # Entrypoint cập nhật tín hiệu hàng ngày sau giờ đóng cửa
 ```
@@ -218,14 +217,7 @@ VNSTOCK_API_KEY=your_vnstock_api_key
 
 ### 4. Vận hành Mô hình
 
-#### Cách 1: Chạy Siêu Tốc với Script Độc Lập (`live_scoring_Q3_2026.py`)
-Script độc lập nạp dữ liệu trực tiếp từ API, tính toán toàn bộ 4 trụ cột, chạy hồi quy OLS và XGBoost Walk-Forward Validation chỉ trong **20 - 30 giây**:
-```bash
-python -X utf8 live_scoring_Q3_2026.py
-```
-*Kết quả điểm số sẽ được in ra console và tự động lưu tại `output/exports/live_score_2026_Q3.json`.*
-
-#### Cách 2: Chạy Full Pipeline Theo Quý (`run_quarterly.py`)
+#### Cách 1: Chạy Full Pipeline Theo Quý (`run_quarterly.py`)
 ```bash
 # Chạy chấm điểm cho quý hiện tại:
 python run_quarterly.py --quarter 2026-Q3
@@ -235,7 +227,7 @@ python run_quarterly.py --quarter 2026-Q3 --no-cache      # Buộc tải lại t
 python run_quarterly.py --quarter 2026-Q3 --skip-ml       # Bỏ qua bước huấn luyện ML để kiểm tra nhanh
 ```
 
-#### Cách 3: Chạy Cập nhật Tín hiệu Hàng ngày (`run_daily_update.py`)
+#### Cách 2: Chạy Cập nhật Tín hiệu Hàng ngày (`run_daily_update.py`)
 Dùng sau 16:05 ICT mỗi ngày giao dịch để kiểm tra diễn biến giá, dòng tiền khối ngoại và cảnh báo biến động bất thường:
 ```bash
 python run_daily_update.py
