@@ -139,7 +139,23 @@ class TestComputeQuarterlyScore:
         from src.scoring.quarterly_scorer import score_market_structure
 
         with pytest.raises(ValueError, match="months_to_next_rebalancing is required"):
-            score_market_structure(ftse_upgrade_status="confirmed")
+            score_market_structure(
+                df_latest=pd.Series(dtype=float),
+                ftse_upgrade_status="confirmed",
+            )
+
+    def test_score_market_structure_valid_call_returns_score(self):
+        """Positive path: hàm phải trả về dict hợp lệ khi đủ tham số."""
+        from src.scoring.quarterly_scorer import score_market_structure
+
+        result = score_market_structure(
+            df_latest=pd.Series(dtype=float),
+            ftse_upgrade_status="confirmed",
+            months_to_next_rebalancing=2,
+            adtv_change_pct=0.10,
+        )
+        assert result["group"] == "market_structure"
+        assert 0 <= result["raw_score"] <= 100
 
 
 if __name__ == "__main__":
