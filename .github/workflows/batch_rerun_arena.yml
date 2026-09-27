@@ -1,0 +1,88 @@
+name: "🔁 Batch Rerun 24Q (arena working branch — temporary)"
+
+# WORKFLOW TẠM THỜI: chạy lại toàn bộ 24 quý bằng code đã fix
+# (point-in-time + predictive MLR) trên nhánh làm việc, vì token sandbox
+# không có quyền workflow_dispatch. Sẽ bị xóa trước khi merge vào main.
+
+on:
+  push:
+    branches:
+      - "arena/01a0e497-vn-index-scoring-quarterly-qua"
+    paths:
+      - ".github/workflows/batch_rerun_arena.yml"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  batch-rerun:
+    name: "Rerun 2021-Q1 → 2026-Q4 (fixed code)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+
+    steps:
+      - name: "📁 Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python ${{ env.PYTHON_VERSION }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: "📦 Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: "🚀 Run Batch Pipeline (2021-2026)"
+        env:
+          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
+          PYTHONUTF8: 1
+        run: |
+          for YEAR in $(seq 2021 2026); do
+            for Q in 1 2 3 4; do
+              QUARTER="${YEAR}-Q${Q}"
+              echo "=========================================================="
+              echo "Running pipeline for $QUARTER..."
+              echo "=========================================================="
+              python run_quarterly.py --quarter $QUARTER --ftse-status auto
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -ne 0 ]; then
+                echo "::error::❌ Pipeline FAILED for $QUARTER (exit code $EXIT_CODE)"
+                echo "FAILED: $QUARTER" >> /tmp/batch_failures.txt
+              else
+                echo "✅ Pipeline OK for $QUARTER"
+              fi
+            done
+          done
+          if [ -f /tmp/batch_failures.txt ]; then
+            echo "::error::Batch có quý bị lỗi:"
+            cat /tmp/batch_failures.txt
+            exit 1
+          fi
+
+      - name: "📤 Upload Artifacts"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: "batch-rerun-arena-24q"
+          path: |
+            output/reports/
+            output/exports/
+            logs/
+          retention-days: 30
+
+      - name: "💾 Commit regenerated scores to working branch"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: regenerate 24Q scores with point-in-time + predictive MLR fixes"
+          file_pattern: |
+            data/scores/*.parquet
+            output/reports/**/*.html
+            output/reports/quarters.json
+            output/exports/*.json
+            README.md
+          commit_author: "GitHub Actions <actions@github.com>"
