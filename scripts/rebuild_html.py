@@ -36,7 +36,6 @@ build_root_index_html()
 # Run post-processing UI injections
 try:
     subprocess.run([sys.executable, "scripts/inject_vnindex_chart.py"], check=True)
-    subprocess.run([sys.executable, "scripts/patch_chart_aesthetics.py"], check=True)
     print("Post-processing scripts executed successfully.")
 except Exception as e:
     print(f"Error running post-processing scripts: {e}")

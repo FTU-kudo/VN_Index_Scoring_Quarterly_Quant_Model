@@ -1,3 +1,9 @@
+"""
+DEPRECATED: This script is no longer used.
+All the chart aesthetic modifications (annotation box, VN-Index mountain chart style, container box-shadow) 
+have been successfully ported natively to src/reporting/report_builder.py.
+Please do NOT run this script. It is kept here for reference only.
+"""
 import os
 import re
 import glob
