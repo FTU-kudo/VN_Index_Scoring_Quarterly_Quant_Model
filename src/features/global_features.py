@@ -23,6 +23,15 @@ import pandas as pd
 from src.utils.config import FEATURES_DIR
 from src.features.valuation_features import load_market_pepb_history
 
+# ── Pandas version compat ────────────────────────────────────────────────────
+# Alias quarter-end: "QE" chỉ tồn tại từ pandas >= 2.2; "Q" bị xóa ở pandas 3.
+# Probe runtime để tương thích với mọi phiên bản (prod pin pandas==2.1.0).
+try:
+    pd.tseries.frequencies.to_offset("QE")
+    QUARTER_END_FREQ = "QE"
+except ValueError:
+    QUARTER_END_FREQ = "Q"
+
 logger = logging.getLogger(__name__)
 
 
@@ -258,7 +267,7 @@ def build_foreign_flow_features(df_ff: pd.DataFrame, df_pepb: pd.DataFrame = Non
             df[f"{prefix}_lag{lag}"] = df[col].shift(lag)
 
     # ── Quarterly Resampling & Expanding Z-score ──
-    df_q = df.set_index("date").resample("QE")[["nff_ex_etf_pct", "etf_flow_pct"]].sum().reset_index()
+    df_q = df.set_index("date").resample(QUARTER_END_FREQ)[["nff_ex_etf_pct", "etf_flow_pct"]].sum().reset_index()
     df_q = df_q.rename(columns={
         "nff_ex_etf_pct": "nff_ex_etf_q_sum",
         "etf_flow_pct": "etf_flow_q_sum"

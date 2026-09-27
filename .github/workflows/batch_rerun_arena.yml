@@ -1,6 +1,6 @@
 name: "🔁 Batch Rerun 24Q (arena working branch — temporary)"
 
-# WORKFLOW TẠM THỜI: chạy lại toàn bộ 24 quý bằng code đã fix
+# WORKFLOW TẠM THỜI: chạy lại toàn bộ 24 quý bằng code đã fix (retrigger #2)
 # (point-in-time + predictive MLR) trên nhánh làm việc, vì token sandbox
 # không có quyền workflow_dispatch. Sẽ bị xóa trước khi merge vào main.
 
