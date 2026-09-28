@@ -8,35 +8,41 @@
       "applied_at": "2026-09-28 11:17",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    },
+    "market_data_backfill": {
+      "applied_at": "2026-09-28 12:05",
+      "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
+      "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
+      "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
     }
   },
   "quarterly_score": {
     "quarter": "2022-Q1",
-    "date_computed": "2026-09-28 11:17",
-    "total_score": 60.76,
+    "date_computed": "2026-09-28 12:05",
+    "total_score": 61.19,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "market_structure",
-    "percentile_label": "BUY/ACCUMULATE",
-    "percentile_p15": 53.6585,
-    "percentile_p85": 60.041,
-    "pillar_std": 10.58,
-    "pillar_range": 28.96,
-    "dispersion_level": "LOW",
+    "most_divergent_pillar": "macro_monetary",
+    "percentile_label": "HOLD",
+    "percentile_p15": 59.295,
+    "percentile_p85": 66.134,
+    "pillar_std": 16.51,
+    "pillar_range": 45.06,
+    "dispersion_level": "HIGH",
     "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 50.15,
-        "weighted_score": 12.54
+        "raw_score": 74.48,
+        "weighted_score": 18.62
       },
       "global_intermarket": {
         "raw_score": 64.27,
         "weighted_score": 12.85
       },
       "valuation_leverage": {
-        "raw_score": 62.31,
-        "weighted_score": 12.46
+        "raw_score": 34.05,
+        "weighted_score": 6.81
       },
       "quant_model": {
         "raw_score": 53.58,
@@ -53,11 +59,11 @@
     },
     "group_details": {
       "macro_monetary": {
-        "vn1y_yield": "<MISSING> N/A → default 50",
-        "ir_trend": "<MISSING> N/A → default 50",
+        "vn1y_yield": "0.49% → score 100",
+        "ir_trend": "Δ VN1Y = 0.0170 (→ Hold) → score 48",
         "usd_vnd": "Z-score = -0.05 → score 51",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
-        "vn_bonds": "<MISSING> N/A → default 50"
+        "m2_yoy_growth": "10.7% YoY → score 75",
+        "vn_bonds": "VN10Y 2.01% | Spread 1.48% → score 99"
       },
       "global_intermarket": {
         "dxy": "Z = 0.33 → score 43",
@@ -67,8 +73,10 @@
         "oil_shock": "Oil Shock Score = 19.1 (Max Δ5d = 10.4%) → score 81"
       },
       "valuation_leverage": {
-        "pe_zscore": "<MISSING> N/A → default 50",
-        "margin_risk": "Risk = 1/100 (SAFE) → score 99"
+        "pe_zscore": "P/E Headline: 8.38 | Median: 11.00 | Ex-VG: 8.39<br>Z = 1.37 (FAIR VALUE) → score 16",
+        "margin_risk": "Risk = 1/100 (SAFE) → score 99",
+        "pb_zscore": "Z = 1.72 (OVERVALUED) → score 7",
+        "eyg_zscore": "EYG Z-score = -0.89 → score 28"
       },
       "quant_model": {
         "mlr_forecast": "Forward log-return/day (next ~1M) = 0.0001 → score 50",
@@ -89,24 +97,24 @@
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — USD/VND z=-0.0 (stable)",
+      "macro_monetary": "Macro: FAVORABLE — VN1Y rate 0.49% (low/favorable) | USD/VND z=-0.1 (stable) | M2 growth 10.7% YoY (normal) | VN10Y 2.01% (Spread 1.48%)",
       "global_intermarket": "Global: DXY=0.3σ | US10Y=1.51% | JPY-Z=1.8σ | OIL-SHOCK=19.1",
-      "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
+      "valuation_leverage": "PE Z=1.37 | EYG Z=-0.89 | Margin risk=1",
       "quant_model": "MLR=50 | VAR=53 | R²=0.195 | Granger=0",
       "ml_forecast": "ML: Forecast: UP (conf=82%) | Quality=51",
       "market_structure": "FTSE: UNKNOWN | ADTV: +33%"
     },
     "data_as_of": "2021-12-31",
     "point_in_time": true,
-    "calibrated_score": 62.17,
-    "calibrated_label": "HOLD",
-    "calibrated_emoji": "🟡",
-    "calibrated_description": "Neutral — Await confirming signals",
-    "calibrated_allocation": "40–60% Equities",
+    "calibrated_score": 46.08,
+    "calibrated_label": "REDUCE",
+    "calibrated_emoji": "🟠",
+    "calibrated_description": "Reduce exposure — Increasing pressure",
+    "calibrated_allocation": "20–40% Equities",
     "calibration_applied": true,
-    "calibration_z": 0.8116,
-    "calibration_hist_mean": 56.6875,
-    "calibration_hist_std": 5.018,
+    "calibration_z": -0.2613,
+    "calibration_hist_mean": 62.555,
+    "calibration_hist_std": 5.2238,
     "calibration_n_history": 4,
     "adtv_change_pct": 0.33276
   },

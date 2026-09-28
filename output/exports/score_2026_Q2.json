@@ -8,35 +8,41 @@
       "applied_at": "2026-09-28 11:17",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    },
+    "market_data_backfill": {
+      "applied_at": "2026-09-28 12:05",
+      "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
+      "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
+      "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
     }
   },
   "quarterly_score": {
     "quarter": "2026-Q2",
-    "date_computed": "2026-09-28 11:17",
-    "total_score": 46.38,
+    "date_computed": "2026-09-28 12:05",
+    "total_score": 45.07,
     "label": "REDUCE",
     "emoji": "🟠",
     "label_description": "Reduce exposure — Increasing pressure",
     "most_divergent_pillar": "valuation_leverage",
     "percentile_label": "REDUCE/SELL",
-    "percentile_p15": 51.31,
-    "percentile_p85": 56.39,
-    "pillar_std": 16.32,
-    "pillar_range": 46.55,
+    "percentile_p15": 51.18,
+    "percentile_p85": 60.67,
+    "pillar_std": 20.09,
+    "pillar_range": 57.58,
     "dispersion_level": "HIGH",
     "label_allocation": "20–40% Equities",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 46.84,
-        "weighted_score": 11.71
+        "raw_score": 50.45,
+        "weighted_score": 12.61
       },
       "global_intermarket": {
         "raw_score": 41.63,
         "weighted_score": 8.33
       },
       "valuation_leverage": {
-        "raw_score": 23.45,
-        "weighted_score": 4.69
+        "raw_score": 12.42,
+        "weighted_score": 2.48
       },
       "quant_model": {
         "raw_score": 58.83,
@@ -56,7 +62,7 @@
         "vn1y_yield": "3.52% → score 65",
         "ir_trend": "Δ VN1Y = 0.0847 (→ Hold) → score 42",
         "usd_vnd": "Z-score = 1.28 → score 31",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
+        "m2_yoy_growth": "15.0% YoY → score 68",
         "vn_bonds": "VN10Y 4.03% | Spread 0.45% → score 47"
       },
       "global_intermarket": {
@@ -70,7 +76,8 @@
       "valuation_leverage": {
         "pe_zscore": "P/E Headline: 12.08 | Median: 11.17 | Ex-VG: 12.09<br>Z = 2.16 (OVERVALUED) → score 0",
         "pb_zscore": "Z = 1.97 (OVERVALUED) → score 1",
-        "margin_risk": "Risk = 53/100 (WARNING) → score 47"
+        "margin_risk": "Risk = 53/100 (WARNING) → score 47",
+        "eyg_zscore": "EYG Z-score = -1.87 → score 3"
       },
       "quant_model": {
         "mlr_forecast": "Forward log-return/day (next ~1M) = 0.0007 → score 52",
@@ -92,24 +99,24 @@
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 3.52% (low/favorable) | USD/VND z=1.3 (pressure) | VN10Y 4.03% (Spread 0.45%)",
+      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 3.52% (low/favorable) | USD/VND z=1.3 (pressure) | M2 growth 15.0% YoY (normal) | VN10Y 4.03% (Spread 0.45%)",
       "global_intermarket": "Global: DXY=1.3σ | US10Y=4.31% | NFF-Z=0.2σ | JPY-Z=1.4σ | OIL-SHOCK=52.8",
-      "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
+      "valuation_leverage": "PE Z=2.16 | EYG Z=-1.87 | Margin risk=53",
       "quant_model": "MLR=52 | VAR=51 | R²=0.114 | Granger=2",
       "ml_forecast": "ML: Forecast: UP (conf=59%) | Quality=47",
       "market_structure": "FTSE: PENDING | ADTV: +17% | ETF-Z: -0.2σ"
     },
     "data_as_of": "2026-03-31",
     "point_in_time": true,
-    "calibrated_score": 20.48,
+    "calibrated_score": 16.99,
     "calibrated_label": "SELL",
     "calibrated_emoji": "🔴",
     "calibrated_description": "Defensive — Unfavorable environment",
     "calibrated_allocation": "0–20% Equities",
     "calibration_applied": true,
-    "calibration_z": -1.9683,
-    "calibration_hist_mean": 54.2005,
-    "calibration_hist_std": 3.9732,
+    "calibration_z": -2.2006,
+    "calibration_hist_mean": 56.1667,
+    "calibration_hist_std": 5.0426,
     "calibration_n_history": 21,
     "adtv_change_pct": 0.17381
   },

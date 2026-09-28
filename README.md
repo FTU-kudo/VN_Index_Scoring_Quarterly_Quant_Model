@@ -56,19 +56,30 @@ Hệ thống dùng kiến trúc **2 tầng điểm** để khắc phục hiện 
 
 **Thông số** nằm trong `config.py → SCORE_CALIBRATION` (single source of truth): `center=50`, `z_scale=15`, `min_history=4`, clip `[0, 100]`. Quý đầu tiên (< 4 quý lịch sử) hoặc σ_hist ≈ 0 → **giữ nguyên điểm thô**, `calibration_applied=false`. Nhãn lấy từ `get_score_label()` — cùng bộ ngưỡng với tầng raw.
 
-**Kết quả backfill 24 quý (2021-Q1 → 2026-Q4)** — *sau khi bổ sung ADTV thật (09/2026) + fix label gap:*
+**Kết quả backfill 24 quý (2021-Q1 → 2026-Q4)** — *sau backfill dữ liệu thật 09/2026 (ADTV, trái phiếu full-history, M2 ADB/GSO, P/E-P/B-EYG Z-score):*
 
 | Phân bố nhãn | Trước (raw) | Sau (calibrated) |
 |---|:---:|:---:|
 | 🟢 BUY | 0 | 0 |
-| 🔵 ACCUMULATE | 0 | **1** |
-| 🟡 HOLD | **21** | **8** |
-| 🟠 REDUCE | 3 | **11** |
-| 🔴 SELL | 0 | **4** |
+| 🔵 ACCUMULATE | **1** | **1** |
+| 🟡 HOLD | **19** | **6** |
+| 🟠 REDUCE | **4** | **9** |
+| 🔴 SELL | 0 | **8** |
 
-Các quý gấu 2022 và đáy 2026-Q2 giờ ra tín hiệu phòng thủ đúng: **2022-Q2 = SELL (26.1)**, 2022-Q3 = REDUCE (35.1), **2022-Q4 = SELL (21.7)**, **2026-Q2 = SELL (20.5)**; trong khi đỉnh tương đối 2023-Q3 = ACCUMULATE (66.4), quý live **2026-Q4 = SELL (34.5)**.
+Các quý gấu 2022 và giai đoạn 2026 ra tín hiệu phòng thủ đúng: **2022-Q2 = SELL (11.8)**, 2022-Q3 = REDUCE (43.6), **2022-Q4 = SELL (22.1)**, **2026-Q2 = SELL (17.0)**, quý live **2026-Q4 = SELL (28.2)**; chu kỳ nới lỏng đầy đủ 2020 nâng quyết định đầu tiên **2021-Q1 = ACCUMULATE (70.1)** (VN1Y 0.43%, M2 +14.5% — trước đây cả hai đều N/A default 50).
 
 > **📈 Nguồn dữ liệu ADTV (từ 09/2026 — hết N/A 24/24 quý):** `ADTV change = ADTV(Q−1)/ADTV(Q−2) − 1` tính point-in-time từ cột `volume` của OHLCV VN-Index (vnstock, nguồn VCI) — quyết định quý Q chỉ dùng 2 quý **đã kết thúc** trước đó. Điểm ADTV = `clip(50 + 100 × %thay đổi, 0, 100)`. Ví dụ: 2025-Q4 bùng nổ thanh khoản +65.7% QoQ → score 100; 2026-Q1 điều chỉnh −38.4% → score 12. Audit đầy đủ: `data/scores/vnindex_quarterly_adtv.json`.
+
+> **📥 Nguồn dữ liệu backfill 09/2026 — trái phiếu + M2 + Z-score (nguồn thật, không suy đoán):**
+> - **Trái phiếu (24/24 quý có dữ liệu)**: đường cong fitted Nelson-Siegel từ repo `VN_Bond_Yield_pipeline` — chuyển sang bản **full-history** `fitted_curve_ns_full.json` (2012-08-06 → nay, 3.397 ngày) thay cho bản cắt dashboard chỉ từ 2022-09-22. VN1Y/ΔVN1Y/VN10Y/spread 10Y−2Y lấy as-of point-in-time; **pre-check: 68/68 giá trị tính lại khớp tuyệt đối** với các quý vốn có dữ liệu. Fixes 7 quý 2021-Q1→2022-Q3 từng N/A (VN1Y 0.43–1.82%, VN10Y 1.91–3.20%).
+> - **M2 (24/24 quý có dữ liệu)**: ADB Key Indicators Database (SDMX `FM2_PTX_PS.VIE`, nguồn gốc số liệu SBV) 2000→2024 + GSO Báo cáo KT-XH quý IV/2025 (tổng PTTT **+14,98%** đến 22/12/2025). Point-in-time bằng `merge_asof` backward — quyết định quý Q nhận giá trị năm gần nhất **đã công bố** (2021-Q* ← 2020 = +14.53%, 2022-Q* ← 2021 = +10.66%, 2023-Q1/Q2 ← 2022 = +6.15% …). 2026 chưa có số công bố → dùng 2025. Fallback committed: `data/external/m2_credit_adb_gso.csv` (kèm README nguồn từng số).
+> - **P/E-P/B-EYG Z-score**: min_periods hạ từ 2,5 năm (630 phiên) xuống **252 phiên** (~1 năm) vì series P/E ex-Vingroup chỉ bắt đầu ~2020-12 (thiếu số cổ phiếu lưu thông trước đó). z đầu tiên hợp lệ 2021-12-20 → fixes pe_zscore 6 quý 2022-Q1→2023-Q2; **giá trị Z các ngày đủ 2,5 năm dữ liệu giữ nguyên** (pre-check 28/28 khớp). EYG = 1/PE − VN10Y giờ được truyền đúng qua `df_macro` — trước đây **âm thầm default 50 ở cả 24/24 quý**.
+> - Audit input thật từng quý: `data/scores/vnindex_quarterly_market_data.json`.
+
+> **🚧 N/A còn lại sau backfill 09/2026 — giới hạn dữ liệu THẬT, cố tình không điền:**
+> - `nff_ex_etf` / `etf_flow` z-score: **5 quý 2021-Q1→2022-Q1**. API VNDirect (nguồn giao dịch khối ngoại) chỉ phục vụ dữ liệu từ 2021-01; z-score cần 4 quý đã kết thúc trước đó → quý sớm nhất có z là 2022-Q2. Không có nguồn giao dịch khối ngoại HOSE 2019-2020 tiếp cận được theo chương trình.
+> - `pe_zscore` / `pb_zscore` / `eyg_zscore`: **4 quý 2021-Q1→Q4**. Series P/E-P/B ex-Vingroup (tính từ market cap = giá × số cổ phiếu lưu thông) chỉ bắt đầu ~2020-12 trong bộ dữ liệu PE_PB_HOSE_stocks; cần 252 phiên cho z-score → z đầu tiên 2021-12-20, sau as-of của mọi quyết định 2021 (mới nhất là 2021-09-30) nên 2021-Q1→Q4 vẫn N/A; quyết định 2022-Q1 (as-of 2021-12-31) trở đi đã có z thật.
+> - Nguyên tắc: **thiếu dữ liệu → default trung lập 50 (hoặc renormalize), không nội suy, không suy đoán**. Mọi con số trong exports đều truy vết được về nguồn công bố.
 
 > **⚠️ Báo cáo trung thực về chất lượng tín hiệu:** Tầng calibrated **không** làm tăng sức mạnh dự báo phương hướng — IC (Spearman) của calibrated score so với forward return quý sau ≈ 0.02 (raw ≈ 0.09), hit-rate ~50%. Giá trị của tầng 2 là **khôi phục độ phân tán regime** để khung phân bổ tài sản có tín hiệu khác biệt giữa các kỳ (trước đây 22/24 quý "HOLD" khiến sizing bất khả thi), chứ không phải alpha prediction. Chi tiết backtest trung thực: sheet `06_Signal_Efficacy` trong Excel workbook.
 
@@ -146,15 +157,15 @@ Trên **dashboard 24 quý**, thẻ & timeline tô màu theo **regime calibrated*
   • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score (raw)      : 49.35 / 100
+  • Total Score (raw)      : 47.32 / 100
   • Classification (raw)   : 🟠 REDUCE — Reduce exposure — Increasing pressure
-  • Calibrated Action      : 🔴 SELL — 34.51 / 100 (0–20% Equities)
-  • Calibration z          : -1.03
+  • Calibrated Action      : 🔴 SELL — 28.24 / 100 (0–20% Equities)
+  • Calibration z          : -1.45
 
 [GROUP BREAKDOWN]
-  • macro_monetary                : raw=  54.3  weight=13.58
+  • macro_monetary                : raw=  57.9  weight=14.48
   • global_intermarket            : raw=  37.2  weight=7.44
-  • valuation_leverage            : raw=  57.5  weight=11.5
+  • valuation_leverage            : raw=  42.9  weight=8.57
   • quant_model                   : raw=  54.9  weight=8.24
   • ml_forecast                   : raw=  25.9  weight=2.59
   • market_structure              : raw=  60.0  weight=6.0

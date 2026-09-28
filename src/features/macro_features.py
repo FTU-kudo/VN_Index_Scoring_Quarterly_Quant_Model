@@ -299,12 +299,20 @@ def build_macro_features(
         fx_cols = [c for c in df_fx_feat.columns if c != "date"]
         result = result.merge(df_fx_feat[["date"] + fx_cols], on="date", how="left")
 
-    # 3. M2 & Credit features (monthly → forward fill)
+    # 3. M2 & Credit features (annual/manual → as-of backward, rồi forward fill)
     if not df_m2.empty:
         df_m2_feat = build_m2_credit_features(df_m2)
         m2_cols = [c for c in df_m2_feat.columns if c != "date"]
-        result = result.merge(df_m2_feat[["date"] + m2_cols], on="date", how="left")
-        # Forward fill monthly data xuống daily
+        # Fix 09/2026: merge_asof backward thay vì exact-date merge + ffill —
+        # quan sát M2 có ngày rơi vào ngày không giao dịch (31/12 cuối tuần...)
+        # trước đây bị mất hoàn toàn; as-of backward đúng point-in-time:
+        # mỗi ngày nhận giá trị M2 ĐÃ CÔNG BỐ gần nhất ≤ ngày đó.
+        result = pd.merge_asof(
+            result.sort_values("date"),
+            df_m2_feat.sort_values("date"),
+            on="date", direction="backward",
+        )
+        # Forward fill an toàn (no-op sau merge_asof backward)
         for col in m2_cols:
             if col in result.columns:
                 result[col] = result[col].ffill()

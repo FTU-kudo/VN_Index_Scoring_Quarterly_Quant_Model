@@ -8,27 +8,33 @@
       "applied_at": "2026-09-28 11:17",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    },
+    "market_data_backfill": {
+      "applied_at": "2026-09-28 12:05",
+      "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
+      "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
+      "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
     }
   },
   "quarterly_score": {
     "quarter": "2021-Q4",
-    "date_computed": "2026-09-28 11:17",
-    "total_score": 52.61,
+    "date_computed": "2026-09-28 12:05",
+    "total_score": 58.17,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "global_intermarket",
+    "most_divergent_pillar": "macro_monetary",
     "percentile_label": "HOLD",
     "percentile_p15": null,
     "percentile_p85": null,
-    "pillar_std": 10.61,
-    "pillar_range": 29.13,
+    "pillar_std": 14.4,
+    "pillar_range": 43.81,
     "dispersion_level": "MEDIUM",
     "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 51.96,
-        "weighted_score": 12.99
+        "raw_score": 74.2,
+        "weighted_score": 18.55
       },
       "global_intermarket": {
         "raw_score": 59.52,
@@ -53,11 +59,11 @@
     },
     "group_details": {
       "macro_monetary": {
-        "vn1y_yield": "<MISSING> N/A → default 50",
-        "ir_trend": "<MISSING> N/A → default 50",
+        "vn1y_yield": "0.50% → score 100",
+        "ir_trend": "Δ VN1Y = 0.0013 (→ Hold) → score 50",
         "usd_vnd": "Z-score = -0.65 → score 60",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
-        "vn_bonds": "<MISSING> N/A → default 50"
+        "m2_yoy_growth": "14.5% YoY → score 70",
+        "vn_bonds": "VN10Y 1.91% | Spread 1.23% → score 92"
       },
       "global_intermarket": {
         "dxy": "Z = 2.89 → score 0",
@@ -89,7 +95,7 @@
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — USD/VND z=-0.7 (stable)",
+      "macro_monetary": "Macro: FAVORABLE — VN1Y rate 0.50% (low/favorable) | USD/VND z=-0.7 (stable) | M2 growth 14.5% YoY (normal) | VN10Y 1.91% (Spread 1.23%)",
       "global_intermarket": "Global: DXY=2.9σ | US10Y=1.53% | JPY-Z=3.8σ | OIL-SHOCK=21.8",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=53 | VAR=49 | R²=0.206 | Granger=0",
@@ -98,7 +104,7 @@
     },
     "data_as_of": "2021-09-30",
     "point_in_time": true,
-    "calibrated_score": 52.61,
+    "calibrated_score": 58.17,
     "calibrated_label": "HOLD",
     "calibrated_emoji": "🟡",
     "calibrated_description": "Neutral — Await confirming signals",

@@ -8,35 +8,41 @@
       "applied_at": "2026-09-28 11:17",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    },
+    "market_data_backfill": {
+      "applied_at": "2026-09-28 12:05",
+      "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
+      "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
+      "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
     }
   },
   "quarterly_score": {
     "quarter": "2026-Q4",
-    "date_computed": "2026-09-28 11:17",
-    "total_score": 49.35,
+    "date_computed": "2026-09-28 12:05",
+    "total_score": 47.32,
     "label": "REDUCE",
     "emoji": "🟠",
     "label_description": "Reduce exposure — Increasing pressure",
     "most_divergent_pillar": "global_intermarket",
     "percentile_label": "REDUCE/SELL",
-    "percentile_p15": 50.405,
-    "percentile_p85": 56.351,
-    "pillar_std": 13.61,
+    "percentile_p15": 50.73,
+    "percentile_p85": 60.451,
+    "pillar_std": 13.47,
     "pillar_range": 34.06,
-    "dispersion_level": "HIGH",
+    "dispersion_level": "MEDIUM",
     "label_allocation": "20–40% Equities",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 54.32,
-        "weighted_score": 13.58
+        "raw_score": 57.92,
+        "weighted_score": 14.48
       },
       "global_intermarket": {
         "raw_score": 37.19,
         "weighted_score": 7.44
       },
       "valuation_leverage": {
-        "raw_score": 57.51,
-        "weighted_score": 11.5
+        "raw_score": 42.87,
+        "weighted_score": 8.57
       },
       "quant_model": {
         "raw_score": 54.93,
@@ -56,7 +62,7 @@
         "vn1y_yield": "3.86% → score 60",
         "ir_trend": "Δ VN1Y = 0.0044 (→ Hold) → score 50",
         "usd_vnd": "Z-score = -1.27 → score 69",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
+        "m2_yoy_growth": "15.0% YoY → score 68",
         "vn_bonds": "VN10Y 4.48% | Spread 0.53% → score 43"
       },
       "global_intermarket": {
@@ -70,7 +76,8 @@
       "valuation_leverage": {
         "pe_zscore": "P/E Headline: 12.46 | Median: 10.25 | Ex-VG: 10.03<br>Z = 0.81 (FAIR VALUE) → score 30",
         "pb_zscore": "Z = 0.68 (FAIR VALUE) → score 33",
-        "margin_risk": "Risk = 20/100 (SAFE) → score 80"
+        "margin_risk": "Risk = 20/100 (SAFE) → score 80",
+        "eyg_zscore": "EYG Z-score = -1.25 → score 19"
       },
       "quant_model": {
         "mlr_forecast": "Forward log-return/day (next ~1M) = -0.0006 → score 48",
@@ -92,24 +99,24 @@
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 3.86% (low/favorable) | USD/VND z=-1.3 (stable) | VN10Y 4.48% (Spread 0.53%)",
+      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 3.86% (low/favorable) | USD/VND z=-1.3 (stable) | M2 growth 15.0% YoY (normal) | VN10Y 4.48% (Spread 0.53%)",
       "global_intermarket": "Global: DXY=1.1σ | US10Y=5.18% | NFF-Z=0.2σ | JPY-Z=-0.2σ | OIL-SHOCK=43.8",
-      "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
+      "valuation_leverage": "PE Z=0.81 | EYG Z=-1.25 | Margin risk=20",
       "quant_model": "MLR=48 | VAR=53 | R²=0.109 | Granger=1",
       "ml_forecast": "ML: Forecast: DOWN (conf=50%) | Quality=40",
       "market_structure": "FTSE: CONFIRMED | ADTV: -12% | ETF-Z: -0.2σ"
     },
     "data_as_of": "2026-09-25",
     "point_in_time": true,
-    "calibrated_score": 34.51,
+    "calibrated_score": 28.24,
     "calibrated_label": "SELL",
     "calibrated_emoji": "🔴",
     "calibrated_description": "Defensive — Unfavorable environment",
     "calibrated_allocation": "0–20% Equities",
     "calibration_applied": true,
-    "calibration_z": -1.0326,
-    "calibration_hist_mean": 53.683,
-    "calibration_hist_std": 4.1962,
+    "calibration_z": -1.4508,
+    "calibration_hist_mean": 55.353,
+    "calibration_hist_std": 5.537,
     "calibration_n_history": 23,
     "adtv_change_pct": -0.119329
   },

@@ -43,6 +43,12 @@ HISTORY_END     = datetime.now().strftime("%Y-%m-%d")   # Ngày hiện tại (Dy
 
 # Cửa sổ Z-score (năm)
 ZSCORE_WINDOW_YEARS = 5          # Rolling 5 năm cho P/E, P/B Z-score
+# Số phiên tối thiểu để tính Z-score (fix 09/2026: trước đây window//2 = 2.5 năm
+# khiến P/E, P/B, EYG Z-score N/A ở 2021→2023-Q2 dù dữ liệu PE/PB có từ 2019-08
+# — series ex-Vingroup chỉ bắt đầu ~2021-03 do thiếu shares trước đó).
+# 252 phiên = 1 năm: giá trị Z cho các ngày ≥2.5 năm dữ liệu GIỮ NGUYÊN
+# (min_periods chỉ mở khoá NaN sớm hơn, không đổi mean/std của window).
+ZSCORE_MIN_PERIODS_DAYS = 252
 
 # ── Tham số VN-Index & VN30 (Dynamic Fetching) ──────────────────────────────
 VNINDEX_TICKER  = "VNINDEX"

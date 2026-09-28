@@ -8,27 +8,33 @@
       "applied_at": "2026-09-28 11:17",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    },
+    "market_data_backfill": {
+      "applied_at": "2026-09-28 12:05",
+      "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
+      "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
+      "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
     }
   },
   "quarterly_score": {
     "quarter": "2021-Q1",
-    "date_computed": "2026-09-28 11:17",
-    "total_score": 64.01,
-    "label": "HOLD",
-    "emoji": "🟡",
-    "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "market_structure",
+    "date_computed": "2026-09-28 12:05",
+    "total_score": 70.13,
+    "label": "ACCUMULATE",
+    "emoji": "🔵",
+    "label_description": "Gradually accumulate — Controllable risks",
+    "most_divergent_pillar": "macro_monetary",
     "percentile_label": "HOLD",
     "percentile_p15": null,
     "percentile_p85": null,
-    "pillar_std": 12.23,
+    "pillar_std": 12.81,
     "pillar_range": 31.65,
     "dispersion_level": "MEDIUM",
-    "label_allocation": "40–60% Equities",
+    "label_allocation": "70–85% Equities",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 58.05,
-        "weighted_score": 14.51
+        "raw_score": 82.5,
+        "weighted_score": 20.63
       },
       "global_intermarket": {
         "raw_score": 63.19,
@@ -53,11 +59,11 @@
     },
     "group_details": {
       "macro_monetary": {
-        "vn1y_yield": "<MISSING> N/A → default 50",
-        "ir_trend": "<MISSING> N/A → default 50",
+        "vn1y_yield": "0.43% → score 100",
+        "ir_trend": "Δ VN1Y = -0.0642 (→ Hold) → score 56",
         "usd_vnd": "Z-score = -2.68 → score 90",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
-        "vn_bonds": "<MISSING> N/A → default 50"
+        "m2_yoy_growth": "14.5% YoY → score 70",
+        "vn_bonds": "VN10Y 2.02% | Spread 1.39% → score 96"
       },
       "global_intermarket": {
         "dxy": "Z = -1.57 → score 81",
@@ -89,7 +95,7 @@
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — USD/VND z=-2.7 (stable)",
+      "macro_monetary": "Macro: FAVORABLE — VN1Y rate 0.43% (low/favorable) | USD/VND z=-2.7 (stable) | M2 growth 14.5% YoY (normal) | VN10Y 2.02% (Spread 1.39%)",
       "global_intermarket": "Global: DXY=-1.6σ | US10Y=0.92% | JPY-Z=-1.8σ | OIL-SHOCK=20.7",
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=48 | VAR=55 | R²=0.199 | Granger=0",
@@ -98,11 +104,11 @@
     },
     "data_as_of": "2020-12-31",
     "point_in_time": true,
-    "calibrated_score": 64.01,
-    "calibrated_label": "HOLD",
-    "calibrated_emoji": "🟡",
-    "calibrated_description": "Neutral — Await confirming signals",
-    "calibrated_allocation": "40–60% Equities",
+    "calibrated_score": 70.13,
+    "calibrated_label": "ACCUMULATE",
+    "calibrated_emoji": "🔵",
+    "calibrated_description": "Gradually accumulate — Controllable risks",
+    "calibrated_allocation": "70–85% Equities",
     "calibration_applied": false,
     "calibration_z": null,
     "calibration_hist_mean": null,

@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from src.utils.config import (
-    ZSCORE_WINDOW_YEARS,
+    ZSCORE_WINDOW_YEARS, ZSCORE_MIN_PERIODS_DAYS,
     PE_ZSCORE_OVERBOUGHT, PE_ZSCORE_OVERSOLD,
     PB_ZSCORE_OVERBOUGHT, PB_ZSCORE_OVERSOLD,
     MARGIN_CALL_DROP_PCT, MARGIN_CALL_SEVERE_PCT,
@@ -157,7 +157,10 @@ def compute_zscore_rolling(
     pd.Series Z-score
     """
     window = window_years * trading_days_per_year
-    min_p  = window // 2   # Tối thiểu 2.5 năm dữ liệu
+    # min_periods từ config (fix 09/2026): 252 phiên ~ 1 năm thay vì 2.5 năm —
+    # mở rộng vùng có Z-score về sớm hơn mà KHÔNG đổi giá trị các ngày đã có
+    # (rolling mean/std chỉ phụ thuộc window & dữ liệu, min_periods chỉ cắt NaN).
+    min_p  = min(ZSCORE_MIN_PERIODS_DAYS, window)
 
     roll_mean = series.rolling(window=window, min_periods=min_p).mean()
     roll_std  = series.rolling(window=window, min_periods=min_p).std()

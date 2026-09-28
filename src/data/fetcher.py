@@ -21,7 +21,7 @@ import pandas as pd
 import numpy as np
 
 from src.utils.config import (
-    VNSTOCK_API_KEY, RAW_DIR, HISTORY_START, HISTORY_END,
+    VNSTOCK_API_KEY, RAW_DIR, DATA_DIR, HISTORY_START, HISTORY_END,
     VNINDEX_TICKER, VN30_TICKERS, get_vn30_tickers
 )
 
@@ -473,6 +473,79 @@ def fetch_m2_credit_manual() -> pd.DataFrame:
                                      "credit_growth_yoy_pct", "m2_b_vnd"])
 
 
+# Nguồn M2 tự động (fix 09/2026 — hết N/A 24/24 quý):
+# 1) ADB Key Indicators Database (SDMX API) — indicator FM2_PTX_PS "Money supply
+#    (% annual change)", economy VIE, nguồn gốc số liệu: State Bank of Viet Nam.
+# 2) Fallback committed: data/external/m2_credit_adb_gso.csv (giá trị đã fetch
+#    và đối chiếu 09/2026; ADB đến 2024, 2025 từ Báo cáo KT-XH quý IV/2025 của GSO).
+ADB_KIDB_M2_URL = (
+    "https://kidb.adb.org/api/v5/sdmx/data/ADB,DF_MF_MON/"
+    "A.FM2_PTX_PS.VIE?format=sdmx-json"
+)
+M2_FALLBACK_CSV = DATA_DIR / "external" / "m2_credit_adb_gso.csv"
+
+
+def fetch_m2_credit_auto() -> pd.DataFrame:
+    """
+    M2 YoY & tăng trưởng tín dụng — nguồn tự động, không cần file thủ công.
+
+    Thứ tự ưu tiên:
+      1. data/raw/m2_credit_monthly.csv (manual override — schema cũ, giữ nguyên)
+      2. ADB KIDB SDMX API (FM2_PTX_PS, nguồn SBV) — hoạt động trên CI/có mạng;
+         kết quả cache vào data/raw/m2_credit_monthly.csv
+      3. data/external/m2_credit_adb_gso.csv (fallback committed trong repo)
+
+    Point-in-time: mỗi dòng là giá trị YoY ĐO TẠI ngày `date` (cuối năm).
+    Quyết định quý Q (as-of cuối quý Q−1) nhận giá trị năm gần nhất ≤ as-of —
+    hợp nhất bằng merge_asof(direction="backward") trong macro_features.
+    """
+    manual_path = RAW_DIR / "m2_credit_monthly.csv"
+    if manual_path.exists():
+        df = pd.read_csv(manual_path)
+        df["date"] = pd.to_datetime(df["date"])
+        logger.info(f"[M2] Manual override: {len(df)} rows từ {manual_path}")
+        return df
+
+    # 2) ADB KIDB live (chỉ chạy được trên máy/có mạng — sandbox KHÔNG)
+    try:
+        import requests
+        logger.info("[M2] Fetching ADB KIDB SDMX (FM2_PTX_PS.VIE — nguồn SBV)...")
+        r = requests.get(ADB_KIDB_M2_URL, timeout=15,
+                         headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        payload = r.json()
+        series = payload["data"]["datasets"][0]["series"]
+        assert series, "ADB trả về series rỗng"
+        key = next(iter(series))
+        obs = series[key]["observations"]
+        periods = payload["data"]["structures"][0]["dimensions"]["observation"][
+            0]["values"]
+        rows = []
+        for idx_s, arr in obs.items():
+            idx = int(idx_s)
+            year = int(periods[idx]["value"])
+            rows.append({"date": pd.Timestamp(year=year, month=12, day=31),
+                         "m2_yoy_pct": float(arr[0])})
+        df = pd.DataFrame(rows).sort_values("date").reset_index(drop=True)
+        logger.info(f"[M2] ADB KIDB: {len(df)} năm ({df['date'].min().year}"
+                    f"→{df['date'].max().year}) — cache vào {manual_path}")
+        df.to_csv(manual_path, index=False)
+        return df
+    except Exception as e:
+        logger.warning(f"[M2] ADB KIDB fetch thất bại ({e}) — dùng fallback committed")
+
+    # 3) Fallback committed
+    if M2_FALLBACK_CSV.exists():
+        df = pd.read_csv(M2_FALLBACK_CSV)
+        df["date"] = pd.to_datetime(df["date"])
+        logger.info(f"[M2] Fallback: {len(df)} rows từ {M2_FALLBACK_CSV}")
+        return df
+
+    logger.warning("[M2] Không có nguồn M2 nào — trả về DataFrame rỗng")
+    return pd.DataFrame(columns=["date", "m2_yoy_pct",
+                                 "credit_growth_yoy_pct", "m2_b_vnd"])
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # 6. Vietnam Bonds — Từ dự án Vietnam_Bonds
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -480,42 +553,66 @@ def fetch_m2_credit_manual() -> pd.DataFrame:
 def fetch_vietnam_bonds() -> pd.DataFrame:
     """
     Tải dữ liệu đường cong lợi suất trái phiếu chính phủ Việt Nam.
-    Dữ liệu lấy trực tiếp từ GitHub repo VN_Bond_Yield_pipeline.
+
+    Nguồn: repo VN_Bond_Yield_pipeline (GitHub Pages) — đường cong fitted
+    Nelson-Siegel, cập nhật hàng ngày bởi pipeline đó.
+
+    Fix 09/2026: dùng bản FULL (fitted_curve_ns_full.json, 2012→nay) thay vì
+    bản cắt ~1.000 ngày cho dashboard (fitted_curve_ns.json, chỉ từ 2022-09).
+    Bản cắt từng khiến vn1y_yield / ir_trend / vn_bonds N/A 7 quý 2021→2022-Q3.
 
     Returns
     -------
     DataFrame: date, vn1y_yield, vn2y_yield, vn10y_yield
     """
     import requests
-    
-    # Sử dụng URL từ GitHub Pages thay vì raw.githubusercontent.com để tránh bị kẹt CDN Cache
-    # và tránh bị lỗi Rate Limit (403) của GitHub API khi lấy sha commit trên GitHub Actions.
-    url = "https://ftu-kudo.github.io/VN_Bond_Yield_pipeline/exports/data/fitted_curve_ns.json"
-    logger.info(f"[BONDS] Đang tải dữ liệu trái phiếu từ GitHub Pages: {url}")
-    
+
+    urls = [
+        # Bản FULL lịch sử (ưu tiên) — cùng cache, cùng phương pháp NS
+        "https://ftu-kudo.github.io/VN_Bond_Yield_pipeline/exports/data/fitted_curve_ns_full.json",
+        # Fallback: bản cắt ~4 năm (dashboard) nếu bản full lỗi
+        "https://ftu-kudo.github.io/VN_Bond_Yield_pipeline/exports/data/fitted_curve_ns.json",
+    ]
+
+    data = None
+    for url in urls:
+        try:
+            logger.info(f"[BONDS] Đang tải đường cong lợi suất: {url}")
+            response = requests.get(url, timeout=20)
+            response.raise_for_status()
+            payload = response.json()
+            if payload:
+                data = payload
+                break
+            logger.warning("[BONDS] JSON rỗng — thử nguồn tiếp theo")
+        except Exception as e:
+            logger.warning(f"[BONDS] Tải thất bại từ {url}: {e}")
+
+    if data is None:
+        logger.error("[BONDS] Không tải được dữ liệu trái phiếu từ bất kỳ nguồn nào")
+        return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
+
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        
         df = pd.DataFrame(data)
         if df.empty:
             return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
-            
+
         df["date"] = pd.to_datetime(df["date"])
-        
+
         # Lấy kỳ hạn 1 năm, 2 năm và 10 năm
         df_1y = df[df["tenor_yr"] == 1.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn1y_yield"})
         df_2y = df[df["tenor_yr"] == 2.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn2y_yield"})
         df_10y = df[df["tenor_yr"] == 10.0][["date", "yield_pct"]].rename(columns={"yield_pct": "vn10y_yield"})
-        
+
         # Merge lại theo date
         merged = pd.merge(df_10y, df_2y, on="date", how="outer")
         merged = pd.merge(merged, df_1y, on="date", how="outer")
         merged = merged.sort_values("date").reset_index(drop=True)
-        logger.info(f"[BONDS] Tải thành công {len(merged)} ngày dữ liệu trái phiếu từ GitHub")
+        logger.info(
+            f"[BONDS] Tải thành công {len(merged)} ngày "
+            f"({merged['date'].min().date()} → {merged['date'].max().date()})"
+        )
         return merged
     except Exception as e:
-        logger.error(f"[BONDS] Lỗi tải dữ liệu trái phiếu từ GitHub: {e}")
+        logger.error(f"[BONDS] Lỗi xử lý dữ liệu trái phiếu: {e}")
         return pd.DataFrame(columns=["date", "vn1y_yield", "vn2y_yield", "vn10y_yield"])
-

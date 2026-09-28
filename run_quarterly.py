@@ -30,7 +30,7 @@ from src.data.fetcher import (
     fetch_vnindex_ohlcv, compute_vni_returns,
     fetch_foreign_flows, fetch_macro_sbv_manual,
     fetch_usdvnd_proxy, fetch_global_indicators,
-    fetch_margin_debt_manual, fetch_m2_credit_manual,
+    fetch_margin_debt_manual, fetch_m2_credit_manual, fetch_m2_credit_auto,
     fetch_vietnam_bonds, fetch_brent_oil
 )
 from src.features.macro_features import build_macro_features
@@ -122,7 +122,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     df_fx      = fetch_usdvnd_proxy(use_cache=use_cache)
     df_global  = fetch_global_indicators(use_cache=use_cache)
     df_margin  = fetch_margin_debt_manual()
-    df_m2      = fetch_m2_credit_manual()
+    df_m2      = fetch_m2_credit_auto()   # fix 09/2026: ADB KIDB (nguồn SBV) + fallback committed
     df_bonds   = fetch_vietnam_bonds()
     df_oil     = fetch_brent_oil(use_cache=use_cache)
 
@@ -132,7 +132,9 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     df_macro_feat = build_macro_features(df_vni, df_macro, df_fx, df_m2, df_bonds=df_bonds)
     df_global_feat = build_global_features(df_vni, df_global, df_ff, df_oil)
-    df_val_feat = build_valuation_leverage_features(df_vni, df_margin)
+    # Fix 09/2026: truyền df_macro_feat để EYG = 1/PE − VN10Y được tính
+    # (trước đây bỏ qua → eyg_zscore luôn default 50 âm thầm ở 24/24 quý)
+    df_val_feat = build_valuation_leverage_features(df_vni, df_margin, df_macro=df_macro_feat)
 
     # Merge tất cả features
 

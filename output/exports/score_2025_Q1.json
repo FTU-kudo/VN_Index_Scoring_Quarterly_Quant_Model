@@ -8,35 +8,41 @@
       "applied_at": "2026-09-28 11:17",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    },
+    "market_data_backfill": {
+      "applied_at": "2026-09-28 12:05",
+      "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
+      "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
+      "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
     }
   },
   "quarterly_score": {
     "quarter": "2025-Q1",
-    "date_computed": "2026-09-28 11:17",
-    "total_score": 51.77,
+    "date_computed": "2026-09-28 12:05",
+    "total_score": 52.02,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "valuation_leverage",
     "percentile_label": "HOLD",
-    "percentile_p15": 51.34,
-    "percentile_p85": 59.2625,
-    "pillar_std": 10.35,
-    "pillar_range": 28.57,
+    "percentile_p15": 51.515,
+    "percentile_p85": 61.06,
+    "pillar_std": 12.8,
+    "pillar_range": 34.83,
     "dispersion_level": "MEDIUM",
     "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 58.37,
-        "weighted_score": 14.59
+        "raw_score": 64.36,
+        "weighted_score": 16.09
       },
       "global_intermarket": {
         "raw_score": 46.37,
         "weighted_score": 9.27
       },
       "valuation_leverage": {
-        "raw_score": 41.54,
-        "weighted_score": 8.31
+        "raw_score": 35.28,
+        "weighted_score": 7.06
       },
       "quant_model": {
         "raw_score": 52.82,
@@ -56,7 +62,7 @@
         "vn1y_yield": "2.06% → score 85",
         "ir_trend": "Δ VN1Y = -0.0040 (→ Hold) → score 50",
         "usd_vnd": "Z-score = 0.94 → score 36",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
+        "m2_yoy_growth": "12.0% YoY → score 80",
         "vn_bonds": "VN10Y 2.82% | Spread 0.66% → score 70"
       },
       "global_intermarket": {
@@ -70,7 +76,8 @@
       "valuation_leverage": {
         "pe_zscore": "P/E Headline: 8.69 | Median: 10.54 | Ex-VG: 8.68<br>Z = 1.40 (FAIR VALUE) → score 15",
         "pb_zscore": "Z = 1.57 (OVERVALUED) → score 11",
-        "margin_risk": "Risk = 7/100 (SAFE) → score 93"
+        "margin_risk": "Risk = 7/100 (SAFE) → score 93",
+        "eyg_zscore": "EYG Z-score = -0.82 → score 29"
       },
       "quant_model": {
         "mlr_forecast": "Forward log-return/day (next ~1M) = -0.0006 → score 48",
@@ -92,24 +99,24 @@
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.06% (low/favorable) | USD/VND z=0.9 (stable) | VN10Y 2.82% (Spread 0.66%)",
+      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.06% (low/favorable) | USD/VND z=0.9 (stable) | M2 growth 12.0% YoY (normal) | VN10Y 2.82% (Spread 0.66%)",
       "global_intermarket": "Global: DXY=1.6σ | US10Y=4.57% | NFF-Z=0.3σ | JPY-Z=1.6σ | OIL-SHOCK=21.6",
-      "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
+      "valuation_leverage": "PE Z=1.40 | EYG Z=-0.82 | Margin risk=7",
       "quant_model": "MLR=48 | VAR=49 | R²=0.130 | Granger=1",
       "ml_forecast": "ML: Forecast: UP (conf=58%) | Quality=47",
       "market_structure": "FTSE: UNKNOWN | ADTV: -12% | ETF-Z: -0.3σ"
     },
     "data_as_of": "2024-12-31",
     "point_in_time": true,
-    "calibrated_score": 39.85,
+    "calibrated_score": 35.01,
     "calibrated_label": "REDUCE",
     "calibrated_emoji": "🟠",
     "calibrated_description": "Reduce exposure — Increasing pressure",
     "calibrated_allocation": "20–40% Equities",
     "calibration_applied": true,
-    "calibration_z": -0.6767,
-    "calibration_hist_mean": 54.7288,
-    "calibration_hist_std": 4.3722,
+    "calibration_z": -0.9993,
+    "calibration_hist_mean": 57.2731,
+    "calibration_hist_std": 5.2568,
     "calibration_n_history": 16,
     "adtv_change_pct": -0.12025
   },
