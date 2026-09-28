@@ -197,6 +197,65 @@ _HTML_STYLE = """
   body.lang-vi-active .lang-en { display: none; }
   
   .chart-container { position: sticky; top: 1.5rem; align-self: flex-start; height: 380px; width: 100%; display: flex; justify-content: center; }
+
+  /* ── Action Panel (Allocation) ─────────────────────────────────────── */
+  .action-panel { margin: 20px auto 0 auto; max-width: 640px; padding: 18px 22px; border-radius: 14px; text-align: left; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.22); }
+  body.dark-mode .action-panel { background: rgba(59,130,246,0.10); }
+  .action-panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 8px; }
+  .alloc-value { font-size: 24px; font-weight: 800; line-height: 1.2; }
+  .alloc-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .alloc-track { position: relative; margin-top: 16px; padding-top: 8px; }
+  .alloc-bands { display: flex; height: 14px; border-radius: 7px; overflow: hidden; }
+  .alloc-band { height: 100%; }
+  .alloc-marker { position: absolute; top: 0; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--text-main); }
+  .alloc-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.3px; }
+
+  /* ── Data Coverage Panel ───────────────────────────────────────────── */
+  .coverage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+  .coverage-item { padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); }
+  .coverage-name { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; gap: 8px; }
+  .coverage-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main); white-space: nowrap; }
+
+  /* ── Responsive layout ─────────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .page-wrapper { flex-direction: column; gap: 20px; }
+    .sidebar { position: static; width: 100%; padding: 8px; overflow-x: auto; }
+    .sidebar ul { display: flex; flex-wrap: nowrap; gap: 4px; }
+    .sidebar li { margin: 0; padding: 10px 14px; white-space: nowrap; flex-shrink: 0; border-left: none; }
+    .sidebar li:hover { transform: none; }
+    .grid-6 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .navbar { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+    .nav-left, .nav-right { flex-wrap: wrap; }
+    .clock { display: none; }
+    .page-wrapper { margin: 20px auto; padding: 0 12px; }
+    .grid-6, .coverage-grid { grid-template-columns: 1fr; }
+    .hero { padding: 24px 16px; }
+    .score-big { font-size: 56px; }
+    .score-label { font-size: 20px; }
+    h1 { font-size: 22px; }
+    .section { padding: 18px; }
+    th, td { padding: 10px; font-size: 13px; }
+  }
+
+  /* ── Print styles ──────────────────────────────────────────────────── */
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    .navbar, .sidebar, .btn, #quarter-select { display: none !important; }
+    .page-wrapper { display: block; margin: 0; padding: 0; max-width: 100%; }
+    .main-content { width: 100%; }
+    .tab-content { display: block !important; page-break-before: always; }
+    #tab-overview { page-break-before: avoid; }
+    .card, .section { box-shadow: none !important; break-inside: avoid; border: 1px solid #d1d5db; backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .card:hover { transform: none; }
+    .hero { box-shadow: none !important; border: 1px solid #d1d5db; backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .progress-fill::after { animation: none; display: none; }
+    .chart-container { position: static; }
+    .score-big { -webkit-text-fill-color: initial; }
+    a { text-decoration: none; color: inherit; }
+  }
 </style>
 """
 
@@ -221,6 +280,13 @@ window.MathJax = {
   }
   setInterval(updateClock, 1000);
   updateClock();
+
+  // "Generated at" — rendered at actual runtime (not hardcoded at build time)
+  (function() {
+    const opts = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const stamp = new Intl.DateTimeFormat('sv-SE', opts).format(new Date()) + ' ICT';
+    document.querySelectorAll('.js-generated-at').forEach(el => { el.textContent = stamp; });
+  })();
 
   // Tab switching logic
   function openTab(evt, tabName) {
@@ -634,6 +700,134 @@ def _build_percentile_dispersion_html(score_record: dict, t) -> str:
     return pct_html + disp_html
 
 
+_LABEL_COLORS = {
+    "BUY":        "#10b981",
+    "ACCUMULATE": "#3b82f6",
+    "HOLD":       "#eab308",
+    "REDUCE":     "#f97316",
+    "SELL":       "#ef4444",
+}
+
+_LABEL_VI = {
+    "BUY":        "MUA",
+    "ACCUMULATE": "TÍCH LŨY",
+    "HOLD":       "GIỮ",
+    "REDUCE":     "GIẢM",
+    "SELL":       "BÁN",
+}
+
+_GROUP_LABELS = {
+    "macro_monetary":     ("💰", "Macro & Monetary"),
+    "global_intermarket": ("🌐", "Global & Intermarket"),
+    "valuation_leverage": ("📐", "Valuation & Leverage"),
+    "quant_model":        ("📊", "Quant Model"),
+    "ml_forecast":        ("🤖", "ML Forecast"),
+    "market_structure":   ("🏗️", "Market Structure"),
+}
+
+
+def _build_action_panel_html(score_record: dict, t) -> str:
+    """
+    Action Panel trong hero: khuyến nghị phân bổ cổ phiếu (equity allocation)
+    theo SCORE_LABELS (single source of truth) + dải regime 0-100 với marker
+    tại vị trí điểm hiện tại.
+    """
+    total = score_record.get("total_score", 50)
+    label = score_record.get("label", "HOLD")
+    allocation = score_record.get("label_allocation")
+    if not allocation:
+        _, _, _, allocation = get_score_label(total)
+    alloc_vi = allocation.replace("Equities", "Cổ phiếu")
+
+    # Dải 5 regime, xếp từ thấp (SELL) đến cao (BUY)
+    bands_html = ""
+    legend_html = ""
+    for (lo, hi), (lbl, em, desc, alloc) in sorted(SCORE_LABEL_RANGES, key=lambda x: x[0][0]):
+        width = hi - lo + 1
+        color = _LABEL_COLORS.get(lbl, "#94a3b8")
+        active = lo <= total <= hi
+        opacity = "1" if active else "0.30"
+        bands_html += (
+            f'<div class="alloc-band" title="{lbl} ({lo}–{hi}): {alloc}" '
+            f'style="width:{width}%; background:{color}; opacity:{opacity};"></div>'
+        )
+        legend_html += f'<span>{t(lbl, _LABEL_VI.get(lbl, lbl))}</span>'
+
+    marker_pos = max(0.0, min(100.0, float(total)))
+    active_color = _LABEL_COLORS.get(label, "#94a3b8")
+
+    return f"""
+      <div class="action-panel">
+        <div class="action-panel-title">⚡ {t('Action Panel — Recommended Allocation', 'Action Panel — Khuyến nghị Phân bổ')}</div>
+        <div class="alloc-value" style="color:{active_color};">{t(allocation, alloc_vi)}</div>
+        <div class="alloc-sub">
+          {t(f'Regime: {label} @ score {total:.1f}/100 — thresholds from config.py SCORE_LABELS',
+             f'Trạng thái: {label} @ điểm {total:.1f}/100 — ngưỡng lấy từ config.py SCORE_LABELS')}
+        </div>
+        <div class="alloc-track">
+          <div class="alloc-marker" style="left:{marker_pos}%;" title="{total:.1f}"></div>
+          <div class="alloc-bands">{bands_html}</div>
+          <div class="alloc-legend">{legend_html}</div>
+        </div>
+      </div>"""
+
+
+def _build_data_coverage_html(score_record: dict, t) -> str:
+    """
+    Panel độ phủ dữ liệu: đếm chỉ số có dữ liệu thực so với chỉ số bị
+    <MISSING> (fallback trung lập) trong group_details của từng trụ cột.
+    """
+    group_details = score_record.get("group_details", {})
+    if not group_details:
+        return ""
+
+    total_ind = 0
+    total_missing = 0
+    items_html = ""
+    for grp, (ico, name) in _GROUP_LABELS.items():
+        details = group_details.get(grp, {})
+        n = len(details)
+        missing = sum(1 for v in details.values() if str(v).strip().startswith("<MISSING>"))
+        avail = n - missing
+        total_ind += n
+        total_missing += missing
+        pct = (avail / n * 100) if n else 0
+        bar_color = "var(--color-green)" if pct >= 99 else ("var(--color-amber)" if pct >= 70 else "var(--color-red)")
+        items_html += f"""
+        <div class="coverage-item">
+          <div class="coverage-name"><span>{ico} {t(name)}</span><span class="coverage-count">{avail}/{n}</span></div>
+          <div class="progress-bar" style="margin:0; height:8px;">
+            <div class="progress-fill" style="width:{pct:.0f}%; background:{bar_color};"></div>
+          </div>
+        </div>"""
+
+    total_avail = total_ind - total_missing
+    overall_pct = (total_avail / total_ind * 100) if total_ind else 0
+    overall_color = "var(--color-green)" if overall_pct >= 99 else ("var(--color-amber)" if overall_pct >= 70 else "var(--color-red)")
+
+    if total_missing == 0:
+        note = t("All indicators computed from real data — no neutral fallback used.",
+                 "Tất cả chỉ số được tính từ dữ liệu thực — không dùng giá trị trung lập thay thế.")
+    else:
+        note = t(f"{total_missing} indicator(s) missing — replaced by neutral score 50 (see N/A badges in Pillars Analysis).",
+                 f"{total_missing} chỉ số thiếu dữ liệu — được thay bằng điểm trung lập 50 (xem nhãn N/A trong Phân Rã Điểm Số).")
+
+    return f"""
+    <div class="section" id="data-coverage">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin-bottom:4px;">🛰️ {t('Data Coverage', 'Độ Phủ Dữ Liệu')}</h2>
+        <div style="font-family:'JetBrains Mono', monospace; font-weight:700; font-size:18px; color:{overall_color};">
+          {total_avail}/{total_ind} ({overall_pct:.0f}%)
+        </div>
+      </div>
+      <div class="progress-bar" style="height:10px;">
+        <div class="progress-fill" style="width:{overall_pct:.0f}%; background:{overall_color};"></div>
+      </div>
+      <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">{note}</div>
+      <div class="coverage-grid">{items_html}</div>
+    </div>"""
+
+
 def build_html_report(
     score_record: Dict[str, Any],
     quarter:      str,
@@ -666,9 +860,11 @@ def build_html_report(
         <div class="clock" id="clock">Loading time...</div>
       </div>
       <div class="nav-right">
-        <button class="btn" id="prev-quarter-btn" title="Previous Quarter" style="padding: 6px 10px;">◀</button>
+        <a class="btn" id="home-btn" href="../index.html" title="Dashboard Home" style="text-decoration: none;">🏠 <span class="lang-en">Home</span><span class="lang-vi">Trang chủ</span></a>
+        <button class="btn" id="prev-quarter-btn" title="Previous Quarter (←)" style="padding: 6px 10px;">◀</button>
         <select class="btn" id="quarter-select" style="max-width: 150px; cursor: pointer;"></select>
-        <button class="btn" id="next-quarter-btn" title="Next Quarter" style="padding: 6px 10px;">▶</button>
+        <button class="btn" id="next-quarter-btn" title="Next Quarter (→)" style="padding: 6px 10px;">▶</button>
+        <button class="btn" id="print-btn" title="Print / Save as PDF">🖨️</button>
         <button class="btn" id="lang-btn">🇻🇳 VI</button>
         <button class="btn" id="theme-btn">🌙 Dark</button>
       </div>
@@ -696,8 +892,12 @@ def build_html_report(
       </div>
 
       {_build_percentile_dispersion_html(score_record, t)}
+
+      {_build_action_panel_html(score_record, t)}
     </div>
     """
+
+    coverage_html = _build_data_coverage_html(score_record, t)
 
     # 6 Group Score Cards + Chart Data
     group_labels = {
@@ -1242,6 +1442,7 @@ def build_html_report(
       <div id="tab-overview" class="tab-content active">
         {hero_html}
         {cards_html}
+        {coverage_html}
         {rec_html}
       </div>
       
@@ -1271,8 +1472,8 @@ def build_html_report(
       {investment_rec_html}
 
       <div class="disclaimer">
-        <strong>Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.')}<br>
-        Generated at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        <strong>⚠️ Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.')}<br>
+        🕒 Generated at: <span class="js-generated-at">…</span>
       </div>
     </div>
   </div>
@@ -1328,9 +1529,24 @@ def build_html_report(
         
         prevBtn.addEventListener("click", () => navigateTo(currentIndex + 1));
         nextBtn.addEventListener("click", () => navigateTo(currentIndex - 1));
-        
+
+        // Keyboard shortcuts: ← previous (older) quarter | → next (newer) quarter
+        document.addEventListener("keydown", (e) => {{
+          const tag = e.target && e.target.tagName;
+          if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          if (e.key === "ArrowLeft")  {{ e.preventDefault(); navigateTo(currentIndex + 1); }}
+          if (e.key === "ArrowRight") {{ e.preventDefault(); navigateTo(currentIndex - 1); }}
+        }});
+
       }} catch (err) {{
         console.error("Quarter navigation error:", err);
+      }}
+
+      // Print / Save-as-PDF button
+      const printBtn = document.getElementById("print-btn");
+      if (printBtn) {{
+        printBtn.addEventListener("click", () => window.print());
       }}
     }})();
   </script>
@@ -1354,14 +1570,41 @@ def build_html_report(
     return out_path
 
 
+def _load_quarter_summaries(reports: List[str]) -> List[Dict[str, Any]]:
+    """Đọc exports/score_*.json để lấy tóm tắt điểm cho từng quý (asc order)."""
+    summaries = []
+    for q in sorted(reports):  # ascending: 2021_Q1 ... 2026_Q4
+        export_path = EXPORTS_DIR / f"score_{q}.json"
+        item = {"dir": q, "quarter": q.replace("_", "-"), "score": None,
+                "label": "N/A", "emoji": "⚪", "allocation": ""}
+        if export_path.exists():
+            try:
+                with open(export_path, "r", encoding="utf-8") as f:
+                    payload = json.load(f)
+                qs = payload.get("quarterly_score", {}) or {}
+                score = qs.get("total_score")
+                if score is not None:
+                    lbl, em, desc, alloc = get_score_label(float(score))
+                    item.update({
+                        "score": float(score),
+                        "label": qs.get("label", lbl),
+                        "emoji": qs.get("emoji", em),
+                        "allocation": qs.get("label_allocation", alloc),
+                    })
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.warning(f"[REPORT] Cannot read export for {q}: {exc}")
+        summaries.append(item)
+    return summaries
+
+
 def build_root_index_html():
+    """Trang chủ dashboard: timeline 24 quý + lưới thẻ quý, thay cho redirect."""
     reports = []
     for d in sorted(REPORTS_DIR.iterdir(), reverse=True):
         if d.is_dir() and (d / "index.html").exists():
             reports.append(d.name)
-            
+
     # Export list of quarters to quarters.json for dynamic navigation
-    import json
     quarters_json_path = REPORTS_DIR / "quarters.json"
     with open(quarters_json_path, "w", encoding="utf-8") as f:
         json.dump(reports, f)
@@ -1371,24 +1614,259 @@ def build_root_index_html():
         return
 
     latest_quarter = reports[0]
+    summaries = _load_quarter_summaries(reports)  # ascending
+    latest = next((s for s in summaries if s["dir"] == latest_quarter), summaries[-1])
+
+    # ── Chart.js data (ascending timeline) ─────────────────────────────
+    tl_labels = [s["quarter"] for s in summaries]
+    tl_scores = [round(s["score"], 2) if s["score"] is not None else None for s in summaries]
+    tl_colors = [_LABEL_COLORS.get(s["label"], "#94a3b8") for s in summaries]
+    tl_hrefs  = [f'{s["dir"]}/index.html' for s in summaries]
+
+    # ── Quarter cards (newest first) ────────────────────────────────────
+    cards_html = ""
+    for s in reversed(summaries):
+        color = _LABEL_COLORS.get(s["label"], "#94a3b8")
+        score_txt = f'{s["score"]:.1f}' if s["score"] is not None else "—"
+        width = s["score"] if s["score"] is not None else 0
+        latest_badge = (
+            '<span class="latest-badge">LATEST</span>' if s["dir"] == latest_quarter else ""
+        )
+        cards_html += f"""
+        <a class="q-card" href="{s['dir']}/index.html" style="--q-color:{color};">
+          <div class="q-card-top">
+            <span class="q-name">{s['quarter']}</span>{latest_badge}
+          </div>
+          <div class="q-score" style="color:{color};">{score_txt}</div>
+          <div class="q-label" style="color:{color};">{s['emoji']} {s['label']}</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:{width}%; background:{color};"></div></div>
+          <div class="q-alloc">{s['allocation']}</div>
+        </a>"""
+
+    latest_color = _LABEL_COLORS.get(latest["label"], "#94a3b8")
+    latest_score_txt = f'{latest["score"]:.1f}' if latest["score"] is not None else "—"
+    n_quarters = len(summaries)
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0; url={latest_quarter}/index.html" />
-  <title>Redirecting to Latest Quarter...</title>
-  <script>
-    window.location.replace("{latest_quarter}/index.html");
-  </script>
+  <title>VN-Index Quant Dashboard — {n_quarters} Quarters</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {{
+      --bg-primary: #f8fafc; --bg-card: rgba(255,255,255,0.85); --text-main: #0f172a;
+      --text-muted: #475569; --border-color: rgba(226,232,240,0.8);
+      --card-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+      --color-blue: #3b82f6;
+    }}
+    body.dark-mode {{
+      --bg-primary: #0f172a; --bg-card: rgba(30,41,59,0.75); --text-main: #f1f5f9;
+      --text-muted: #94a3b8; --border-color: rgba(51,65,85,0.8);
+      --card-shadow: 0 10px 25px -5px rgba(0,0,0,0.4); --color-blue: #60a5fa;
+    }}
+    * {{ box-sizing: border-box; transition: background-color 0.4s ease, color 0.4s ease; }}
+    body {{ font-family: 'Outfit', sans-serif; background: var(--bg-primary); color: var(--text-main); margin: 0; line-height: 1.6; }}
+    .navbar {{ background: var(--bg-card); backdrop-filter: blur(12px); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }}
+    .brand {{ font-weight: 700; font-size: 18px; color: var(--color-blue); }}
+    .nav-right {{ display: flex; gap: 12px; }}
+    .btn {{ cursor: pointer; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }}
+    .btn:hover {{ background: var(--bg-primary); transform: translateY(-1px); }}
+    .btn-primary {{ background: linear-gradient(90deg, #3b82f6, #8b5cf6); color: #fff; border: none; }}
+    .wrap {{ max-width: 1350px; margin: 40px auto; padding: 0 24px; }}
+    .hero {{ background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 36px; text-align: center; box-shadow: var(--card-shadow); margin-bottom: 30px; }}
+    .hero-sub {{ color: var(--text-muted); font-size: 14px; font-weight: 500; margin-bottom: 10px; letter-spacing: 0.5px; }}
+    .hero-score {{ font-size: 72px; font-weight: 800; line-height: 1; }}
+    .hero-label {{ font-size: 22px; font-weight: 700; margin-top: 8px; }}
+    .hero-alloc {{ color: var(--text-muted); font-size: 15px; margin-top: 6px; }}
+    .section {{ background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; margin-bottom: 30px; box-shadow: var(--card-shadow); }}
+    .section h2 {{ margin: 0 0 18px 0; font-size: 20px; font-weight: 600; }}
+    .chart-box {{ position: relative; height: 360px; }}
+    .q-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }}
+    .q-card {{ display: block; text-decoration: none; color: var(--text-main); background: var(--bg-card); border: 1px solid var(--border-color); border-left: 5px solid var(--q-color, #94a3b8); border-radius: 14px; padding: 16px 18px; box-shadow: var(--card-shadow); transition: transform 0.2s ease, box-shadow 0.2s ease; }}
+    .q-card:hover {{ transform: translateY(-4px); box-shadow: 0 12px 30px -8px rgba(0,0,0,0.18); }}
+    .q-card-top {{ display: flex; justify-content: space-between; align-items: center; }}
+    .q-name {{ font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text-muted); }}
+    .latest-badge {{ background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.5px; }}
+    .q-score {{ font-size: 30px; font-weight: 800; margin-top: 6px; line-height: 1.1; }}
+    .q-label {{ font-size: 13px; font-weight: 700; margin-top: 2px; }}
+    .q-bar {{ background: rgba(0,0,0,0.06); border-radius: 6px; height: 6px; margin-top: 10px; overflow: hidden; }}
+    body.dark-mode .q-bar {{ background: rgba(255,255,255,0.08); }}
+    .q-bar-fill {{ height: 100%; border-radius: 6px; }}
+    .q-alloc {{ font-size: 12px; color: var(--text-muted); margin-top: 8px; }}
+    .disclaimer {{ color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0 40px 0; opacity: 0.8; }}
+    .lang-vi {{ display: none; }}
+    body.lang-vi-active .lang-vi {{ display: inline; }}
+    body.lang-vi-active .lang-en {{ display: none; }}
+    @media (max-width: 1100px) {{ .q-grid {{ grid-template-columns: repeat(3, 1fr); }} }}
+    @media (max-width: 860px)  {{ .q-grid {{ grid-template-columns: repeat(2, 1fr); }} }}
+    @media (max-width: 720px) {{
+      .navbar {{ flex-wrap: wrap; gap: 10px; padding: 12px 16px; }}
+      .wrap {{ margin: 20px auto; padding: 0 12px; }}
+      .hero {{ padding: 24px 16px; }}
+      .hero-score {{ font-size: 54px; }}
+      .chart-box {{ height: 260px; }}
+    }}
+    @media (max-width: 520px) {{ .q-grid {{ grid-template-columns: 1fr; }} }}
+    @media print {{
+      body {{ background: #fff !important; }}
+      .navbar, .btn {{ display: none !important; }}
+      .section, .hero, .q-card {{ box-shadow: none !important; border: 1px solid #d1d5db; break-inside: avoid; }}
+    }}
+  </style>
 </head>
-<body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
-  <p>Redirecting to the latest report ({latest_quarter.replace("_", "/")})...</p>
-  <p>If you are not redirected automatically, please <a href="{latest_quarter}/index.html">click here</a>.</p>
+<body>
+  <div class="navbar">
+    <div class="brand">📊 VNI Quant Dashboard</div>
+    <div class="nav-right">
+      <a class="btn btn-primary" href="{latest_quarter}/index.html">🚀 <span class="lang-en">Latest Report</span><span class="lang-vi">Báo cáo mới nhất</span></a>
+      <button class="btn" id="print-btn" title="Print / Save as PDF">🖨️</button>
+      <button class="btn" id="lang-btn">🇻🇳 VI</button>
+      <button class="btn" id="theme-btn">🌙 Dark</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-sub">
+        {t('VN-INDEX QUARTERLY QUANTITATIVE SCORING MODEL', 'HỆ THỐNG CHẤM ĐIỂM ĐỊNH LƯỢNG VN-INDEX THEO QUÝ')}
+        — {t(f'{n_quarters} quarters tracked', f'theo dõi {n_quarters} quý')}
+      </div>
+      <div class="hero-score" style="color:{latest_color};">{latest_score_txt}</div>
+      <div class="hero-label" style="color:{latest_color};">{latest['emoji']} {latest['label']} — {latest['quarter']}</div>
+      <div class="hero-alloc">⚡ {t('Recommended allocation', 'Khuyến nghị phân bổ')}: <strong>{latest['allocation']}</strong></div>
+      <div style="margin-top: 18px;">
+        <a class="btn btn-primary" href="{latest_quarter}/index.html" style="font-size: 15px;">
+          📈 <span class="lang-en">Open {latest['quarter']} Report</span><span class="lang-vi">Mở Báo cáo {latest['quarter']}</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📈 {t(f'Composite Score Timeline ({n_quarters} Quarters)', f'Timeline Điểm Tổng hợp ({n_quarters} Quý)')}</h2>
+      <div class="chart-box"><canvas id="timelineChart" aria-label="Composite Score Timeline" role="img"></canvas></div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+        💡 {t("Click any point to open that quarter's report.", 'Nhấp vào bất kỳ điểm nào để mở báo cáo của quý đó.')}
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🗂️ {t('All Quarterly Reports', 'Tất cả Báo cáo theo Quý')}</h2>
+      <div class="q-grid">{cards_html}
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚠️ Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu. Không phải khuyến nghị đầu tư.')}<br>
+      🕒 Generated at: <span class="js-generated-at">…</span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const TL_LABELS = {json.dumps(tl_labels)};
+    const TL_SCORES = {json.dumps(tl_scores)};
+    const TL_COLORS = {json.dumps(tl_colors)};
+    const TL_HREFS  = {json.dumps(tl_hrefs)};
+
+    // Theme toggle (shared localStorage key with quarterly reports)
+    const themeBtn = document.getElementById('theme-btn');
+    function applyTheme() {{
+      const isDark = document.body.classList.contains('dark-mode');
+      themeBtn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+    }}
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+    applyTheme();
+    themeBtn.addEventListener('click', () => {{
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+      applyTheme();
+      renderTimeline();
+    }});
+
+    // Language toggle (shared localStorage key with quarterly reports)
+    const langBtn = document.getElementById('lang-btn');
+    function applyLang() {{
+      langBtn.innerHTML = document.body.classList.contains('lang-vi-active') ? '🇬🇧 EN' : '🇻🇳 VI';
+    }}
+    if (localStorage.getItem('lang') === 'vi') document.body.classList.add('lang-vi-active');
+    applyLang();
+    langBtn.addEventListener('click', () => {{
+      document.body.classList.toggle('lang-vi-active');
+      localStorage.setItem('lang', document.body.classList.contains('lang-vi-active') ? 'vi' : 'en');
+      applyLang();
+    }});
+
+    // Print
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+    // "Generated at" — rendered at actual runtime (not hardcoded at build time)
+    (function() {{
+      const opts = {{ timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }};
+      const stamp = new Intl.DateTimeFormat('sv-SE', opts).format(new Date()) + ' ICT';
+      document.querySelectorAll('.js-generated-at').forEach(el => {{ el.textContent = stamp; }});
+    }})();
+
+    // Timeline chart
+    let timelineInstance = null;
+    function renderTimeline() {{
+      const ctx = document.getElementById('timelineChart');
+      if (!ctx) return;
+      const isDark = document.body.classList.contains('dark-mode');
+      const textColor = isDark ? '#e2e8f0' : '#0f172a';
+      const gridColor = isDark ? 'rgba(100,116,139,0.35)' : 'rgba(226,232,240,0.9)';
+      if (timelineInstance) timelineInstance.destroy();
+      timelineInstance = new Chart(ctx, {{
+        type: 'line',
+        data: {{
+          labels: TL_LABELS,
+          datasets: [{{
+            label: 'Composite Score',
+            data: TL_SCORES,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.10)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            pointBackgroundColor: TL_COLORS,
+            pointBorderColor: '#fff',
+            spanGaps: true
+          }}]
+        }},
+        options: {{
+          responsive: true,
+          maintainAspectRatio: false,
+          onClick: (evt, elements) => {{
+            if (elements.length > 0) window.location.href = TL_HREFS[elements[0].index];
+          }},
+          onHover: (evt, elements) => {{
+            evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+          }},
+          scales: {{
+            x: {{ grid: {{ display: false }}, ticks: {{ color: textColor, font: {{ size: 11 }}, maxRotation: 60 }} }},
+            y: {{ min: 0, max: 100, grid: {{ color: gridColor }}, ticks: {{ color: textColor }},
+                 title: {{ display: true, text: 'Composite Score (0-100)', color: textColor, font: {{ weight: 'bold' }} }} }}
+          }},
+          plugins: {{
+            legend: {{ display: false }},
+            tooltip: {{
+              callbacks: {{
+                afterLabel: (c) => 'Click to open report'
+              }}
+            }}
+          }}
+        }}
+      }});
+    }}
+    document.addEventListener('DOMContentLoaded', renderTimeline);
+    if (document.readyState !== 'loading') renderTimeline();
+  </script>
 </body>
 </html>"""
-    
+
     out_path = REPORTS_DIR / "index.html"
     out_path.write_text(html, encoding="utf-8")
-    logger.info(f"[REPORT] Root Index updated -> {out_path}")
+    logger.info(f"[REPORT] Root Dashboard updated -> {out_path} ({n_quarters} quarters)")

@@ -4,13 +4,28 @@ import glob
 import pandas as pd
 import json
 
+PRICE_CACHE_PATH = os.path.join("data", "scores", "vnindex_quarterly_close.json")
+
+
 def get_vnindex_quarterly_prices():
+    scores = pd.read_parquet('data/scores/quarterly_scores_history.parquet')
+    scores = scores[scores['quarter'] != '2099-Q1']
+
+    if not os.path.exists('data/raw/vnindex_ohlcv.parquet'):
+        # Fallback: dùng cache giá đóng cửa theo quý (được ghi lại ở lần chạy
+        # có dữ liệu OHLCV) để việc rebuild HTML không làm mất chart VN-Index.
+        if os.path.exists(PRICE_CACHE_PATH):
+            with open(PRICE_CACHE_PATH, 'r', encoding='utf-8') as f:
+                cache = json.load(f)
+            return [cache.get(q) if cache.get(q) is not None else 'null' for q in scores['quarter']]
+        raise FileNotFoundError(
+            "Missing data/raw/vnindex_ohlcv.parquet and no price cache at "
+            + PRICE_CACHE_PATH
+        )
+
     ohlcv = pd.read_parquet('data/raw/vnindex_ohlcv.parquet')
     ohlcv['date'] = pd.to_datetime(ohlcv['date'])
     ohlcv = ohlcv.sort_values('date')
-    
-    scores = pd.read_parquet('data/scores/quarterly_scores_history.parquet')
-    scores = scores[scores['quarter'] != '2099-Q1']
     
     max_date = ohlcv['date'].max()
     prices = []
@@ -35,6 +50,15 @@ def get_vnindex_quarterly_prices():
                 else:
                     p = 'null'
         prices.append(p)
+
+    # Ghi cache để có thể rebuild HTML khi thiếu file OHLCV gốc
+    try:
+        cache = {q: (None if p == 'null' else p) for q, p in zip(scores['quarter'], prices)}
+        with open(PRICE_CACHE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, indent=1)
+    except Exception as exc:
+        print(f"Warning: could not write price cache: {exc}")
+
     return prices
 
 def inject_html():

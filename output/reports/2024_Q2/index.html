@@ -124,6 +124,65 @@
   body.lang-vi-active .lang-en { display: none; }
   
   .chart-container { position: sticky; top: 1.5rem; align-self: flex-start; height: 380px; width: 100%; display: flex; justify-content: center; }
+
+  /* ── Action Panel (Allocation) ─────────────────────────────────────── */
+  .action-panel { margin: 20px auto 0 auto; max-width: 640px; padding: 18px 22px; border-radius: 14px; text-align: left; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.22); }
+  body.dark-mode .action-panel { background: rgba(59,130,246,0.10); }
+  .action-panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 8px; }
+  .alloc-value { font-size: 24px; font-weight: 800; line-height: 1.2; }
+  .alloc-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .alloc-track { position: relative; margin-top: 16px; padding-top: 8px; }
+  .alloc-bands { display: flex; height: 14px; border-radius: 7px; overflow: hidden; }
+  .alloc-band { height: 100%; }
+  .alloc-marker { position: absolute; top: 0; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--text-main); }
+  .alloc-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.3px; }
+
+  /* ── Data Coverage Panel ───────────────────────────────────────────── */
+  .coverage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+  .coverage-item { padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); }
+  .coverage-name { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; gap: 8px; }
+  .coverage-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main); white-space: nowrap; }
+
+  /* ── Responsive layout ─────────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .page-wrapper { flex-direction: column; gap: 20px; }
+    .sidebar { position: static; width: 100%; padding: 8px; overflow-x: auto; }
+    .sidebar ul { display: flex; flex-wrap: nowrap; gap: 4px; }
+    .sidebar li { margin: 0; padding: 10px 14px; white-space: nowrap; flex-shrink: 0; border-left: none; }
+    .sidebar li:hover { transform: none; }
+    .grid-6 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .navbar { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+    .nav-left, .nav-right { flex-wrap: wrap; }
+    .clock { display: none; }
+    .page-wrapper { margin: 20px auto; padding: 0 12px; }
+    .grid-6, .coverage-grid { grid-template-columns: 1fr; }
+    .hero { padding: 24px 16px; }
+    .score-big { font-size: 56px; }
+    .score-label { font-size: 20px; }
+    h1 { font-size: 22px; }
+    .section { padding: 18px; }
+    th, td { padding: 10px; font-size: 13px; }
+  }
+
+  /* ── Print styles ──────────────────────────────────────────────────── */
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    .navbar, .sidebar, .btn, #quarter-select { display: none !important; }
+    .page-wrapper { display: block; margin: 0; padding: 0; max-width: 100%; }
+    .main-content { width: 100%; }
+    .tab-content { display: block !important; page-break-before: always; }
+    #tab-overview { page-break-before: avoid; }
+    .card, .section { box-shadow: none !important; break-inside: avoid; border: 1px solid #d1d5db; backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .card:hover { transform: none; }
+    .hero { box-shadow: none !important; border: 1px solid #d1d5db; backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .progress-fill::after { animation: none; display: none; }
+    .chart-container { position: static; }
+    .score-big { -webkit-text-fill-color: initial; }
+    a { text-decoration: none; color: inherit; }
+  }
 </style>
 
 </head>
@@ -137,9 +196,11 @@
         <div class="clock" id="clock">Loading time...</div>
       </div>
       <div class="nav-right">
-        <button class="btn" id="prev-quarter-btn" title="Previous Quarter" style="padding: 6px 10px;">◀</button>
+        <a class="btn" id="home-btn" href="../index.html" title="Dashboard Home" style="text-decoration: none;">🏠 <span class="lang-en">Home</span><span class="lang-vi">Trang chủ</span></a>
+        <button class="btn" id="prev-quarter-btn" title="Previous Quarter (←)" style="padding: 6px 10px;">◀</button>
         <select class="btn" id="quarter-select" style="max-width: 150px; cursor: pointer;"></select>
-        <button class="btn" id="next-quarter-btn" title="Next Quarter" style="padding: 6px 10px;">▶</button>
+        <button class="btn" id="next-quarter-btn" title="Next Quarter (→)" style="padding: 6px 10px;">▶</button>
+        <button class="btn" id="print-btn" title="Print / Save as PDF">🖨️</button>
         <button class="btn" id="lang-btn">🇻🇳 VI</button>
         <button class="btn" id="theme-btn">🌙 Dark</button>
       </div>
@@ -199,16 +260,16 @@
     
         <script>
           window.chartDataLine = {
-            labels: ["2021-Q1", "2021-Q2", "2021-Q3", "2021-Q4", "2022-Q1", "2022-Q2", "2022-Q3", "2022-Q4", "2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"],
+            labels: ["2021-Q1", "2021-Q2", "2021-Q3", "2021-Q4", "2022-Q1", "2022-Q2", "2022-Q3", "2022-Q4", "2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4", "2099-Q1"],
             datasets: [{
               label: 'Total Score',
-              data: [61.41, 52.980000000000004, 54.28, 52.83, 59.0, 50.260000000000005, 52.06, 46.09, 53.650000000000006, 57.019999999999996, 58.89, 52.60999999999999, 53.12, 55.39, 54.38000000000001, 55.02, 52.17, 50.970000000000006, 53.790000000000006, 50.94, 52.59, 45.8, 50.96999999999999, 49.739999999999995],
-              percentile_label: ["HOLD", "HOLD", "HOLD", "HOLD", "BUY/ACCUMULATE", "REDUCE/SELL", "REDUCE/SELL", "REDUCE/SELL", "HOLD", "HOLD", "BUY/ACCUMULATE", "HOLD", "HOLD", "HOLD", "HOLD", "HOLD", "REDUCE/SELL", "REDUCE/SELL", "HOLD", "REDUCE/SELL", "HOLD", "REDUCE/SELL", "HOLD", "REDUCE/SELL"],
-              dispersion_level: ["MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "HIGH", "LOW", "LOW", "LOW", "LOW", "MEDIUM", "MEDIUM", "HIGH", "LOW", "HIGH", "LOW", "MEDIUM", "LOW", "MEDIUM", "HIGH", "HIGH", "HIGH", "HIGH", "HIGH"],
+              data: [61.41, 52.980000000000004, 54.28, 52.83, 59.0, 50.260000000000005, 52.06, 46.09, 53.650000000000006, 57.019999999999996, 58.89, 52.60999999999999, 53.12, 55.39, 54.38000000000001, 55.02, 52.17, 50.970000000000006, 53.790000000000006, 50.94, 52.59, 45.8, 52.779999999999994, 49.739999999999995, 51.93],
+              percentile_label: ["HOLD", "HOLD", "HOLD", "HOLD", "BUY/ACCUMULATE", "REDUCE/SELL", "REDUCE/SELL", "REDUCE/SELL", "HOLD", "HOLD", "BUY/ACCUMULATE", "HOLD", "HOLD", "HOLD", "HOLD", "HOLD", "REDUCE/SELL", "REDUCE/SELL", "HOLD", "REDUCE/SELL", "HOLD", "REDUCE/SELL", "HOLD", "REDUCE/SELL", "HOLD"],
+              dispersion_level: ["MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "HIGH", "LOW", "LOW", "LOW", "LOW", "MEDIUM", "MEDIUM", "HIGH", "LOW", "HIGH", "LOW", "MEDIUM", "LOW", "MEDIUM", "HIGH", "HIGH", "HIGH", "MEDIUM", "HIGH", "LOW"],
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               borderWidth: 3,
-              pointBackgroundColor: ["#eab308", "#eab308", "#eab308", "#eab308", "#22c55e", "#ef4444", "#ef4444", "#ef4444", "#eab308", "#eab308", "#22c55e", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#ef4444", "#ef4444", "#eab308", "#ef4444", "#eab308", "#ef4444", "#eab308", "#ef4444"],
+              pointBackgroundColor: ["#eab308", "#eab308", "#eab308", "#eab308", "#22c55e", "#ef4444", "#ef4444", "#ef4444", "#eab308", "#eab308", "#22c55e", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#ef4444", "#ef4444", "#eab308", "#ef4444", "#eab308", "#ef4444", "#eab308", "#ef4444", "#eab308"],
               pointBorderColor: '#fff',
               pointRadius: 5,
               pointHoverRadius: 7,
@@ -272,6 +333,20 @@
           </span>
         </div>
       </div>
+
+      
+      <div class="action-panel">
+        <div class="action-panel-title">⚡ <span class="lang-en">Action Panel — Recommended Allocation</span><span class="lang-vi">Action Panel — Khuyến nghị Phân bổ</span></div>
+        <div class="alloc-value" style="color:#eab308;"><span class="lang-en">40–60% Equities</span><span class="lang-vi">40–60% Cổ phiếu</span></div>
+        <div class="alloc-sub">
+          <span class="lang-en">Regime: HOLD @ score 55.4/100 — thresholds from config.py SCORE_LABELS</span><span class="lang-vi">Trạng thái: HOLD @ điểm 55.4/100 — ngưỡng lấy từ config.py SCORE_LABELS</span>
+        </div>
+        <div class="alloc-track">
+          <div class="alloc-marker" style="left:55.39%;" title="55.4"></div>
+          <div class="alloc-bands"><div class="alloc-band" title="SELL (0–34): 0–20% Equities" style="width:35%; background:#ef4444; opacity:0.30;"></div><div class="alloc-band" title="REDUCE (35–49): 20–40% Equities" style="width:15%; background:#f97316; opacity:0.30;"></div><div class="alloc-band" title="HOLD (50–64): 40–60% Equities" style="width:15%; background:#eab308; opacity:1;"></div><div class="alloc-band" title="ACCUMULATE (65–79): 70–85% Equities" style="width:15%; background:#3b82f6; opacity:0.30;"></div><div class="alloc-band" title="BUY (80–100): 85–100% Equities" style="width:21%; background:#10b981; opacity:0.30;"></div></div>
+          <div class="alloc-legend"><span><span class="lang-en">SELL</span><span class="lang-vi">BÁN</span></span><span><span class="lang-en">REDUCE</span><span class="lang-vi">GIẢM</span></span><span><span class="lang-en">HOLD</span><span class="lang-vi">GIỮ</span></span><span><span class="lang-en">ACCUMULATE</span><span class="lang-vi">TÍCH LŨY</span></span><span><span class="lang-en">BUY</span><span class="lang-vi">MUA</span></span></div>
+        </div>
+      </div>
     </div>
     
         <div class="grid-6">
@@ -323,6 +398,56 @@
           </div>
           <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 5.05 pts</div>
         </div></div>
+        
+    <div class="section" id="data-coverage">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin-bottom:4px;">🛰️ <span class="lang-en">Data Coverage</span><span class="lang-vi">Độ Phủ Dữ Liệu</span></h2>
+        <div style="font-family:'JetBrains Mono', monospace; font-weight:700; font-size:18px; color:var(--color-amber);">
+          23/25 (92%)
+        </div>
+      </div>
+      <div class="progress-bar" style="height:10px;">
+        <div class="progress-fill" style="width:92%; background:var(--color-amber);"></div>
+      </div>
+      <div style="font-size:13px; color:var(--text-muted); margin-top:6px;"><span class="lang-en">2 indicator(s) missing — replaced by neutral score 50 (see N/A badges in Pillars Analysis).</span><span class="lang-vi">2 chỉ số thiếu dữ liệu — được thay bằng điểm trung lập 50 (xem nhãn N/A trong Phân Rã Điểm Số).</span></div>
+      <div class="coverage-grid">
+        <div class="coverage-item">
+          <div class="coverage-name"><span>💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span></span><span class="coverage-count">4/5</span></div>
+          <div class="progress-bar" style="margin:0; height:8px;">
+            <div class="progress-fill" style="width:80%; background:var(--color-amber);"></div>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <div class="coverage-name"><span>🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span></span><span class="coverage-count">6/6</span></div>
+          <div class="progress-bar" style="margin:0; height:8px;">
+            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <div class="coverage-name"><span>📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span></span><span class="coverage-count">3/3</span></div>
+          <div class="progress-bar" style="margin:0; height:8px;">
+            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <div class="coverage-name"><span>📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span></span><span class="coverage-count">4/4</span></div>
+          <div class="progress-bar" style="margin:0; height:8px;">
+            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <div class="coverage-name"><span>🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span></span><span class="coverage-count">2/2</span></div>
+          <div class="progress-bar" style="margin:0; height:8px;">
+            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
+          </div>
+        </div>
+        <div class="coverage-item">
+          <div class="coverage-name"><span>🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span></span><span class="coverage-count">4/5</span></div>
+          <div class="progress-bar" style="margin:0; height:8px;">
+            <div class="progress-fill" style="width:80%; background:var(--color-amber);"></div>
+          </div>
+        </div></div>
+    </div>
         
     <div class="section" style="border-color:var(--color-amber);">
       <h2>🟡 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2024-Q2</h2>
@@ -741,8 +866,8 @@
     
 
       <div class="disclaimer">
-        <strong>Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
-        Generated at: 2026-09-27 21:52:19
+        <strong>⚠️ Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.</span><br>
+        🕒 Generated at: <span class="js-generated-at">…</span>
       </div>
     </div>
   </div>
@@ -767,6 +892,13 @@ window.MathJax = {
   }
   setInterval(updateClock, 1000);
   updateClock();
+
+  // "Generated at" — rendered at actual runtime (not hardcoded at build time)
+  (function() {
+    const opts = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const stamp = new Intl.DateTimeFormat('sv-SE', opts).format(new Date()) + ' ICT';
+    document.querySelectorAll('.js-generated-at').forEach(el => { el.textContent = stamp; });
+  })();
 
   // Tab switching logic
   function openTab(evt, tabName) {
@@ -1096,9 +1228,24 @@ window.MathJax = {
         
         prevBtn.addEventListener("click", () => navigateTo(currentIndex + 1));
         nextBtn.addEventListener("click", () => navigateTo(currentIndex - 1));
-        
+
+        // Keyboard shortcuts: ← previous (older) quarter | → next (newer) quarter
+        document.addEventListener("keydown", (e) => {
+          const tag = e.target && e.target.tagName;
+          if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          if (e.key === "ArrowLeft")  { e.preventDefault(); navigateTo(currentIndex + 1); }
+          if (e.key === "ArrowRight") { e.preventDefault(); navigateTo(currentIndex - 1); }
+        });
+
       } catch (err) {
         console.error("Quarter navigation error:", err);
+      }
+
+      // Print / Save-as-PDF button
+      const printBtn = document.getElementById("print-btn");
+      if (printBtn) {
+        printBtn.addEventListener("click", () => window.print());
       }
     })();
   </script>

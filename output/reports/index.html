@@ -3,15 +3,434 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0; url=2026_Q4/index.html" />
-  <title>Redirecting to Latest Quarter...</title>
-  <script>
-    window.location.replace("2026_Q4/index.html");
-  </script>
+  <title>VN-Index Quant Dashboard — 24 Quarters</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --bg-primary: #f8fafc; --bg-card: rgba(255,255,255,0.85); --text-main: #0f172a;
+      --text-muted: #475569; --border-color: rgba(226,232,240,0.8);
+      --card-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+      --color-blue: #3b82f6;
+    }
+    body.dark-mode {
+      --bg-primary: #0f172a; --bg-card: rgba(30,41,59,0.75); --text-main: #f1f5f9;
+      --text-muted: #94a3b8; --border-color: rgba(51,65,85,0.8);
+      --card-shadow: 0 10px 25px -5px rgba(0,0,0,0.4); --color-blue: #60a5fa;
+    }
+    * { box-sizing: border-box; transition: background-color 0.4s ease, color 0.4s ease; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg-primary); color: var(--text-main); margin: 0; line-height: 1.6; }
+    .navbar { background: var(--bg-card); backdrop-filter: blur(12px); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+    .brand { font-weight: 700; font-size: 18px; color: var(--color-blue); }
+    .nav-right { display: flex; gap: 12px; }
+    .btn { cursor: pointer; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:hover { background: var(--bg-primary); transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(90deg, #3b82f6, #8b5cf6); color: #fff; border: none; }
+    .wrap { max-width: 1350px; margin: 40px auto; padding: 0 24px; }
+    .hero { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 36px; text-align: center; box-shadow: var(--card-shadow); margin-bottom: 30px; }
+    .hero-sub { color: var(--text-muted); font-size: 14px; font-weight: 500; margin-bottom: 10px; letter-spacing: 0.5px; }
+    .hero-score { font-size: 72px; font-weight: 800; line-height: 1; }
+    .hero-label { font-size: 22px; font-weight: 700; margin-top: 8px; }
+    .hero-alloc { color: var(--text-muted); font-size: 15px; margin-top: 6px; }
+    .section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; margin-bottom: 30px; box-shadow: var(--card-shadow); }
+    .section h2 { margin: 0 0 18px 0; font-size: 20px; font-weight: 600; }
+    .chart-box { position: relative; height: 360px; }
+    .q-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .q-card { display: block; text-decoration: none; color: var(--text-main); background: var(--bg-card); border: 1px solid var(--border-color); border-left: 5px solid var(--q-color, #94a3b8); border-radius: 14px; padding: 16px 18px; box-shadow: var(--card-shadow); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .q-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px -8px rgba(0,0,0,0.18); }
+    .q-card-top { display: flex; justify-content: space-between; align-items: center; }
+    .q-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .latest-badge { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.5px; }
+    .q-score { font-size: 30px; font-weight: 800; margin-top: 6px; line-height: 1.1; }
+    .q-label { font-size: 13px; font-weight: 700; margin-top: 2px; }
+    .q-bar { background: rgba(0,0,0,0.06); border-radius: 6px; height: 6px; margin-top: 10px; overflow: hidden; }
+    body.dark-mode .q-bar { background: rgba(255,255,255,0.08); }
+    .q-bar-fill { height: 100%; border-radius: 6px; }
+    .q-alloc { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+    .disclaimer { color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0 40px 0; opacity: 0.8; }
+    .lang-vi { display: none; }
+    body.lang-vi-active .lang-vi { display: inline; }
+    body.lang-vi-active .lang-en { display: none; }
+    @media (max-width: 1100px) { .q-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 860px)  { .q-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 720px) {
+      .navbar { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+      .wrap { margin: 20px auto; padding: 0 12px; }
+      .hero { padding: 24px 16px; }
+      .hero-score { font-size: 54px; }
+      .chart-box { height: 260px; }
+    }
+    @media (max-width: 520px) { .q-grid { grid-template-columns: 1fr; } }
+    @media print {
+      body { background: #fff !important; }
+      .navbar, .btn { display: none !important; }
+      .section, .hero, .q-card { box-shadow: none !important; border: 1px solid #d1d5db; break-inside: avoid; }
+    }
+  </style>
 </head>
-<body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
-  <p>Redirecting to the latest report (2026/Q4)...</p>
-  <p>If you are not redirected automatically, please <a href="2026_Q4/index.html">click here</a>.</p>
+<body>
+  <div class="navbar">
+    <div class="brand">📊 VNI Quant Dashboard</div>
+    <div class="nav-right">
+      <a class="btn btn-primary" href="2026_Q4/index.html">🚀 <span class="lang-en">Latest Report</span><span class="lang-vi">Báo cáo mới nhất</span></a>
+      <button class="btn" id="print-btn" title="Print / Save as PDF">🖨️</button>
+      <button class="btn" id="lang-btn">🇻🇳 VI</button>
+      <button class="btn" id="theme-btn">🌙 Dark</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-sub">
+        <span class="lang-en">VN-INDEX QUARTERLY QUANTITATIVE SCORING MODEL</span><span class="lang-vi">HỆ THỐNG CHẤM ĐIỂM ĐỊNH LƯỢNG VN-INDEX THEO QUÝ</span>
+        — <span class="lang-en">24 quarters tracked</span><span class="lang-vi">theo dõi 24 quý</span>
+      </div>
+      <div class="hero-score" style="color:#eab308;">49.7</div>
+      <div class="hero-label" style="color:#eab308;">🟡 HOLD — 2026-Q4</div>
+      <div class="hero-alloc">⚡ <span class="lang-en">Recommended allocation</span><span class="lang-vi">Khuyến nghị phân bổ</span>: <strong>40–60% Equities</strong></div>
+      <div style="margin-top: 18px;">
+        <a class="btn btn-primary" href="2026_Q4/index.html" style="font-size: 15px;">
+          📈 <span class="lang-en">Open 2026-Q4 Report</span><span class="lang-vi">Mở Báo cáo 2026-Q4</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📈 <span class="lang-en">Composite Score Timeline (24 Quarters)</span><span class="lang-vi">Timeline Điểm Tổng hợp (24 Quý)</span></h2>
+      <div class="chart-box"><canvas id="timelineChart" aria-label="Composite Score Timeline" role="img"></canvas></div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+        💡 <span class="lang-en">Click any point to open that quarter's report.</span><span class="lang-vi">Nhấp vào bất kỳ điểm nào để mở báo cáo của quý đó.</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🗂️ <span class="lang-en">All Quarterly Reports</span><span class="lang-vi">Tất cả Báo cáo theo Quý</span></h2>
+      <div class="q-grid">
+        <a class="q-card" href="2026_Q4/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2026-Q4</span><span class="latest-badge">LATEST</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">49.7</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:49.74%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2026_Q3/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2026-Q3</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">51.0</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:50.97%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2026_Q2/index.html" style="--q-color:#f97316;">
+          <div class="q-card-top">
+            <span class="q-name">2026-Q2</span>
+          </div>
+          <div class="q-score" style="color:#f97316;">45.8</div>
+          <div class="q-label" style="color:#f97316;">🟠 REDUCE</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:45.8%; background:#f97316;"></div></div>
+          <div class="q-alloc">20–40% Equities</div>
+        </a>
+        <a class="q-card" href="2026_Q1/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2026-Q1</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">52.6</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:52.59%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2025_Q4/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2025-Q4</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">50.9</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:50.94%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2025_Q3/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2025-Q3</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">53.8</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:53.79%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2025_Q2/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2025-Q2</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">51.0</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:50.97%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2025_Q1/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2025-Q1</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">52.2</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:52.17%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2024_Q4/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2024-Q4</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">55.0</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:55.02%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2024_Q3/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2024-Q3</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">54.4</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:54.38%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2024_Q2/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2024-Q2</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">55.4</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:55.39%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2024_Q1/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2024-Q1</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">53.1</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:53.12%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2023_Q4/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2023-Q4</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">52.6</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:52.61%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2023_Q3/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2023-Q3</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">58.9</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:58.89%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2023_Q2/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2023-Q2</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">57.0</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:57.02%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2023_Q1/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2023-Q1</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">53.6</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:53.65%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2022_Q4/index.html" style="--q-color:#f97316;">
+          <div class="q-card-top">
+            <span class="q-name">2022-Q4</span>
+          </div>
+          <div class="q-score" style="color:#f97316;">46.1</div>
+          <div class="q-label" style="color:#f97316;">🟠 REDUCE</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:46.09%; background:#f97316;"></div></div>
+          <div class="q-alloc">20–40% Equities</div>
+        </a>
+        <a class="q-card" href="2022_Q3/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2022-Q3</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">52.1</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:52.06%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2022_Q2/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2022-Q2</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">50.3</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:50.26%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2022_Q1/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2022-Q1</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">59.0</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:59.0%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2021_Q4/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2021-Q4</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">52.8</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:52.83%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2021_Q3/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2021-Q3</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">54.3</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:54.28%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2021_Q2/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2021-Q2</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">53.0</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:52.98%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+        <a class="q-card" href="2021_Q1/index.html" style="--q-color:#eab308;">
+          <div class="q-card-top">
+            <span class="q-name">2021-Q1</span>
+          </div>
+          <div class="q-score" style="color:#eab308;">61.4</div>
+          <div class="q-label" style="color:#eab308;">🟡 HOLD</div>
+          <div class="q-bar"><div class="q-bar-fill" style="width:61.41%; background:#eab308;"></div></div>
+          <div class="q-alloc">40–60% Equities</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚠️ Disclaimer:</strong> <span class="lang-en">Generated by VN_Index_Scoring_Quarterly_Quant_Model. For research purposes only. Not financial advice.</span><span class="lang-vi">Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu. Không phải khuyến nghị đầu tư.</span><br>
+      🕒 Generated at: <span class="js-generated-at">…</span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const TL_LABELS = ["2021-Q1", "2021-Q2", "2021-Q3", "2021-Q4", "2022-Q1", "2022-Q2", "2022-Q3", "2022-Q4", "2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"];
+    const TL_SCORES = [61.41, 52.98, 54.28, 52.83, 59.0, 50.26, 52.06, 46.09, 53.65, 57.02, 58.89, 52.61, 53.12, 55.39, 54.38, 55.02, 52.17, 50.97, 53.79, 50.94, 52.59, 45.8, 50.97, 49.74];
+    const TL_COLORS = ["#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#f97316", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#eab308", "#f97316", "#eab308", "#eab308"];
+    const TL_HREFS  = ["2021_Q1/index.html", "2021_Q2/index.html", "2021_Q3/index.html", "2021_Q4/index.html", "2022_Q1/index.html", "2022_Q2/index.html", "2022_Q3/index.html", "2022_Q4/index.html", "2023_Q1/index.html", "2023_Q2/index.html", "2023_Q3/index.html", "2023_Q4/index.html", "2024_Q1/index.html", "2024_Q2/index.html", "2024_Q3/index.html", "2024_Q4/index.html", "2025_Q1/index.html", "2025_Q2/index.html", "2025_Q3/index.html", "2025_Q4/index.html", "2026_Q1/index.html", "2026_Q2/index.html", "2026_Q3/index.html", "2026_Q4/index.html"];
+
+    // Theme toggle (shared localStorage key with quarterly reports)
+    const themeBtn = document.getElementById('theme-btn');
+    function applyTheme() {
+      const isDark = document.body.classList.contains('dark-mode');
+      themeBtn.innerHTML = isDark ? '☀️ Light' : '🌙 Dark';
+    }
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+    applyTheme();
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+      applyTheme();
+      renderTimeline();
+    });
+
+    // Language toggle (shared localStorage key with quarterly reports)
+    const langBtn = document.getElementById('lang-btn');
+    function applyLang() {
+      langBtn.innerHTML = document.body.classList.contains('lang-vi-active') ? '🇬🇧 EN' : '🇻🇳 VI';
+    }
+    if (localStorage.getItem('lang') === 'vi') document.body.classList.add('lang-vi-active');
+    applyLang();
+    langBtn.addEventListener('click', () => {
+      document.body.classList.toggle('lang-vi-active');
+      localStorage.setItem('lang', document.body.classList.contains('lang-vi-active') ? 'vi' : 'en');
+      applyLang();
+    });
+
+    // Print
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+    // "Generated at" — rendered at actual runtime (not hardcoded at build time)
+    (function() {
+      const opts = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      const stamp = new Intl.DateTimeFormat('sv-SE', opts).format(new Date()) + ' ICT';
+      document.querySelectorAll('.js-generated-at').forEach(el => { el.textContent = stamp; });
+    })();
+
+    // Timeline chart
+    let timelineInstance = null;
+    function renderTimeline() {
+      const ctx = document.getElementById('timelineChart');
+      if (!ctx) return;
+      const isDark = document.body.classList.contains('dark-mode');
+      const textColor = isDark ? '#e2e8f0' : '#0f172a';
+      const gridColor = isDark ? 'rgba(100,116,139,0.35)' : 'rgba(226,232,240,0.9)';
+      if (timelineInstance) timelineInstance.destroy();
+      timelineInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: TL_LABELS,
+          datasets: [{
+            label: 'Composite Score',
+            data: TL_SCORES,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.10)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            pointBackgroundColor: TL_COLORS,
+            pointBorderColor: '#fff',
+            spanGaps: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          onClick: (evt, elements) => {
+            if (elements.length > 0) window.location.href = TL_HREFS[elements[0].index];
+          },
+          onHover: (evt, elements) => {
+            evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11 }, maxRotation: 60 } },
+            y: { min: 0, max: 100, grid: { color: gridColor }, ticks: { color: textColor },
+                 title: { display: true, text: 'Composite Score (0-100)', color: textColor, font: { weight: 'bold' } } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                afterLabel: (c) => 'Click to open report'
+              }
+            }
+          }
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', renderTimeline);
+    if (document.readyState !== 'loading') renderTimeline();
+  </script>
 
   <script>
     // Inject VN-Index dataset

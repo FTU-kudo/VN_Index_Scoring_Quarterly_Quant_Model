@@ -39,3 +39,9 @@ try:
     print("Post-processing scripts executed successfully.")
 except Exception as e:
     print(f"Error running post-processing scripts: {e}")
+
+# Regenerate the Excel Quant Factor Workbook alongside the HTML reports
+try:
+    subprocess.run([sys.executable, "scripts/generate_excel_report.py"], check=True)
+except Exception as e:
+    print(f"Error generating Excel workbook: {e}")

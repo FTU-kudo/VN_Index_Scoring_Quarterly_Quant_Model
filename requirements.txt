@@ -28,6 +28,9 @@ python-dotenv==1.0.0      # .env loading
 requests==2.31.0          # HTTP calls
 tqdm==4.65.0              # Progress bars
 
+# ── Reporting / Excel export ─────────────────────────────────────────────────
+XlsxWriter>=3.2.0         # Quant Factor Workbook (scripts/generate_excel_report.py)
+
 # ── Optional: Deep Learning (LSTM) ───────────────────────────────────────────
 # torch==2.1.0            # PyTorch — uncomment nếu cần LSTM
 # tensorflow==2.14.0      # Keras — alternative LSTM backend
