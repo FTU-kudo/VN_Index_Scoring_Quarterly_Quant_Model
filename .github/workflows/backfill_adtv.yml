@@ -12,6 +12,15 @@ on:
         default: false
         type: boolean
 
+  # Cách kích hoạt trên branch feature (workflow_dispatch cần file nằm trên
+  # default branch): push commit chạm tới chính file này → chạy 1 lần.
+  # Commit kết quả của workflow không chạm file này → không loop.
+  push:
+    branches:
+      - arena/01a0e760-vn-index-scoring-quarterly-qua
+    paths:
+      - ".github/workflows/backfill_adtv.yml"
+
 env:
   PYTHON_VERSION: "3.11"
 
