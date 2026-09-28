@@ -1,6 +1,6 @@
 {
   "description": "ADTV (avg daily volume) theo quý — từ vnindex_ohlcv.volume; change = ADTV(Q-1)/ADTV(Q-2)-1 dùng cho quý Q (point-in-time)",
-  "updated_at": "2026-09-28 11:09",
+  "updated_at": "2026-09-28 11:15",
   "quarters": {
     "2021-Q1": {
       "quarter": "2021-Q1",

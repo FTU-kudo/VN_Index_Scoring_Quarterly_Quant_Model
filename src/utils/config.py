@@ -229,7 +229,8 @@ SCORE_CALIBRATION = {
 
 
 def get_score_label(score: float):
-    """Trả về (label, emoji, description, allocation) cho điểm số.
+    """
+    Trả về (label, emoji, description, allocation) cho điểm số.
 
     Nguồn sự thật duy nhất — mọi nơi cần gán nhãn PHẢI gọi hàm này.
 
@@ -240,10 +241,27 @@ def get_score_label(score: float):
     Returns
     -------
     tuple: (label_str, emoji_str, description_str, allocation_str)
+
+    Lưu ý half-open intervals (fix 09/2026):
+    SCORE_LABEL_RANGES là các dải NGUYÊN liên tiếp (0-34, 35-49, 50-64,
+    65-79, 80-100) nhưng total_score/calibrated_score là số THẬP (làm tròn
+    2 chữ số). Nếu dò theo `lo <= score <= hi`, điểm rơi VÀO KHOẢNG TRỐNG
+    (vd 34.51, 49.74, 64.99) không khớp dải nào và rơi vào fallback HOLD
+    mặc định — sai về ngữ nghĩa (49.74 rõ ràng là "chưa tới HOLD" → REDUCE).
+    Fix: dải [lo, next_lo) — điểm thập phân thuộc dải MỚI CHƯA ĐẠT ngưỡng
+    trên (34.51 → SELL, 49.74 → REDUCE, 64.99 → HOLD, 79.99 → ACCUMULATE).
+    Điểm nguyên cho kết quả GIỐNG HỆT trước fix (34→SELL, 35→REDUCE, …).
     """
-    for (lo, hi), values in SCORE_LABEL_RANGES:
-        if lo <= score <= hi:
-            return values
+    n_bands = len(SCORE_LABEL_RANGES)
+    # Sắp xếp tăng dần theo ngưỡng dưới — không phụ thuộc thứ tự khai báo
+    ranges = sorted(SCORE_LABEL_RANGES, key=lambda x: x[0][0])
+    for i, ((lo, hi), values) in enumerate(ranges):
+        if i + 1 < n_bands:
+            if lo <= score < ranges[i + 1][0][0]:
+                return values
+        else:  # dải cuối — inclusive tới 100
+            if lo <= score <= hi:
+                return values
     # Fallback (score ngoài [0, 100] do lỗi numeric)
     return ("HOLD", "🟡", "Neutral — Await confirming signals", "40–60% Equities")
 

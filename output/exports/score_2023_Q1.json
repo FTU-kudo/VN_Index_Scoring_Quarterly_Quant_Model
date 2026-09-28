@@ -5,14 +5,14 @@
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
     "adtv_backfill": {
-      "applied_at": "2026-09-28 11:09",
+      "applied_at": "2026-09-28 11:15",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
     }
   },
   "quarterly_score": {
     "quarter": "2023-Q1",
-    "date_computed": "2026-09-28 11:09",
+    "date_computed": "2026-09-28 11:15",
     "total_score": 54.29,
     "label": "HOLD",
     "emoji": "🟡",
@@ -101,10 +101,10 @@
     "data_as_of": "2022-12-30",
     "point_in_time": true,
     "calibrated_score": 49.98,
-    "calibrated_label": "HOLD",
-    "calibrated_emoji": "🟡",
-    "calibrated_description": "Neutral — Await confirming signals",
-    "calibrated_allocation": "40–60% Equities",
+    "calibrated_label": "REDUCE",
+    "calibrated_emoji": "🟠",
+    "calibrated_description": "Reduce exposure — Increasing pressure",
+    "calibrated_allocation": "20–40% Equities",
     "calibration_applied": true,
     "calibration_z": -0.0013,
     "calibration_hist_mean": 54.2975,

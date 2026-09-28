@@ -5,14 +5,14 @@
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
     "adtv_backfill": {
-      "applied_at": "2026-09-28 11:09",
+      "applied_at": "2026-09-28 11:15",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
     }
   },
   "quarterly_score": {
     "quarter": "2022-Q4",
-    "date_computed": "2026-09-28 11:09",
+    "date_computed": "2026-09-28 11:15",
     "total_score": 45.8,
     "label": "REDUCE",
     "emoji": "🟠",

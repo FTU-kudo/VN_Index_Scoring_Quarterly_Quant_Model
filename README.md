@@ -145,8 +145,8 @@ Trên **dashboard 24 quý**, thẻ & timeline tô màu theo **regime calibrated*
 
 [COMPOSITE SCORE & ALLOCATION]
   • Total Score (raw)      : 49.35 / 100
-  • Classification (raw)   : 🟡 HOLD — Neutral — Await confirming signals
-  • Calibrated Action      : 🟡 HOLD — 34.51 / 100 (40–60% Equities)
+  • Classification (raw)   : 🟠 REDUCE — Reduce exposure — Increasing pressure
+  • Calibrated Action      : 🔴 SELL — 34.51 / 100 (0–20% Equities)
   • Calibration z          : -1.03
 
 [GROUP BREAKDOWN]

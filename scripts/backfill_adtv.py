@@ -41,6 +41,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -155,12 +156,18 @@ def derive_dispersion(pillar_std: float, prior_stds) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def backfill_all(
-    ohlcv: pd.DataFrame,
+    ohlcv: Optional[pd.DataFrame],
     dry_run: bool = False,
     history_path: Path = HISTORY_PATH,
     exports_dir: Path = EXPORTS_DIR,
     adtv_cache_path: Path = ADTV_CACHE_PATH,
+    adtv_changes: Optional[Dict[str, Optional[float]]] = None,
 ) -> pd.DataFrame:
+    """
+    ohlcv        : DataFrame OHLCV (cần cột volume) — hoặc None khi truyền
+                   adtv_changes dựng sẵn (chế độ offline --from-cache).
+    adtv_changes : {quarter: change_pct} — nếu có thì bỏ qua ohlcv.
+    """
     if not history_path.exists():
         raise SystemExit(f"[BACKFILL] Missing {history_path}")
 
@@ -178,10 +185,16 @@ def backfill_all(
         with open(path, encoding="utf-8") as f:
             exports[q] = json.load(f)
 
-    # Window ADTV cần phủ: Q−1 và Q−2 của MỌI quý trong lịch sử
-    need = sorted({w for q in quarters for w in (previous_quarter(q), previous_quarter(previous_quarter(q)))})
-    logger.info(f"[ADTV] Windows cần phủ: {need[0]} → {need[-1]} ({len(need)} quý)")
-    validate_volume(ohlcv, need)
+    if adtv_changes is None:
+        # Window ADTV cần phủ: Q−1 và Q−2 của MỌI quý trong lịch sử
+        need = sorted({w for q in quarters for w in (previous_quarter(q), previous_quarter(previous_quarter(q)))})
+        logger.info(f"[ADTV] Windows cần phủ: {need[0]} → {need[-1]} ({len(need)} quý)")
+        validate_volume(ohlcv, need)
+    else:
+        missing = [q for q in quarters if q not in adtv_changes]
+        if missing:
+            raise SystemExit(f"[BACKFILL] Cache ADTV thiếu các quý: {missing}")
+        logger.info(f"[ADTV] Dùng cache {len(adtv_changes)} quý — không cần OHLCV (offline)")
 
     # ── Pre-check: replicate derived fields trên dữ liệu CŨ ──────────────────
     # Nếu trùng khớp stored JSON → logic expanding là bản sao trung thực của scorer.
@@ -206,6 +219,15 @@ def backfill_all(
     rows, changes, audit = [], [], []
     prior_totals, prior_stds = [], []
 
+    # Chế độ from-cache: giữ lại windows cũ cho audit (không có OHLCV để tính lại)
+    old_cache_windows: Dict[str, Dict] = {}
+    if adtv_changes is not None and adtv_cache_path.exists():
+        try:
+            _old = json.load(open(adtv_cache_path, encoding="utf-8"))
+            old_cache_windows = {q: a.get("windows", {}) for q, a in _old.get("quarters", {}).items()}
+        except Exception as e:
+            logger.warning(f"[BACKFILL] Không đọc được cache cũ ({e}) — audit sẽ thiếu windows")
+
     for q in quarters:
         payload = exports[q]
         rec = payload["quarterly_score"]
@@ -222,11 +244,15 @@ def backfill_all(
         if inp["months_to_next_rebalancing"] is None:
             raise SystemExit(f"[BACKFILL] {q}: không parse được months_to_next_rebalancing — dừng.")
 
-        # 2) ADTV point-in-time từ OHLCV
-        adtv_change = compute_adtv_change_pct(ohlcv, q)
+        # 2) ADTV point-in-time — từ OHLCV hoặc từ cache (--from-cache)
         q1, q2 = previous_quarter(q), previous_quarter(previous_quarter(q))
-        a1 = compute_quarterly_adtv(ohlcv, q1)
-        a2 = compute_quarterly_adtv(ohlcv, q2)
+        if adtv_changes is not None:
+            adtv_change = adtv_changes[q]
+            a1 = a2 = None
+        else:
+            adtv_change = compute_adtv_change_pct(ohlcv, q)
+            a1 = compute_quarterly_adtv(ohlcv, q1)
+            a2 = compute_quarterly_adtv(ohlcv, q2)
 
         # 3) Re-score trụ cột bằng scorer hiện hành
         df_latest = pd.Series(
@@ -296,13 +322,19 @@ def backfill_all(
         })
         rows.append(row)
 
+        if a1 is not None or q in old_cache_windows:
+            windows = {
+                q1: ({"adtv": round(a1["adtv"], 2), "n_sessions": a1["n_sessions"]} if a1
+                     else old_cache_windows.get(q, {}).get(q1)),
+                q2: ({"adtv": round(a2["adtv"], 2), "n_sessions": a2["n_sessions"]} if a2
+                     else old_cache_windows.get(q, {}).get(q2)),
+            }
+        else:
+            windows = {q1: None, q2: None}
         audit.append({
             "quarter": q,
             "adtv_change_pct": None if adtv_change is None else round(adtv_change, 6),
-            "windows": {
-                q1: {"adtv": round(a1["adtv"], 2), "n_sessions": a1["n_sessions"]} if a1 else None,
-                q2: {"adtv": round(a2["adtv"], 2), "n_sessions": a2["n_sessions"]} if a2 else None,
-            },
+            "windows": windows,
         })
         changes.append({
             "quarter": q, "adtv": adtv_change,
@@ -373,10 +405,27 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="Chỉ in so sánh, không ghi")
     ap.add_argument("--force-fetch", action="store_true",
                     help="Bỏ qua cache OHLCV local, tải lại từ vnstock")
+    ap.add_argument("--from-cache", action="store_true",
+                    help="Dùng adtv_change_pct từ data/scores/vnindex_quarterly_adtv.json "
+                         "(offline — không cần OHLCV/mạng; hữu ích khi cần refresh label "
+                         "hoặc chạy lại derived fields)")
     args = ap.parse_args()
 
-    ohlcv = load_ohlcv(force_fetch=args.force_fetch)
-    backfill_all(ohlcv, dry_run=args.dry_run)
+    adtv_changes = None
+    if args.from_cache:
+        if not ADTV_CACHE_PATH.exists():
+            raise SystemExit(
+                f"[BACKFILL] Missing {ADTV_CACHE_PATH} — chạy lần đầu với OHLCV "
+                "(trên CI hoặc máy có mạng) trước khi dùng --from-cache."
+            )
+        cache = json.load(open(ADTV_CACHE_PATH, encoding="utf-8"))
+        adtv_changes = {q: a["adtv_change_pct"] for q, a in cache["quarters"].items()}
+        logger.info(f"[BACKFILL] --from-cache: {len(adtv_changes)} quý từ cache")
+        ohlcv = None
+    else:
+        ohlcv = load_ohlcv(force_fetch=args.force_fetch)
+
+    backfill_all(ohlcv, dry_run=args.dry_run, adtv_changes=adtv_changes)
     return 0
 
 
