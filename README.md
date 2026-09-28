@@ -162,18 +162,18 @@ Trên **dashboard 24 quý**, thẻ & timeline tô màu theo **regime calibrated*
   • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score (raw)      : 47.32 / 100
+  • Total Score (raw)      : 47.20 / 100
   • Classification (raw)   : 🟠 REDUCE — Reduce exposure — Increasing pressure
-  • Calibrated Action      : 🔴 SELL — 28.24 / 100 (0–20% Equities)
-  • Calibration z          : -1.45
+  • Calibrated Action      : 🔴 SELL — 29.37 / 100 (0–20% Equities)
+  • Calibration z          : -1.38
 
 [GROUP BREAKDOWN]
   • macro_monetary                : raw=  57.9  weight=14.48
-  • global_intermarket            : raw=  37.2  weight=7.44
+  • global_intermarket            : raw=  36.4  weight=7.28
   • valuation_leverage            : raw=  42.9  weight=8.57
   • quant_model                   : raw=  54.9  weight=8.24
   • ml_forecast                   : raw=  25.9  weight=2.59
-  • market_structure              : raw=  60.0  weight=6.0
+  • market_structure              : raw=  60.4  weight=6.04
 ======================================================================
 ```
 <!-- AUTO_RESULTS_END -->

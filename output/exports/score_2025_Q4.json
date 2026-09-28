@@ -14,20 +14,25 @@
       "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
       "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
       "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
+    },
+    "flows_backfill": {
+      "applied_at": "2026-09-28 15:48",
+      "source": "VNDirect api-finfo /v4/foreigns — STOCK_HOSE, ETF_HOSE (2018-08-30→nay)",
+      "fix": "bỏ giới hạn fetch 2021 tự đặt; splice MC HOSE công bố trước 2021-04-15"
     }
   },
   "quarterly_score": {
     "quarter": "2025-Q4",
-    "date_computed": "2026-09-28 12:11",
-    "total_score": 52.94,
+    "date_computed": "2026-09-28 15:48",
+    "total_score": 51.72,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "valuation_leverage",
     "percentile_label": "HOLD",
-    "percentile_p15": 51.621,
-    "percentile_p85": 60.826,
-    "pillar_std": 16.61,
+    "percentile_p15": 50.954,
+    "percentile_p85": 60.155,
+    "pillar_std": 16.54,
     "pillar_range": 45.27,
     "dispersion_level": "HIGH",
     "label_allocation": "40–60% Equities",
@@ -37,8 +42,8 @@
         "weighted_score": 14.56
       },
       "global_intermarket": {
-        "raw_score": 56.66,
-        "weighted_score": 11.33
+        "raw_score": 51.02,
+        "weighted_score": 10.2
       },
       "valuation_leverage": {
         "raw_score": 23.95,
@@ -53,8 +58,8 @@
         "weighted_score": 6.92
       },
       "market_structure": {
-        "raw_score": 69.13,
-        "weighted_score": 6.91
+        "raw_score": 68.24,
+        "weighted_score": 6.82
       }
     },
     "group_details": {
@@ -68,7 +73,7 @@
       "global_intermarket": {
         "dxy": "Z = -0.44 → score 59",
         "us10y": "4.15% → score 17",
-        "nff_ex_etf": "Z = 0.23 (Neutral) → score 53",
+        "nff_ex_etf": "Z = -1.65 (NET SELL) → score 25",
         "nff_ex_etf_q_ytd": "-0.58% of Market Cap (YTD in Q)",
         "jpy_carry": "Z = 1.03 (Neutral) → score 65",
         "oil_shock": "Oil Shock Score = 11.4 (Max Δ5d = 6.9%) → score 89"
@@ -93,30 +98,30 @@
         "ftse_upgrade": "Status: pending → score 55\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
         "adtv": "ADTV change +65.7% QoQ → score 100",
-        "etf_flow": "Z = -0.24 (Neutral) → score 46",
+        "etf_flow": "Z = -0.42 (Neutral) → score 44",
         "etf_flow_q_ytd": "-0.01% of Market Cap (YTD in Q)",
         "pillar_components_used": "3/3 components with data → average over 3"
       }
     },
     "group_rationale": {
       "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.81% (low/favorable) | USD/VND z=1.4 (pressure) | M2 growth 12.0% YoY (normal) | VN10Y 3.46% (Spread 0.56%)",
-      "global_intermarket": "Global: DXY=-0.4σ | US10Y=4.15% | NFF-Z=0.2σ | JPY-Z=1.0σ | OIL-SHOCK=11.4",
+      "global_intermarket": "Global: DXY=-0.4σ | US10Y=4.15% | NFF-Z=-1.7σ | JPY-Z=1.0σ | OIL-SHOCK=11.4",
       "valuation_leverage": "PE Z=2.23 | EYG Z=-1.20 | Margin risk=9",
       "quant_model": "MLR=53 | VAR=51 | R²=0.122 | Granger=1",
       "ml_forecast": "ML: Forecast: UP (conf=42%) | Quality=44",
-      "market_structure": "FTSE: PENDING | ADTV: +66% | ETF-Z: -0.2σ"
+      "market_structure": "FTSE: PENDING | ADTV: +66% | ETF-Z: -0.4σ"
     },
     "data_as_of": "2025-09-30",
     "point_in_time": true,
-    "calibrated_score": 39.19,
+    "calibrated_score": 37.08,
     "calibrated_label": "REDUCE",
     "calibrated_emoji": "🟠",
     "calibrated_description": "Reduce exposure — Increasing pressure",
     "calibrated_allocation": "20–40% Equities",
     "calibration_applied": true,
-    "calibration_z": -0.7208,
-    "calibration_hist_mean": 56.6116,
-    "calibration_hist_std": 5.0939,
+    "calibration_z": -0.8612,
+    "calibration_hist_mean": 56.1011,
+    "calibration_hist_std": 5.087,
     "calibration_n_history": 19,
     "adtv_change_pct": 0.657237
   },

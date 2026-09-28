@@ -14,20 +14,25 @@
       "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
       "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
       "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
+    },
+    "flows_backfill": {
+      "applied_at": "2026-09-28 15:48",
+      "source": "VNDirect api-finfo /v4/foreigns — STOCK_HOSE, ETF_HOSE (2018-08-30→nay)",
+      "fix": "bỏ giới hạn fetch 2021 tự đặt; splice MC HOSE công bố trước 2021-04-15"
     }
   },
   "quarterly_score": {
     "quarter": "2022-Q1",
-    "date_computed": "2026-09-28 12:11",
-    "total_score": 61.19,
+    "date_computed": "2026-09-28 15:48",
+    "total_score": 60.1,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "macro_monetary",
     "percentile_label": "HOLD",
-    "percentile_p15": 59.295,
-    "percentile_p85": 66.134,
-    "pillar_std": 16.51,
+    "percentile_p15": 58.6305,
+    "percentile_p85": 64.869,
+    "pillar_std": 16.09,
     "pillar_range": 45.06,
     "dispersion_level": "HIGH",
     "label_allocation": "40–60% Equities",
@@ -37,8 +42,8 @@
         "weighted_score": 18.62
       },
       "global_intermarket": {
-        "raw_score": 64.27,
-        "weighted_score": 12.85
+        "raw_score": 62.99,
+        "weighted_score": 12.6
       },
       "valuation_leverage": {
         "raw_score": 34.05,
@@ -53,8 +58,8 @@
         "weighted_score": 7.91
       },
       "market_structure": {
-        "raw_score": 69.64,
-        "weighted_score": 6.96
+        "raw_score": 61.18,
+        "weighted_score": 6.12
       }
     },
     "group_details": {
@@ -68,9 +73,10 @@
       "global_intermarket": {
         "dxy": "Z = 0.33 → score 43",
         "us10y": "1.51% → score 70",
-        "nff_ex_etf": "<MISSING> Not enough data for Z-score (2021) → default 50",
+        "nff_ex_etf": "Z = -0.43 (Neutral) → score 44",
         "jpy_carry": "Z = 1.82 (Neutral) → score 77",
-        "oil_shock": "Oil Shock Score = 19.1 (Max Δ5d = 10.4%) → score 81"
+        "oil_shock": "Oil Shock Score = 19.1 (Max Δ5d = 10.4%) → score 81",
+        "nff_ex_etf_q_ytd": "-0.29% of Market Cap (YTD in Q)"
       },
       "valuation_leverage": {
         "pe_zscore": "P/E Headline: 8.38 | Median: 11.00 | Ex-VG: 8.39<br>Z = 1.37 (FAIR VALUE) → score 16",
@@ -92,29 +98,30 @@
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
         "adtv": "ADTV change +33.3% QoQ → score 83",
-        "etf_flow": "<MISSING> Not enough data for Z-score (2021) → excluded from pillar average",
-        "pillar_components_used": "2/3 components with data → average over 2"
+        "etf_flow": "Z = -0.38 (Neutral) → score 44",
+        "pillar_components_used": "3/3 components with data → average over 3",
+        "etf_flow_q_ytd": "0.01% of Market Cap (YTD in Q)"
       }
     },
     "group_rationale": {
       "macro_monetary": "Macro: FAVORABLE — VN1Y rate 0.49% (low/favorable) | USD/VND z=-0.1 (stable) | M2 growth 10.7% YoY (normal) | VN10Y 2.01% (Spread 1.48%)",
-      "global_intermarket": "Global: DXY=0.3σ | US10Y=1.51% | JPY-Z=1.8σ | OIL-SHOCK=19.1",
+      "global_intermarket": "Global: DXY=0.3σ | US10Y=1.51% | NFF-Z=-0.4σ | JPY-Z=1.8σ | OIL-SHOCK=19.1",
       "valuation_leverage": "PE Z=1.37 | EYG Z=-0.89 | Margin risk=1",
       "quant_model": "MLR=50 | VAR=53 | R²=0.195 | Granger=0",
       "ml_forecast": "ML: Forecast: UP (conf=82%) | Quality=51",
-      "market_structure": "FTSE: UNKNOWN | ADTV: +33%"
+      "market_structure": "FTSE: UNKNOWN | ADTV: +33% | ETF-Z: -0.4σ"
     },
     "data_as_of": "2021-12-31",
     "point_in_time": true,
-    "calibrated_score": 46.08,
+    "calibrated_score": 45.35,
     "calibrated_label": "REDUCE",
     "calibrated_emoji": "🟠",
     "calibrated_description": "Reduce exposure — Increasing pressure",
     "calibrated_allocation": "20–40% Equities",
     "calibration_applied": true,
-    "calibration_z": -0.2613,
-    "calibration_hist_mean": 62.555,
-    "calibration_hist_std": 5.2238,
+    "calibration_z": -0.3098,
+    "calibration_hist_mean": 61.6075,
+    "calibration_hist_std": 4.8665,
     "calibration_n_history": 4,
     "adtv_change_pct": 0.33276
   },

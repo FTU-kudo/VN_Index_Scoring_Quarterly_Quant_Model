@@ -14,20 +14,25 @@
       "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
       "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
       "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
+    },
+    "flows_backfill": {
+      "applied_at": "2026-09-28 15:48",
+      "source": "VNDirect api-finfo /v4/foreigns — STOCK_HOSE, ETF_HOSE (2018-08-30→nay)",
+      "fix": "bỏ giới hạn fetch 2021 tự đặt; splice MC HOSE công bố trước 2021-04-15"
     }
   },
   "quarterly_score": {
     "quarter": "2024-Q1",
-    "date_computed": "2026-09-28 12:11",
-    "total_score": 51.18,
+    "date_computed": "2026-09-28 15:48",
+    "total_score": 50.45,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "global_intermarket",
     "percentile_label": "REDUCE/SELL",
-    "percentile_p15": 51.862,
-    "percentile_p85": 61.211,
-    "pillar_std": 18.12,
+    "percentile_p15": 51.2585,
+    "percentile_p85": 60.589,
+    "pillar_std": 19.17,
     "pillar_range": 47.61,
     "dispersion_level": "HIGH",
     "label_allocation": "40–60% Equities",
@@ -53,8 +58,8 @@
         "weighted_score": 6.76
       },
       "market_structure": {
-        "raw_score": 40.82,
-        "weighted_score": 4.08
+        "raw_score": 33.47,
+        "weighted_score": 3.35
       }
     },
     "group_details": {
@@ -68,9 +73,9 @@
       "global_intermarket": {
         "dxy": "Z = -1.73 → score 85",
         "us10y": "3.87% → score 23",
-        "nff_ex_etf": "Z = 0.30 (Neutral) → score 54",
+        "nff_ex_etf": "Z = -0.26 (Neutral) → score 46",
         "nff_ex_etf_q_ytd": "-0.16% of Market Cap (YTD in Q)",
-        "jpy_carry": "Z = -2.03 (High_Risk) → score 19",
+        "jpy_carry": "Z = -2.03 (High_Risk) → score 20",
         "oil_shock": "Oil Shock Score = 14.8 (Max Δ5d = 8.2%) → score 85"
       },
       "valuation_leverage": {
@@ -93,30 +98,30 @@
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
         "adtv": "ADTV change -28.9% QoQ → score 21",
-        "etf_flow": "Z = -0.31 (Neutral) → score 45",
+        "etf_flow": "Z = -1.78 (NET SELL) → score 23",
         "etf_flow_q_ytd": "-0.06% of Market Cap (YTD in Q)",
         "pillar_components_used": "3/3 components with data → average over 3"
       }
     },
     "group_rationale": {
       "macro_monetary": "Macro: FAVORABLE — VN1Y rate 1.61% (low/favorable) | USD/VND z=-1.0 (stable) | M2 growth 6.2% YoY (weak) | VN10Y 2.22% (Spread 0.54%)",
-      "global_intermarket": "Global: DXY=-1.7σ | US10Y=3.87% | NFF-Z=0.3σ | JPY-Z=-2.0σ | OIL-SHOCK=14.8",
+      "global_intermarket": "Global: DXY=-1.7σ | US10Y=3.87% | NFF-Z=-0.3σ | JPY-Z=-2.0σ | OIL-SHOCK=14.8",
       "valuation_leverage": "PE Z=0.42 | EYG Z=-0.34 | Margin risk=10",
       "quant_model": "MLR=48 | VAR=50 | R²=0.155 | Granger=1",
       "ml_forecast": "ML: Forecast: UP (conf=50%) | Quality=39",
-      "market_structure": "FTSE: UNKNOWN | ADTV: -29% | ETF-Z: -0.3σ"
+      "market_structure": "FTSE: UNKNOWN | ADTV: -29% | ETF-Z: -1.8σ"
     },
     "data_as_of": "2023-12-29",
     "point_in_time": true,
-    "calibrated_score": 30.74,
+    "calibrated_score": 29.31,
     "calibrated_label": "SELL",
     "calibrated_emoji": "🔴",
     "calibrated_description": "Defensive — Unfavorable environment",
     "calibrated_allocation": "0–20% Equities",
     "calibration_applied": true,
-    "calibration_z": -1.2842,
-    "calibration_hist_mean": 58.3617,
-    "calibration_hist_std": 5.5925,
+    "calibration_z": -1.3795,
+    "calibration_hist_mean": 57.9767,
+    "calibration_hist_std": 5.4561,
     "calibration_n_history": 12,
     "adtv_change_pct": -0.288754
   },

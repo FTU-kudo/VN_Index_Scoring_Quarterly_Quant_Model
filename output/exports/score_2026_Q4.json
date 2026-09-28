@@ -14,21 +14,26 @@
       "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
       "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
       "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
+    },
+    "flows_backfill": {
+      "applied_at": "2026-09-28 15:48",
+      "source": "VNDirect api-finfo /v4/foreigns — STOCK_HOSE, ETF_HOSE (2018-08-30→nay)",
+      "fix": "bỏ giới hạn fetch 2021 tự đặt; splice MC HOSE công bố trước 2021-04-15"
     }
   },
   "quarterly_score": {
     "quarter": "2026-Q4",
-    "date_computed": "2026-09-28 12:11",
-    "total_score": 47.32,
+    "date_computed": "2026-09-28 15:48",
+    "total_score": 47.2,
     "label": "REDUCE",
     "emoji": "🟠",
     "label_description": "Reduce exposure — Increasing pressure",
     "most_divergent_pillar": "global_intermarket",
     "percentile_label": "REDUCE/SELL",
-    "percentile_p15": 50.73,
-    "percentile_p85": 60.451,
-    "pillar_std": 13.47,
-    "pillar_range": 34.06,
+    "percentile_p15": 50.338,
+    "percentile_p85": 60.107,
+    "pillar_std": 13.67,
+    "pillar_range": 34.52,
     "dispersion_level": "MEDIUM",
     "label_allocation": "20–40% Equities",
     "group_scores": {
@@ -37,8 +42,8 @@
         "weighted_score": 14.48
       },
       "global_intermarket": {
-        "raw_score": 37.19,
-        "weighted_score": 7.44
+        "raw_score": 36.4,
+        "weighted_score": 7.28
       },
       "valuation_leverage": {
         "raw_score": 42.87,
@@ -53,8 +58,8 @@
         "weighted_score": 2.59
       },
       "market_structure": {
-        "raw_score": 59.97,
-        "weighted_score": 6.0
+        "raw_score": 60.43,
+        "weighted_score": 6.04
       }
     },
     "group_details": {
@@ -68,7 +73,7 @@
       "global_intermarket": {
         "dxy": "Z = 1.05 → score 29",
         "us10y": "5.18% → score 0",
-        "nff_ex_etf": "Z = 0.21 (Neutral) → score 53",
+        "nff_ex_etf": "Z = -0.05 (Neutral) → score 49",
         "nff_ex_etf_q_ytd": "-0.16% of Market Cap (YTD in Q)",
         "jpy_carry": "Z = -0.16 (Neutral) → score 48",
         "oil_shock": "Oil Shock Score = 43.8 (Max Δ5d = 19.5%) → score 56"
@@ -93,30 +98,30 @@
         "ftse_upgrade": "Status: confirmed → score 75\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "0 months to rebalancing → bonus +20",
         "adtv": "ADTV change -11.9% QoQ → score 38",
-        "etf_flow": "Z = -0.21 (Neutral) → score 47",
+        "etf_flow": "Z = -0.12 (Neutral) → score 48",
         "etf_flow_q_ytd": "0.00% of Market Cap (YTD in Q)",
         "pillar_components_used": "3/3 components with data → average over 3"
       }
     },
     "group_rationale": {
       "macro_monetary": "Macro: NEUTRAL — VN1Y rate 3.86% (low/favorable) | USD/VND z=-1.3 (stable) | M2 growth 15.0% YoY (normal) | VN10Y 4.48% (Spread 0.53%)",
-      "global_intermarket": "Global: DXY=1.1σ | US10Y=5.18% | NFF-Z=0.2σ | JPY-Z=-0.2σ | OIL-SHOCK=43.8",
+      "global_intermarket": "Global: DXY=1.1σ | US10Y=5.18% | NFF-Z=-0.1σ | JPY-Z=-0.2σ | OIL-SHOCK=43.8",
       "valuation_leverage": "PE Z=0.81 | EYG Z=-1.25 | Margin risk=20",
       "quant_model": "MLR=48 | VAR=53 | R²=0.109 | Granger=1",
       "ml_forecast": "ML: Forecast: DOWN (conf=50%) | Quality=40",
-      "market_structure": "FTSE: CONFIRMED | ADTV: -12% | ETF-Z: -0.2σ"
+      "market_structure": "FTSE: CONFIRMED | ADTV: -12% | ETF-Z: -0.1σ"
     },
     "data_as_of": "2026-09-25",
     "point_in_time": true,
-    "calibrated_score": 28.24,
+    "calibrated_score": 29.37,
     "calibrated_label": "SELL",
     "calibrated_emoji": "🔴",
     "calibrated_description": "Defensive — Unfavorable environment",
     "calibrated_allocation": "0–20% Equities",
     "calibration_applied": true,
-    "calibration_z": -1.4508,
-    "calibration_hist_mean": 55.353,
-    "calibration_hist_std": 5.537,
+    "calibration_z": -1.3751,
+    "calibration_hist_mean": 54.8183,
+    "calibration_hist_std": 5.5401,
     "calibration_n_history": 23,
     "adtv_change_pct": -0.119329
   },
