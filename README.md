@@ -63,10 +63,10 @@ Hệ thống dùng kiến trúc **2 tầng điểm** để khắc phục hiện 
 | 🟢 BUY | 0 | 0 |
 | 🔵 ACCUMULATE | **1** | **1** |
 | 🟡 HOLD | **19** | **6** |
-| 🟠 REDUCE | **4** | **9** |
-| 🔴 SELL | 0 | **8** |
+| 🟠 REDUCE | **4** | **7** |
+| 🔴 SELL | 0 | **10** |
 
-Các quý gấu 2022 và giai đoạn 2026 ra tín hiệu phòng thủ đúng: **2022-Q2 = SELL (11.8)**, 2022-Q3 = REDUCE (43.6), **2022-Q4 = SELL (22.1)**, **2026-Q2 = SELL (17.0)**, quý live **2026-Q4 = SELL (28.2)**; chu kỳ nới lỏng đầy đủ 2020 nâng quyết định đầu tiên **2021-Q1 = ACCUMULATE (70.1)** (VN1Y 0.43%, M2 +14.5% — trước đây cả hai đều N/A default 50).
+Các quý gấu 2022 và giai đoạn 2026 ra tín hiệu phòng thủ đúng: **2022-Q2 = SELL (11.3)**, 2022-Q3 = REDUCE (46.8), **2022-Q4 = SELL (20.6)**, **2026-Q2 = SELL (17.4)**, quý live **2026-Q4 = SELL (29.4)**; quyết định đầu tiên **2021-Q1 = ACCUMULATE (68.6)** phản ánh chu kỳ nới lỏng 2020 (VN1Y 0.43%, M2 +14.5%) — dù z flows thật (−2.43: khối ngoại bán ròng mạnh Q4/2020) đã kéo trụ cột global xuống từ 63.2 → 55.9 so với thời còn default 50.
 
 > **📈 Nguồn dữ liệu ADTV (từ 09/2026 — hết N/A 24/24 quý):** `ADTV change = ADTV(Q−1)/ADTV(Q−2) − 1` tính point-in-time từ cột `volume` của OHLCV VN-Index (vnstock, nguồn VCI) — quyết định quý Q chỉ dùng 2 quý **đã kết thúc** trước đó. Điểm ADTV = `clip(50 + 100 × %thay đổi, 0, 100)`. Ví dụ: 2025-Q4 bùng nổ thanh khoản +65.7% QoQ → score 100; 2026-Q1 điều chỉnh −38.4% → score 12. Audit đầy đủ: `data/scores/vnindex_quarterly_adtv.json`.
 
