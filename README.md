@@ -56,17 +56,19 @@ Hệ thống dùng kiến trúc **2 tầng điểm** để khắc phục hiện 
 
 **Thông số** nằm trong `config.py → SCORE_CALIBRATION` (single source of truth): `center=50`, `z_scale=15`, `min_history=4`, clip `[0, 100]`. Quý đầu tiên (< 4 quý lịch sử) hoặc σ_hist ≈ 0 → **giữ nguyên điểm thô**, `calibration_applied=false`. Nhãn lấy từ `get_score_label()` — cùng bộ ngưỡng với tầng raw.
 
-**Kết quả backfill 24 quý (2021-Q1 → 2026-Q4):**
+**Kết quả backfill 24 quý (2021-Q1 → 2026-Q4)** — *sau khi bổ sung ADTV thật (09/2026) + fix label gap:*
 
 | Phân bố nhãn | Trước (raw) | Sau (calibrated) |
 |---|:---:|:---:|
 | 🟢 BUY | 0 | 0 |
 | 🔵 ACCUMULATE | 0 | **1** |
-| 🟡 HOLD | **22** | **11** |
-| 🟠 REDUCE | 2 | **9** |
-| 🔴 SELL | 0 | **3** |
+| 🟡 HOLD | **21** | **8** |
+| 🟠 REDUCE | 3 | **11** |
+| 🔴 SELL | 0 | **4** |
 
-Các quý gấu 2022 và đáy 2026-Q2 giờ ra tín hiệu phòng thủ đúng: **2022-Q2 = SELL (27.5)**, 2022-Q3 = REDUCE (39.1), **2022-Q4 = SELL (17.9)**, **2026-Q2 = SELL (14.3)**; trong khi đỉnh相对 2023-Q3 = ACCUMULATE (66.9).
+Các quý gấu 2022 và đáy 2026-Q2 giờ ra tín hiệu phòng thủ đúng: **2022-Q2 = SELL (26.1)**, 2022-Q3 = REDUCE (35.1), **2022-Q4 = SELL (21.7)**, **2026-Q2 = SELL (20.5)**; trong khi đỉnh tương đối 2023-Q3 = ACCUMULATE (66.4), quý live **2026-Q4 = SELL (34.5)**.
+
+> **📈 Nguồn dữ liệu ADTV (từ 09/2026 — hết N/A 24/24 quý):** `ADTV change = ADTV(Q−1)/ADTV(Q−2) − 1` tính point-in-time từ cột `volume` của OHLCV VN-Index (vnstock, nguồn VCI) — quyết định quý Q chỉ dùng 2 quý **đã kết thúc** trước đó. Điểm ADTV = `clip(50 + 100 × %thay đổi, 0, 100)`. Ví dụ: 2025-Q4 bùng nổ thanh khoản +65.7% QoQ → score 100; 2026-Q1 điều chỉnh −38.4% → score 12. Audit đầy đủ: `data/scores/vnindex_quarterly_adtv.json`.
 
 > **⚠️ Báo cáo trung thực về chất lượng tín hiệu:** Tầng calibrated **không** làm tăng sức mạnh dự báo phương hướng — IC (Spearman) của calibrated score so với forward return quý sau ≈ 0.02 (raw ≈ 0.09), hit-rate ~50%. Giá trị của tầng 2 là **khôi phục độ phân tán regime** để khung phân bổ tài sản có tín hiệu khác biệt giữa các kỳ (trước đây 22/24 quý "HOLD" khiến sizing bất khả thi), chứ không phải alpha prediction. Chi tiết backtest trung thực: sheet `06_Signal_Efficacy` trong Excel workbook.
 
