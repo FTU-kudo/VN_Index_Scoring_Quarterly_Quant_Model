@@ -1032,7 +1032,7 @@ def build_html_report(
       <div class="score-desc">{t(desc)}</div>
       <div style="margin-top: 16px;">
         <span class="action-chip" style="background:{cal_color};"
-              title="{t('Calibrated Action Signal — z-score vs prior quarters (expanding, point-in-time)', 'Tín hiệu hành động hiệu chỉnh — z-score so với các quý trước (expanding, point-in-time)')}">
+              title="Calibrated Action Signal — z-score vs prior quarters (expanding, point-in-time) · Tín hiệu hành động hiệu chỉnh — z-score so với các quý trước (point-in-time)">
           ⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}
         </span>
         <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
