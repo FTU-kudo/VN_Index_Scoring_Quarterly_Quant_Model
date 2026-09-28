@@ -55,6 +55,13 @@ def extract_results(data: dict) -> str:
     emoji = qs.get("emoji", "")
     desc = qs.get("description", qs.get("label_description", ""))
 
+    # Calibrated Action Signal (Tầng 2 — fallback về raw nếu chưa có)
+    cal_total = qs.get("calibrated_score", total)
+    cal_label = qs.get("calibrated_label", label)
+    cal_emoji = qs.get("calibrated_emoji", emoji)
+    cal_alloc = qs.get("calibrated_allocation", "N/A")
+    cal_z = qs.get("calibration_z", None)
+
     # MLR
     r2 = mlr.get("r2", "N/A") if mlr else "N/A"
     adj_r2 = mlr.get("adj_r2", "N/A") if mlr else "N/A"
@@ -113,8 +120,10 @@ def extract_results(data: dict) -> str:
   • Latest Prediction      : {wfv_pred}
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score            : {fmt(total)} / 100
-  • Classification         : {emoji} {label} — {desc}
+  • Total Score (raw)      : {fmt(total)} / 100
+  • Classification (raw)   : {emoji} {label} — {desc}
+  • Calibrated Action      : {cal_emoji} {cal_label} — {fmt(cal_total)} / 100 ({cal_alloc})
+  • Calibration z          : {fmt(cal_z, 2) if isinstance(cal_z, (int, float)) else "N/A (insufficient history)"}
 
 [GROUP BREAKDOWN]
 {chr(10).join(group_lines) if group_lines else "  (No group data available)"}

@@ -467,9 +467,17 @@ def run_pipeline(args: argparse.Namespace) -> None:
     # ── Summary ───────────────────────────────────────────────────────────────
     logger.info(f"\n{'='*60}")
     logger.info(f"HOÀN THÀNH — {quarter}")
-    logger.info(f"Tổng điểm   : {score_record['total_score']:.1f}/100")
-    logger.info(f"Phân loại   : {score_record['emoji']} {score_record['label']}")
-    logger.info(f"Khuyến nghị : {score_record['label_description']}")
+    logger.info(f"Tổng điểm (raw composite) : {score_record['total_score']:.1f}/100 → {score_record['emoji']} {score_record['label']}")
+    if score_record.get("calibration_applied"):
+        logger.info(
+            f"HÀNH ĐỘNG (calibrated)    : {score_record['calibrated_score']:.1f}/100 → "
+            f"{score_record['calibrated_emoji']} {score_record['calibrated_label']} "
+            f"(z={score_record['calibration_z']:+.2f} vs {score_record['calibration_n_history']} quý trước)"
+        )
+    else:
+        logger.info(f"HÀNH ĐỘNG (calibrated)    : chưa đủ lịch sử — giữ nguyên raw")
+    logger.info(f"Khuyến nghị : {score_record.get('calibrated_description', score_record['label_description'])}")
+    logger.info(f"Phân bổ     : {score_record.get('calibrated_allocation', score_record.get('label_allocation', 'N/A'))}")
     logger.info(f"Leading     : {score_record.get('most_divergent_pillar', score_record.get('leading_indicator', 'N/A'))}")
     logger.info(f"HTML report : {html_path}")
     logger.info(f"JSON export : {json_path}")

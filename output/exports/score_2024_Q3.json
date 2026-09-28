@@ -94,7 +94,17 @@
       "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
     },
     "data_as_of": "2024-06-28",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 50.47,
+    "calibrated_label": "HOLD",
+    "calibrated_emoji": "🟡",
+    "calibrated_description": "Neutral — Await confirming signals",
+    "calibrated_allocation": "40–60% Equities",
+    "calibration_applied": true,
+    "calibration_z": 0.0315,
+    "calibration_hist_mean": 54.2564,
+    "calibration_hist_std": 3.9183,
+    "calibration_n_history": 14
   },
   "mlr_regression": [
     {

@@ -94,7 +94,17 @@
       "market_structure": "FTSE: CONFIRMED | ETF-Z: -0.2σ"
     },
     "data_as_of": "2026-09-25",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 35.27,
+    "calibrated_label": "REDUCE",
+    "calibrated_emoji": "🟠",
+    "calibrated_description": "Reduce exposure — Increasing pressure",
+    "calibrated_allocation": "20–40% Equities",
+    "calibration_applied": true,
+    "calibration_z": -0.9823,
+    "calibration_hist_mean": 53.3139,
+    "calibration_hist_std": 3.6383,
+    "calibration_n_history": 23
   },
   "mlr_regression": [
     {

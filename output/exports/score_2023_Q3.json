@@ -94,7 +94,17 @@
       "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
     },
     "data_as_of": "2023-06-30",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 66.93,
+    "calibrated_label": "ACCUMULATE",
+    "calibrated_emoji": "🔵",
+    "calibrated_description": "Gradually accumulate — Controllable risks",
+    "calibrated_allocation": "70–85% Equities",
+    "calibration_applied": true,
+    "calibration_z": 1.1284,
+    "calibration_hist_mean": 53.958,
+    "calibration_hist_std": 4.3709,
+    "calibration_n_history": 10
   },
   "mlr_regression": [
     {

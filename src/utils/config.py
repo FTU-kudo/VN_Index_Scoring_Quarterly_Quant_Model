@@ -136,7 +136,8 @@ MLR_TRAIN_RATIO = 0.75            # 75% train / 25% test
 # Horizon dự báo forward của MLR (phiên giao dịch, ~1 tháng).
 # Target = TRUNG BÌNH log-return/ngày của {h} phiên KẾ TIẾP (t+1..t+h) —
 # không phải return cùng ngày (nowcast). Giữ scale per-day để tương thích
-# với hệ số quy đổi điểm trong quarterly_scorer (50 + pred*3000).
+# với hệ số quy đổi điểm trong quarterly_scorer (MLR: 50 + pred*20000,
+# VAR: 50 + pred*5000 — xem SCORE_CALIBRATION và score_quant_model).
 MLR_FORECAST_HORIZON_DAYS = 21
 
 # ── Tham số mô hình VAR ───────────────────────────────────────────────────────
@@ -206,6 +207,25 @@ SCORE_LABELS = {
 
 # Tuple đã sắp xếp để get_score_label() duyệt từ cao xuống thấp
 SCORE_LABEL_RANGES = tuple(sorted(SCORE_LABELS.items(), key=lambda x: x[0][0], reverse=True))
+
+# ── Calibrated Action Signal (Tầng 2 — tín hiệu hành động) ─────────────────────
+# VẤN ĐỀ: điểm thô (raw composite) bị nén quanh 45-61 do (i) nhiều chỉ báo
+# thiếu dữ liệu fallback về 50, (ii) gain chuyển đổi tín hiệu MLR/VAR quá nhỏ,
+# (iii) trung bình hoá 6 trụ cột kéo mọi thứ về mean → 22/24 quý dính nhãn HOLD.
+# GIẢI PHÁP: chuẩn hoá z-score điểm thô so với lịch sử EXPANDING (chỉ các quý
+# TRƯỚC quý hiện tại — point-in-time, không look-ahead):
+#   calibrated = clip(center + z_scale × (total − μ_hist) / σ_hist, 0, 100)
+# Nhãn hành động lấy từ get_score_label() (single source of truth).
+# Điểm thô được GIỮ NGUYÊN làm tầng tham chiếu — calibrated chỉ là tầng nhãn
+# hành động, không thay thế điểm gốc.
+SCORE_CALIBRATION = {
+    "enabled":      True,    # tắt để quay về hành vi cũ (chỉ raw composite)
+    "center":       50.0,    # điểm calibrated trung bình
+    "z_scale":      15.0,    # 1σ lịch sử ≈ ±15 điểm calibrated
+    "min_history":  4,       # cần ≥ 4 quý TRƯỚC đó mới hiệu chỉnh
+    "clip_low":     0.0,
+    "clip_high":    100.0,
+}
 
 
 def get_score_label(score: float):

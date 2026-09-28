@@ -94,7 +94,17 @@
       "market_structure": "FTSE: PENDING | ETF-Z: -0.2σ"
     },
     "data_as_of": "2025-09-30",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 36.71,
+    "calibrated_label": "REDUCE",
+    "calibrated_emoji": "🟠",
+    "calibrated_description": "Reduce exposure — Increasing pressure",
+    "calibrated_allocation": "20–40% Equities",
+    "calibration_applied": true,
+    "calibration_z": -0.8857,
+    "calibration_hist_mean": 53.9958,
+    "calibration_hist_std": 3.4502,
+    "calibration_n_history": 19
   },
   "mlr_regression": [
     {

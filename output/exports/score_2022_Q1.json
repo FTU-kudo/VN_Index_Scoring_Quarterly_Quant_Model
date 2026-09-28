@@ -91,7 +91,17 @@
       "market_structure": "FTSE: UNKNOWN"
     },
     "data_as_of": "2021-12-31",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 63.34,
+    "calibrated_label": "HOLD",
+    "calibrated_emoji": "🟡",
+    "calibrated_description": "Neutral — Await confirming signals",
+    "calibrated_allocation": "40–60% Equities",
+    "calibration_applied": true,
+    "calibration_z": 0.8894,
+    "calibration_hist_mean": 55.375,
+    "calibration_hist_std": 4.0757,
+    "calibration_n_history": 4
   },
   "mlr_regression": [
     {

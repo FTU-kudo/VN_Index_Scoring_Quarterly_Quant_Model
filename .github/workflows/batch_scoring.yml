@@ -57,7 +57,11 @@ jobs:
           START_YEAR=${{ github.event.inputs.start_year }}
           END_YEAR=${{ github.event.inputs.end_year }}
           FTSE_STATUS="${{ github.event.inputs.ftse_status }}"
-          
+
+          # QUAN TRỌNG (point-in-time): vòng lặp phải chạy TUẦN TỰ THEO QUÝ TĂNG DẦN
+          # (2021-Q1 → 2026-Q4). Calibrated Action Signal dùng expanding window
+          # (z-score so với CHỈ các quý TRƯỚC) — nếu chạy song song hoặc giảm dần,
+          # lịch sử hiệu chỉnh sẽ sai (look-ahead / thiếu dữ liệu).
           for YEAR in $(seq $START_YEAR $END_YEAR); do
             for Q in 1 2 3 4; do
               QUARTER="${YEAR}-Q${Q}"

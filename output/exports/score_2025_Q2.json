@@ -94,7 +94,17 @@
       "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
     },
     "data_as_of": "2025-03-31",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 36.51,
+    "calibrated_label": "REDUCE",
+    "calibrated_emoji": "🟠",
+    "calibrated_description": "Reduce exposure — Increasing pressure",
+    "calibrated_allocation": "20–40% Equities",
+    "calibration_applied": true,
+    "calibration_z": -0.8996,
+    "calibration_hist_mean": 54.1859,
+    "calibration_hist_std": 3.5747,
+    "calibration_n_history": 17
   },
   "mlr_regression": [
     {

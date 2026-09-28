@@ -93,7 +93,17 @@
       "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.4σ"
     },
     "data_as_of": "2022-12-30",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 50.11,
+    "calibrated_label": "HOLD",
+    "calibrated_emoji": "🟡",
+    "calibrated_description": "Neutral — Await confirming signals",
+    "calibrated_allocation": "40–60% Equities",
+    "calibration_applied": true,
+    "calibration_z": 0.0075,
+    "calibration_hist_mean": 53.6138,
+    "calibration_hist_std": 4.8036,
+    "calibration_n_history": 8
   },
   "mlr_regression": [
     {

@@ -94,7 +94,17 @@
       "market_structure": "FTSE: PENDING | ETF-Z: -0.2σ"
     },
     "data_as_of": "2026-03-31",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 14.27,
+    "calibrated_label": "SELL",
+    "calibrated_emoji": "🔴",
+    "calibrated_description": "Defensive — Unfavorable environment",
+    "calibrated_allocation": "0–20% Equities",
+    "calibration_applied": true,
+    "calibration_z": -2.3821,
+    "calibration_hist_mean": 53.7833,
+    "calibration_hist_std": 3.3514,
+    "calibration_n_history": 21
   },
   "mlr_regression": [
     {

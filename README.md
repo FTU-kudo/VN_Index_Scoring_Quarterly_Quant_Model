@@ -39,9 +39,36 @@ Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa 
 
 > **⚠️ Lưu ý về phương pháp luận (Methodology Notes):**
 > - **Point-in-time đầu quý (nguyên tắc buy-side)**: Quyết định phân bổ được ra vào ngày giao dịch đầu tiên của quý, do đó điểm số quý Q chỉ được tính từ dữ liệu có đến hết phiên cuối cùng của quý Q-1 — áp dụng **đồng nhất cho cả chạy live lẫn backfill lịch sử** (xem `src/utils/dates.py`). Các cột `*_q_ytd` tại cut-off này chính là giá trị cộng dồn trọn quý vừa kết thúc. Trường `data_as_of` trong mỗi JSON export cho phép audit chính xác điểm được tính từ thông tin đến ngày nào. Lần chạy giám sát giữa quý dùng `--as-of YYYY-MM-DD` và bị đánh dấu `point_in_time=false` để không lẫn vào backtest.
-> - **Hệ số quy đổi**: Các hàm chuyển đổi raw → score 0-100 (ví dụ: `vn1y_score = 100 - (vn1y-1.0)*14.0`, `mlr_score = 50 + pred*3000`) là heuristics được calibrate theo expert judgment. Hướng cải tiến: chuyển sang percentile rank thực tế trên cửa sổ expanding/rolling.
+> - **Hệ số quy đổi (chống nén tín hiệu)**: Các hàm chuyển đổi raw → score 0-100 (ví dụ: `vn1y_score = 100 - (vn1y-1.0)*14.0`) là heuristics được calibrate theo expert judgment. Tín hiệu mô hình dùng gain mạnh để không bị bóp chết: `mlr_score = 50 + pred*20000` (±0.10%/ngày → 70/30), `var_score = 50 + pred*5000`. Tín hiệu MISSING (MLR/VAR/ADTV/ETF) **không tham gia trung bình trụ cột** — trung bình được renormalize theo số tín hiệu có thật, thay vì fallback trung lập 50 kéo mọi thứ về giữa.
 > - **Chỉ báo kỹ thuật ngắn hạn**: Một số indicators (RSI-14, MACD daily) có chu kỳ ngắn hơn đáng kể so với tần suất ra quyết định hàng quý (3 tháng). Hệ thống sử dụng giá trị snapshot tại thời điểm chấm điểm — đây là trade-off có chủ đích giữa tính kịp thời (timeliness) và tính ổn định (stability).
 > - **Most Divergent Pillar**: Trường `most_divergent_pillar` trong output là nhóm có raw score lệch xa 50 nhất — đây là heuristic đơn giản, KHÔNG phải kết quả từ Granger Causality test. Granger tests được dùng riêng trong mô hình VAR để xếp hạng biến giải thích.
+
+---
+
+## 🎚️ HAI TẦNG ĐIỂM: RAW COMPOSITE + CALIBRATED ACTION SIGNAL
+
+Hệ thống dùng kiến trúc **2 tầng điểm** để khắc phục hiện tượng "HOLD mãn tính" (22/24 quý bị nhãn HOLD do điểm thô bị nén trong dải hẹp 45.8–61.4 — vô dụng cho phân bổ tài sản):
+
+| Tầng | Tên | Công thức | Vai trò |
+|:---:|---|---|---|
+| **1** | **Raw Composite** (`total_score`) | 6 trụ cột × trọng số, thang 0–100 | Tầng **tham chiếu** — giữ nguyên qua mọi kỳ, dùng so sánh lịch sử & backtest |
+| **2** | **Calibrated Action Signal** (`calibrated_score`) | `clip(50 + 15 × z, 0, 100)` với `z = (total − μ_hist)/σ_hist` trên **cửa sổ expanding CHỈ gồm các quý TRƯỚC** (point-in-time, không look-ahead) | Tầng **hành động** — nhãn phân bổ tài sản (BUY/ACCUMULATE/HOLD/REDUCE/SELL) |
+
+**Thông số** nằm trong `config.py → SCORE_CALIBRATION` (single source of truth): `center=50`, `z_scale=15`, `min_history=4`, clip `[0, 100]`. Quý đầu tiên (< 4 quý lịch sử) hoặc σ_hist ≈ 0 → **giữ nguyên điểm thô**, `calibration_applied=false`. Nhãn lấy từ `get_score_label()` — cùng bộ ngưỡng với tầng raw.
+
+**Kết quả backfill 24 quý (2021-Q1 → 2026-Q4):**
+
+| Phân bố nhãn | Trước (raw) | Sau (calibrated) |
+|---|:---:|:---:|
+| 🟢 BUY | 0 | 0 |
+| 🔵 ACCUMULATE | 0 | **1** |
+| 🟡 HOLD | **22** | **11** |
+| 🟠 REDUCE | 2 | **9** |
+| 🔴 SELL | 0 | **3** |
+
+Các quý gấu 2022 và đáy 2026-Q2 giờ ra tín hiệu phòng thủ đúng: **2022-Q2 = SELL (27.5)**, 2022-Q3 = REDUCE (39.1), **2022-Q4 = SELL (17.9)**, **2026-Q2 = SELL (14.3)**; trong khi đỉnh相对 2023-Q3 = ACCUMULATE (66.9).
+
+> **⚠️ Báo cáo trung thực về chất lượng tín hiệu:** Tầng calibrated **không** làm tăng sức mạnh dự báo phương hướng — IC (Spearman) của calibrated score so với forward return quý sau ≈ 0.02 (raw ≈ 0.09), hit-rate ~50%. Giá trị của tầng 2 là **khôi phục độ phân tán regime** để khung phân bổ tài sản có tín hiệu khác biệt giữa các kỳ (trước đây 22/24 quý "HOLD" khiến sizing bất khả thi), chứ không phải alpha prediction. Chi tiết backtest trung thực: sheet `06_Signal_Efficacy` trong Excel workbook.
 
 ---
 
@@ -76,15 +103,17 @@ $$
 
 ## 🎖️ THANG ĐIỂM & MA TRẬN PHÂN BỔ TÀI SẢN (ASSET ALLOCATION MATRIX)
 
-Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa ra khuyến nghị phân bổ tài sản chiến lược:
+Bộ ngưỡng **duy nhất** từ `config.py → SCORE_LABELS` (test `test_score_label_sync` tự động FAIL nếu có nơi nào hardcode lại ngưỡng). Áp dụng cho **cả 2 tầng** — nhãn hành động thực tế lấy từ tầng calibrated:
 
-| Khoảng Điểm | Xếp Hạng Khuyến Nghị | Tỷ Trọng Cổ Phiếu (% NAV) | Tỷ Trọng Tiền Mặt / Trái Phiếu | Chiến Lược Quản Trị Rủi Ro |
-|:---:|:---:|:---:|:---:|---|
-| **80 – 100** | 🟢 **MUA (BUY)** | 85% – 100% | 0% – 15% | • Full vị thế cổ phiếu dẫn dắt (VN30)<br>• Cân nhắc sử dụng Margin chọn lọc |
-| **65 – 79** | 🔵 **TÍCH LŨY (ACCUMULATE)** | 70% – 85% | 15% – 30% | • Tích lũy cổ phiếu cơ bản tốt khi có điều chỉnh<br>• Duy trì đòn bẩy an toàn |
-| **50 – 64** | 🟡 **NẮM GIỮ (HOLD)** | 40% – 60% | 40% – 60% | • Cân bằng danh mục, tập trung cổ phiếu trả cổ tức cao<br>• Tuyệt đối không dùng margin cao |
-| **35 – 49** | 🟠 **GIẢM TỶ TRỌNG (REDUCE)** | 20% – 40% | 60% – 80% | • Hạ tỷ trọng cổ phiếu beta cao<br>• Đưa margin về 0, chốt lời từng phần |
-| **0 – 34** | 🔴 **BÁN (SELL)** | 0% – 20% | 80% – 100% | • Giữ tối đa tiền mặt / chứng chỉ tiền gửi<br>• Mở vị thế short phái sinh VN30F để hedge |
+| Khoảng Điểm | Xếp Hạng Khuyến Nghị | Màu trên Dashboard/Excel | Tỷ Trọng Cổ Phiếu (% NAV) | Tỷ Trọng Tiền Mặt / Trái Phiếu | Chiến Lược Quản Trị Rủi Ro |
+|:---:|:---:|:---:|:---:|:---:|---|
+| **80 – 100** | 🟢 **MUA (BUY)** | 🟢 Xanh lá `#10b981` | 85% – 100% | 0% – 15% | • Full vị thế cổ phiếu dẫn dắt (VN30)<br>• Cân nhắc sử dụng Margin chọn lọc |
+| **65 – 79** | 🔵 **TÍCH LŨY (ACCUMULATE)** | 🔵 Xanh dương `#3b82f6` | 70% – 85% | 15% – 30% | • Tích lũy cổ phiếu cơ bản tốt khi có điều chỉnh<br>• Duy trì đòn bẩy an toàn |
+| **50 – 64** | 🟡 **NẮM GIỮ (HOLD)** | 🟡 Vàng `#eab308` | 40% – 60% | 40% – 60% | • Cân bằng danh mục, tập trung cổ phiếu trả cổ tức cao<br>• Tuyệt đối không dùng margin cao |
+| **35 – 49** | 🟠 **GIẢM TỶ TRỌNG (REDUCE)** | 🟠 Cam `#f97316` | 20% – 40% | 60% – 80% | • Hạ tỷ trọng cổ phiếu beta cao<br>• Đưa margin về 0, chốt lời từng phần |
+| **0 – 34** | 🔴 **BÁN (SELL)** | 🔴 Đỏ `#ef4444` | 0% – 20% | 80% – 100% | • Giữ tối đa tiền mặt / chứng chỉ tiền gửi<br>• Mở vị thế short phái sinh VN30F để hedge |
+
+Trên **dashboard 24 quý**, thẻ & timeline tô màu theo **regime calibrated** (4–5 màu); đường **raw composite** giữ **nét đứt** làm tham chiếu. Trong **báo cáo quý**, hero hiển thị điểm thô + chip nổi bật `⚡ HÀNH ĐỘNG: {calibrated_label} — {calibrated_score}` và Action Panel chạy theo calibrated (marker, allocation, dòng z-diagnostic: `z, μ_hist, σ_hist, n`).
 
 ---
 
@@ -115,8 +144,10 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
   • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score            : 49.74 / 100
-  • Classification         : 🟡 HOLD — Neutral — Await confirming signals
+  • Total Score (raw)      : 49.74 / 100
+  • Classification (raw)   : 🟡 HOLD — Neutral — Await confirming signals
+  • Calibrated Action      : 🟠 REDUCE — 35.27 / 100 (20–40% Equities)
+  • Calibration z          : -0.98
 
 [GROUP BREAKDOWN]
   • macro_monetary                : raw=  54.3  weight=13.58
@@ -145,9 +176,15 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 │   ├── processed/                 # Dữ liệu sạch đã căn chỉnh mốc thời gian
 │   └── features/                  # Ma trận đặc trưng 4 nhóm biến số
 ├── output/
-│   ├── exports/                   # Tệp JSON xuất kết quả điểm số (live_score_2026_Q3.json)
-│   ├── reports/                   # Báo cáo phân tích HTML / Markdown hoàn chỉnh
+│   ├── exports/                   # Tệp JSON xuất kết quả điểm số (score_*.json) + Excel Quant Factor Workbook
+│   ├── reports/                   # Báo cáo phân tích HTML / Markdown hoàn chỉnh (index.html = dashboard 24 quý)
 │   └── charts/                    # Biểu đồ phân rã điểm số và hàm phản ứng xung
+├── scripts/
+│   ├── backfill_calibrated_scores.py  # Backfill idempotent cột calibrated cho 24 quý (parquet + JSON)
+│   ├── rebuild_html.py            # Rebuild 24 báo cáo HTML + dashboard + validate + Excel
+│   ├── generate_excel_report.py   # Xuất Excel Quant Factor Workbook 8 sheet
+│   ├── inject_vnindex_chart.py    # Validator: VN-Index overlay (fail loudly nếu thiếu)
+│   └── inject_navbar.py           # Validator: navbar quarter navigation (fail loudly nếu thiếu)
 ├── src/
 │   ├── data/
 │   │   └── fetcher.py             # Data Ingestion: vnstock 4.0.2 (Quote, Listing) & yfinance
@@ -165,12 +202,17 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 │   │   └── ml/
 │   │       └── ml_model.py        # XGBoost / Random Forest + Walk-Forward Validation
 │   ├── scoring/
-│   │   ├── quarterly_scorer.py    # Bộ tính điểm tổng hợp 100 điểm & phân hạng
+│   │   ├── quarterly_scorer.py    # Bộ tính điểm 2 tầng: raw composite + calibrate_total_score() (Calibrated Action Signal)
 │   │   └── backtester.py          # Kiểm định chiến lược phân bổ tài sản lịch sử
 │   ├── reporting/
-│   │   └── report_builder.py      # Tạo báo cáo Executive Dashboard (HTML + CSS)
+│   │   ├── report_builder.py      # Báo cáo HTML 2 tầng + dashboard + VN-Index overlay (tích hợp, không inject)
+│   │   └── excel_builder.py       # Excel Quant Factor Workbook 8 sheet (KPI CALIBRATED ACTION)
 │   └── utils/
-│       └── config.py              # Cấu hình trung tâm + get_vn30_tickers() động
+│       └── config.py              # Cấu hình trung tâm: SCORE_LABELS + SCORE_CALIBRATION + get_vn30_tickers() động
+├── tests/
+│   ├── conftest.py                # Test hygiene: cách ly SCORES_DIR (pytest không chạm data/ production)
+│   ├── test_score_calibration.py  # 13 tests: công thức calibrated, clip, fallback, point-in-time, SSOT, gains
+│   └── ...                        # MLR forecast, point-in-time dates, label sync, scoring weights
 ├── .env.example                   # Mẫu cấu hình API key (VNSTOCK_API_KEY, Telegram, SMTP)
 ├── .gitignore                     # Đã cấu hình loại trừ file nhạy cảm và handoff notes
 ├── LICENSE                        # Giấy phép mã nguồn mở GNU AGPL v3.0
@@ -229,8 +271,31 @@ python run_quarterly.py --quarter 2026-Q3
 python run_quarterly.py --quarter 2026-Q3 --no-cache      # Buộc tải lại toàn bộ dữ liệu mới nhất
 python run_quarterly.py --quarter 2026-Q3 --skip-ml       # Bỏ qua bước huấn luyện ML để kiểm tra nhanh
 ```
+Pipeline tự động tính **cả 2 tầng điểm** (raw composite + calibrated action signal), ghi cột `calibrated_score`/`calibrated_label` vào `data/scores/quarterly_scores_history.parquet`, rồi auto-sync README + toàn bộ báo cáo HTML + Excel.
 
-#### Cách 2: Chạy Cập nhật Tín hiệu Hàng ngày (`run_daily_update.py`)
+#### Cách 2: Backfill Calibrated Action Signal cho lịch sử (`scripts/backfill_calibrated_scores.py`)
+Idempotent — chỉ **THÊM** cột/field calibrated vào 24 quý lịch sử (parquet + toàn bộ `output/exports/score_*.json`), **KHÔNG sửa** điểm thô; tự lọc bỏ row test `2099-Q1` nếu lọt vào parquet:
+```bash
+python scripts/backfill_calibrated_scores.py
+# In ra bảng so sánh raw vs calibrated + phân bố nhãn cho từng quý
+```
+
+#### Cách 3: Rebuild Toàn bộ Báo cáo HTML + Dashboard + Excel (`scripts/rebuild_html.py`)
+```bash
+python scripts/rebuild_html.py
+# 24 báo cáo quý + dashboard root + validate VN-Index overlay & navbar
+# (exit code != 0 nếu thiếu feature — chống gãy âm thầm) + Excel workbook
+```
+
+#### Cách 4: Xuất Excel Quant Factor Workbook (`scripts/generate_excel_report.py`)
+```bash
+python scripts/generate_excel_report.py
+# -> output/exports/VN_Index_Quant_Factor_Analysis.xlsx (8 sheet)
+#    00_Dashboard: KPI "CALIBRATED ACTION" | 01_Score_History: cột calibrated
+#    06_Signal_Efficacy: backtest theo tín hiệu calibrated (raw để đối chiếu)
+```
+
+#### Cách 5: Chạy Cập nhật Tín hiệu Hàng ngày (`run_daily_update.py`)
 Dùng sau 16:05 ICT mỗi ngày giao dịch để kiểm tra diễn biến giá, dòng tiền khối ngoại và cảnh báo biến động bất thường:
 ```bash
 python run_daily_update.py
