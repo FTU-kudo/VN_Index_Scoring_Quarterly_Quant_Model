@@ -43,6 +43,12 @@ HISTORY_END     = datetime.now().strftime("%Y-%m-%d")   # Ngày hiện tại (Dy
 
 # Cửa sổ Z-score (năm)
 ZSCORE_WINDOW_YEARS = 5          # Rolling 5 năm cho P/E, P/B Z-score
+# Số phiên tối thiểu để tính Z-score (fix 09/2026: trước đây window//2 = 2.5 năm
+# khiến P/E, P/B, EYG Z-score N/A ở 2021→2023-Q2 dù dữ liệu PE/PB có từ 2019-08
+# — series ex-Vingroup chỉ bắt đầu ~2021-03 do thiếu shares trước đó).
+# 252 phiên = 1 năm: giá trị Z cho các ngày ≥2.5 năm dữ liệu GIỮ NGUYÊN
+# (min_periods chỉ mở khoá NaN sớm hơn, không đổi mean/std của window).
+ZSCORE_MIN_PERIODS_DAYS = 252
 
 # ── Tham số VN-Index & VN30 (Dynamic Fetching) ──────────────────────────────
 VNINDEX_TICKER  = "VNINDEX"
@@ -136,7 +142,8 @@ MLR_TRAIN_RATIO = 0.75            # 75% train / 25% test
 # Horizon dự báo forward của MLR (phiên giao dịch, ~1 tháng).
 # Target = TRUNG BÌNH log-return/ngày của {h} phiên KẾ TIẾP (t+1..t+h) —
 # không phải return cùng ngày (nowcast). Giữ scale per-day để tương thích
-# với hệ số quy đổi điểm trong quarterly_scorer (50 + pred*3000).
+# với hệ số quy đổi điểm trong quarterly_scorer (MLR: 50 + pred*20000,
+# VAR: 50 + pred*5000 — xem SCORE_CALIBRATION và score_quant_model).
 MLR_FORECAST_HORIZON_DAYS = 21
 
 # ── Tham số mô hình VAR ───────────────────────────────────────────────────────
@@ -207,9 +214,29 @@ SCORE_LABELS = {
 # Tuple đã sắp xếp để get_score_label() duyệt từ cao xuống thấp
 SCORE_LABEL_RANGES = tuple(sorted(SCORE_LABELS.items(), key=lambda x: x[0][0], reverse=True))
 
+# ── Calibrated Action Signal (Tầng 2 — tín hiệu hành động) ─────────────────────
+# VẤN ĐỀ: điểm thô (raw composite) bị nén quanh 45-61 do (i) nhiều chỉ báo
+# thiếu dữ liệu fallback về 50, (ii) gain chuyển đổi tín hiệu MLR/VAR quá nhỏ,
+# (iii) trung bình hoá 6 trụ cột kéo mọi thứ về mean → 22/24 quý dính nhãn HOLD.
+# GIẢI PHÁP: chuẩn hoá z-score điểm thô so với lịch sử EXPANDING (chỉ các quý
+# TRƯỚC quý hiện tại — point-in-time, không look-ahead):
+#   calibrated = clip(center + z_scale × (total − μ_hist) / σ_hist, 0, 100)
+# Nhãn hành động lấy từ get_score_label() (single source of truth).
+# Điểm thô được GIỮ NGUYÊN làm tầng tham chiếu — calibrated chỉ là tầng nhãn
+# hành động, không thay thế điểm gốc.
+SCORE_CALIBRATION = {
+    "enabled":      True,    # tắt để quay về hành vi cũ (chỉ raw composite)
+    "center":       50.0,    # điểm calibrated trung bình
+    "z_scale":      15.0,    # 1σ lịch sử ≈ ±15 điểm calibrated
+    "min_history":  4,       # cần ≥ 4 quý TRƯỚC đó mới hiệu chỉnh
+    "clip_low":     0.0,
+    "clip_high":    100.0,
+}
+
 
 def get_score_label(score: float):
-    """Trả về (label, emoji, description, allocation) cho điểm số.
+    """
+    Trả về (label, emoji, description, allocation) cho điểm số.
 
     Nguồn sự thật duy nhất — mọi nơi cần gán nhãn PHẢI gọi hàm này.
 
@@ -220,10 +247,27 @@ def get_score_label(score: float):
     Returns
     -------
     tuple: (label_str, emoji_str, description_str, allocation_str)
+
+    Lưu ý half-open intervals (fix 09/2026):
+    SCORE_LABEL_RANGES là các dải NGUYÊN liên tiếp (0-34, 35-49, 50-64,
+    65-79, 80-100) nhưng total_score/calibrated_score là số THẬP (làm tròn
+    2 chữ số). Nếu dò theo `lo <= score <= hi`, điểm rơi VÀO KHOẢNG TRỐNG
+    (vd 34.51, 49.74, 64.99) không khớp dải nào và rơi vào fallback HOLD
+    mặc định — sai về ngữ nghĩa (49.74 rõ ràng là "chưa tới HOLD" → REDUCE).
+    Fix: dải [lo, next_lo) — điểm thập phân thuộc dải MỚI CHƯA ĐẠT ngưỡng
+    trên (34.51 → SELL, 49.74 → REDUCE, 64.99 → HOLD, 79.99 → ACCUMULATE).
+    Điểm nguyên cho kết quả GIỐNG HỆT trước fix (34→SELL, 35→REDUCE, …).
     """
-    for (lo, hi), values in SCORE_LABEL_RANGES:
-        if lo <= score <= hi:
-            return values
+    n_bands = len(SCORE_LABEL_RANGES)
+    # Sắp xếp tăng dần theo ngưỡng dưới — không phụ thuộc thứ tự khai báo
+    ranges = sorted(SCORE_LABEL_RANGES, key=lambda x: x[0][0])
+    for i, ((lo, hi), values) in enumerate(ranges):
+        if i + 1 < n_bands:
+            if lo <= score < ranges[i + 1][0][0]:
+                return values
+        else:  # dải cuối — inclusive tới 100
+            if lo <= score <= hi:
+                return values
     # Fallback (score ngoài [0, 100] do lỗi numeric)
     return ("HOLD", "🟡", "Neutral — Await confirming signals", "40–60% Equities")
 

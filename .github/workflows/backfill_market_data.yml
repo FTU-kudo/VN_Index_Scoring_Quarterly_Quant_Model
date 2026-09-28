@@ -1,0 +1,129 @@
+name: "📥 Backfill Market Data (Bonds + M2 + Z-scores)"
+
+# Backfill dữ liệu thị trường thật cho lịch sử 24 quý:
+#   1. Trái phiếu full-history (fitted_curve_ns_full.json, 2012→nay)
+#   2. M2 YoY (ADB KIDB SDMX — nguồn SBV; fallback committed data/external/)
+#   3. P/E-P/B-EYG Z-score (min_periods 252 phiên; EYG wire qua df_macro)
+# Sandbox không có mạng thị trường → chạy trên Actions.
+# Pipeline: backfill_market_data → backfill_calibrated → rebuild HTML/Excel → README → commit.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run (chỉ in so sánh, KHÔNG ghi/commit)"
+        required: false
+        default: false
+        type: boolean
+
+  # Kích hoạt trên branch feature: push commit chạm tới chính file này.
+  # Commit kết quả của workflow không chạm file này → không loop.
+  push:
+    branches:
+      - arena/01a0e760-vn-index-scoring-quarterly-qua
+    paths:
+      - ".github/workflows/backfill_market_data.yml"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  backfill-market-data:
+    name: "Backfill bonds + M2 + PE/PB/EYG Z"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────
+      - name: "📁 Checkout repository"
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ───────────────────────────────────────────────────
+      - name: "🐍 Setup Python ${{ env.PYTHON_VERSION }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      # ── 3. Install dependencies ────────────────────────────────────────────
+      - name: "📦 Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── 4. Backfill (bonds fetch GH Pages + M2 ADB KIDB + PE/PB local/raw) ─
+      # Pre-check bên trong script: giá trị tính lại PHẢI khớp detail đã lưu,
+      # không khớp → SystemExit (không ghi đè sai).
+      - name: "📊 Backfill market data"
+        run: |
+          set -euo pipefail
+          python scripts/backfill_market_data.py ${{ (github.event.inputs.dry_run == 'true') && '--dry-run' || '' }} 2>&1 | tee /tmp/backfill_md.log
+          {
+            echo "## 📥 Market-Data Backfill (bonds + M2 + Z-scores)"
+            echo '```'
+            cat /tmp/backfill_md.log
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
+      # ── 5. Tầng calibrated theo total mới (expanding, point-in-time) ──────
+      - name: "🎯 Recompute calibrated layer"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/backfill_calibrated_scores.py
+
+      # ── 6. Rebuild báo cáo HTML + validators + Excel ───────────────────────
+      - name: "📄 Rebuild HTML reports + Excel"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/rebuild_html.py
+
+      # ── 7. Update README auto-section ──────────────────────────────────────
+      - name: "📝 Update README results"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/update_readme_results.py
+
+      # ── 8. Run tests ───────────────────────────────────────────────────────
+      - name: "✅ Unit tests"
+        run: |
+          pip install pytest
+          python -m pytest tests/ -q
+
+      # ── 9. Commit kết quả ─────────────────────────────────────────────────
+      - name: "💾 Commit backfilled outputs"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/scores output/reports output/exports README.md data/external
+          echo "Files staged:"
+          git status --short | head -40
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "feat(market-data): backfill bonds full-history + M2 ADB/GSO + PE/PB/EYG Z-score — bỏ N/A"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
+
+      # ── 10. Summary ────────────────────────────────────────────────────────
+      - name: "📋 N/A scan sau backfill"
+        if: always()
+        run: |
+          {
+            echo "## 🚧 N/A còn lại sau backfill"
+            python - <<'EOF' || true
+          import glob, json
+          from collections import Counter
+          na = Counter()
+          for f in sorted(glob.glob("output/exports/score_*.json")):
+              rec = json.load(open(f))["quarterly_score"]
+              for grp, dets in rec["group_details"].items():
+                  for k, v in dets.items():
+                      if "<MISSING>" in str(v):
+                          na[k] += 1
+          print("Chỉ báo còn N/A (trên 24 quý):")
+          for k, c in sorted(na.items(), key=lambda x: -x[1]):
+              print(f"  {k}: {c}/24")
+          if not na:
+              print("  (không còn)")
+          EOF
+          } >> $GITHUB_STEP_SUMMARY

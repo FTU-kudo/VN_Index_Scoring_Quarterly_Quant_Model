@@ -1,7 +1,7 @@
 name: "📊 VN-Index Quarterly Scoring"
 
 on:
-  # Chạy tự động đầu mỗi quý (01/01, 01/04, 01/07, 01/10 lúc 00:00 UTC = 07:00 ICT)
+  # Chạy tự động đầu mỗi quý (01/01, 01/04, 01/07, 01/10 lúc 00:00 UTC = 07:00 UTC+7 (giờ Việt Nam))
   schedule:
     - cron: "0 0 1 1,4,7,10 *"
 

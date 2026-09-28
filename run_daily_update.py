@@ -1,7 +1,7 @@
 """
 run_daily_update.py — Entry Point: Cập nhật Daily Indicators
 =============================================================
-Chạy hàng ngày sau giờ đóng cửa (16:05 ICT) để cập nhật:
+Chạy hàng ngày sau giờ đóng cửa (16:05 UTC+7 (giờ Việt Nam)) để cập nhật:
   - VNI OHLCV mới nhất
   - Foreign flows
   - Global indicators (DXY, US10Y)

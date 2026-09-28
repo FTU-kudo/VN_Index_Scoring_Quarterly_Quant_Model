@@ -1,73 +1,47 @@
+"""
+inject_vnindex_chart.py — Validator/Injector: VN-Index overlay trong HTML reports
+================================================================================
+TRƯỚC ĐÂY: post-processing string-replacement sau khi build HTML — dễ gãy âm
+thầm khi template đổi (pattern không khớp thì chart biến mất không báo lỗi).
+
+HIỆN NAY: logic overlay VN-Index + toggle đã được TÍCH HỢP thẳng vào
+src/reporting/report_builder.py (build_html_report). Script này chỉ:
+  1. VALIDATE mọi output/reports/*/index.html có đủ feature (toggle + dataset).
+  2. Với file cũ chưa có: thử inject theo cách legacy (string-replacement)
+     nhưng BÁO LỖI LOUD + exit code != 0 khi pattern không khớp — không còn
+     im lặng bỏ qua.
+
+Exit code: 0 = mọi report OK | 1 = có report thiếu feature và không inject được.
+"""
+
+import glob
 import os
 import re
-import glob
+import sys
+
 import pandas as pd
-import json
 
 PRICE_CACHE_PATH = os.path.join("data", "scores", "vnindex_quarterly_close.json")
 
+# Feature markers phải tồn tại trong HTML sau khi build đúng
+REQUIRED_MARKERS = [
+    'id="toggleVNIndex"',       # toggle checkbox
+    "label: 'VN-Index'",        # dataset trong chartDataLine
+    "'y1'",                     # trục y1 (giá VN-Index)
+]
+
 
 def get_vnindex_quarterly_prices():
-    scores = pd.read_parquet('data/scores/quarterly_scores_history.parquet')
-    scores = scores[scores['quarter'] != '2099-Q1']
+    """Giá VN-Index theo quý — ủy quyền cho report_builder (single source)."""
+    from src.reporting.report_builder import _load_vnindex_quarterly_prices
+    scores = pd.read_parquet("data/scores/quarterly_scores_history.parquet")
+    scores = scores[scores["quarter"] != "2099-Q1"]
+    return _load_vnindex_quarterly_prices(scores["quarter"].tolist())
 
-    if not os.path.exists('data/raw/vnindex_ohlcv.parquet'):
-        # Fallback: dùng cache giá đóng cửa theo quý (được ghi lại ở lần chạy
-        # có dữ liệu OHLCV) để việc rebuild HTML không làm mất chart VN-Index.
-        if os.path.exists(PRICE_CACHE_PATH):
-            with open(PRICE_CACHE_PATH, 'r', encoding='utf-8') as f:
-                cache = json.load(f)
-            return [cache.get(q) if cache.get(q) is not None else 'null' for q in scores['quarter']]
-        raise FileNotFoundError(
-            "Missing data/raw/vnindex_ohlcv.parquet and no price cache at "
-            + PRICE_CACHE_PATH
-        )
 
-    ohlcv = pd.read_parquet('data/raw/vnindex_ohlcv.parquet')
-    ohlcv['date'] = pd.to_datetime(ohlcv['date'])
-    ohlcv = ohlcv.sort_values('date')
-    
-    max_date = ohlcv['date'].max()
-    prices = []
-    for q in scores['quarter']:
-        y, qn = q.split('-Q')
-        y, qn = int(y), int(qn)
-        m = qn * 3
-        d = 31 if m in (3,12) else 30
-        start_date = pd.Timestamp(f'{y}-{m-2:02d}-01')
-        end_date = pd.Timestamp(f'{y}-{m:02d}-{d:02d}')
-        
-        if max_date < start_date:
-            p = 'null'
-        else:
-            valid = ohlcv[(ohlcv['date'] >= start_date) & (ohlcv['date'] <= end_date)]
-            if len(valid) > 0:
-                p = round(float(valid.iloc[-1]['close']), 2)
-            else:
-                valid_before = ohlcv[ohlcv['date'] <= end_date]
-                if len(valid_before) > 0:
-                    p = round(float(valid_before.iloc[-1]['close']), 2)
-                else:
-                    p = 'null'
-        prices.append(p)
-
-    # Ghi cache để có thể rebuild HTML khi thiếu file OHLCV gốc
-    try:
-        cache = {q: (None if p == 'null' else p) for q, p in zip(scores['quarter'], prices)}
-        with open(PRICE_CACHE_PATH, 'w', encoding='utf-8') as f:
-            json.dump(cache, f, indent=1)
-    except Exception as exc:
-        print(f"Warning: could not write price cache: {exc}")
-
-    return prices
-
-def inject_html():
-    prices = get_vnindex_quarterly_prices()
-    prices_json = '[' + ', '.join(map(str, prices)) + ']'
-    
-    reports_dir = os.path.join("output", "reports")
-    html_files = glob.glob(os.path.join(reports_dir, "**", "index.html"), recursive=True)
-    
+def try_legacy_injection(html: str, prices_json: str) -> "tuple[str, bool]":
+    """Fallback inject cho HTML cũ (build trước khi tích hợp vào report_builder).
+    Trả về (html mới, thành công?). KHÔNG im lặng khi pattern không khớp."""
     old_header = '<h2>📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>'
     new_header = '''<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="margin-bottom: 0;">📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
@@ -82,23 +56,17 @@ def inject_html():
               </label>
             </div>
           </div>'''
-          
-    old_scales = '''{
-            x: { grid: { color: gridColor }, ticks: { color: textColor } },
-            y: { grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 }
-          }'''
-          
-    new_scales = '''{
-            x: { grid: { color: gridColor }, ticks: { color: textColor } },
-            y: { type: 'linear', display: true, position: 'left', grid: { color: gridColor }, ticks: { color: textColor }, min: 0, max: 100 },
-            y1: { type: 'linear', display: false, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor } }
-          }'''
-          
+
+    if old_header not in html:
+        return html, False   # pattern không khớp → caller báo lỗi loud
+
+    html = html.replace(old_header, new_header)
+
     js_injection = f'''
   <script>
-    // Inject VN-Index dataset
+    // Legacy injection: VN-Index dataset (builder-integrated depuis PR calibration)
     if (typeof window !== 'undefined' && window.chartDataLine && window.chartDataLine.datasets) {{
-        if (window.chartDataLine.datasets.length === 1) {{
+        if (!window.chartDataLine.datasets.some(d => d.label === 'VN-Index')) {{
             window.chartDataLine.datasets.push({{
                 label: 'VN-Index',
                 data: {prices_json},
@@ -112,30 +80,26 @@ def inject_html():
             }});
         }}
     }}
-    
-    // Toggle logic
     const toggleVN = document.getElementById('toggleVNIndex');
     if (toggleVN) {{
         toggleVN.addEventListener('change', function(e) {{
             if (typeof lineChartInstance !== 'undefined' && lineChartInstance) {{
-                const isChecked = e.target.checked;
-                if (lineChartInstance.data.datasets.length > 1) {{
-                    lineChartInstance.data.datasets[1].hidden = !isChecked;
-                    lineChartInstance.options.scales.y1.display = isChecked;
+                const vniDs = lineChartInstance.data.datasets.find(d => d.label === 'VN-Index');
+                if (vniDs) {{
+                    vniDs.hidden = !e.target.checked;
+                    if (lineChartInstance.options.scales.y1) lineChartInstance.options.scales.y1.display = e.target.checked;
                     lineChartInstance.update();
                 }}
             }}
         }});
     }}
-    
     const toggleCS = document.getElementById('toggleCompositeScore');
     if (toggleCS) {{
         toggleCS.addEventListener('change', function(e) {{
             if (typeof lineChartInstance !== 'undefined' && lineChartInstance) {{
-                const isChecked = e.target.checked;
                 if (lineChartInstance.data.datasets.length > 0) {{
-                    lineChartInstance.data.datasets[0].hidden = !isChecked;
-                    lineChartInstance.options.scales.y.display = isChecked;
+                    lineChartInstance.data.datasets[0].hidden = !e.target.checked;
+                    lineChartInstance.options.scales.y.display = e.target.checked;
                     lineChartInstance.update();
                 }}
             }}
@@ -143,22 +107,52 @@ def inject_html():
     }}
   </script>
 </body>'''
+    html = html.replace("</body>", js_injection, 1)
+    return html, True
 
-    count = 0
+
+def main() -> int:
+    reports_dir = os.path.join("output", "reports")
+    html_files = sorted(glob.glob(os.path.join(reports_dir, "**", "index.html"), recursive=True))
+    html_files = [f for f in html_files if os.path.dirname(f) != reports_dir]  # bỏ dashboard root
+
+    if not html_files:
+        print("ERROR: no quarterly report HTML found under output/reports/*/ — nothing to validate.")
+        return 1
+
+    ok, injected, failed = 0, 0, 0
     for path in html_files:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             html = f.read()
-            
-        if 'id="toggleVNIndex"' not in html:
-            html = html.replace(old_header, new_header)
-            html = html.replace(old_scales, new_scales)
-            html = html.replace('</body>', js_injection)
-            
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write(html)
-            count += 1
-            
-    print(f"Injected VN-Index feature into {count} HTML files.")
+
+        missing = [m for m in REQUIRED_MARKERS if m not in html]
+        if not missing:
+            ok += 1
+            continue
+
+        # HTML cũ → thử legacy injection
+        print(f"WARN: {path} missing VN-Index overlay markers: {missing} — attempting legacy injection")
+        try:
+            prices = get_vnindex_quarterly_prices()
+            prices_json = "[" + ", ".join(map(str, prices or [])) + "]"
+            html, success = try_legacy_injection(html, prices_json)
+        except Exception as exc:
+            print(f"ERROR: {path}: cannot load VN-Index prices: {exc}")
+            success = False
+
+        if not success:
+            print(f"ERROR: {path}: legacy pattern not found — rebuild via scripts/rebuild_html.py "
+                  f"instead of relying on injection. FAILING LOUDLY (exit 1).")
+            failed += 1
+            continue
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(html)
+        injected += 1
+
+    print(f"VN-Index overlay validation: {ok} already OK, {injected} injected, {failed} FAILED")
+    return 1 if failed else 0
+
 
 if __name__ == "__main__":
-    inject_html()
+    sys.exit(main())

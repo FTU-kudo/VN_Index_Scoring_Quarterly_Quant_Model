@@ -30,13 +30,14 @@ from src.data.fetcher import (
     fetch_vnindex_ohlcv, compute_vni_returns,
     fetch_foreign_flows, fetch_macro_sbv_manual,
     fetch_usdvnd_proxy, fetch_global_indicators,
-    fetch_margin_debt_manual, fetch_m2_credit_manual,
+    fetch_margin_debt_manual, fetch_m2_credit_manual, fetch_m2_credit_auto,
     fetch_vietnam_bonds, fetch_brent_oil
 )
 from src.features.macro_features import build_macro_features
 from src.features.global_features import build_global_features
 from src.features.valuation_features import build_valuation_leverage_features
 from src.features.technical_features import add_technical_indicators
+from src.features.market_structure_features import compute_adtv_change_pct
 from src.models.regression.mlr_model import MLRModel
 from src.models.var.var_model import VARModel
 from src.models.ml.ml_model import (
@@ -121,7 +122,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     df_fx      = fetch_usdvnd_proxy(use_cache=use_cache)
     df_global  = fetch_global_indicators(use_cache=use_cache)
     df_margin  = fetch_margin_debt_manual()
-    df_m2      = fetch_m2_credit_manual()
+    df_m2      = fetch_m2_credit_auto()   # fix 09/2026: ADB KIDB (nguồn SBV) + fallback committed
     df_bonds   = fetch_vietnam_bonds()
     df_oil     = fetch_brent_oil(use_cache=use_cache)
 
@@ -131,7 +132,9 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     df_macro_feat = build_macro_features(df_vni, df_macro, df_fx, df_m2, df_bonds=df_bonds)
     df_global_feat = build_global_features(df_vni, df_global, df_ff, df_oil)
-    df_val_feat = build_valuation_leverage_features(df_vni, df_margin)
+    # Fix 09/2026: truyền df_macro_feat để EYG = 1/PE − VN10Y được tính
+    # (trước đây bỏ qua → eyg_zscore luôn default 50 âm thầm ở 24/24 quý)
+    df_val_feat = build_valuation_leverage_features(df_vni, df_margin, df_macro=df_macro_feat)
 
     # Merge tất cả features
 
@@ -365,6 +368,20 @@ def run_pipeline(args: argparse.Namespace) -> None:
         f"| etf_flow_q_ytd={latest.get('etf_flow_q_ytd', 'N/A')}"
     )
 
+    # ── ADTV: khối lượng giao dịch bình quân mỗi phiên (point-in-time) ──────
+    # ADTV(Q−1)/ADTV(Q−2) − 1 — chỉ dùng 2 quý ĐÃ KẾT THÚC trước quý đang chấm.
+    # Trước đây chưa bao giờ truyền → chỉ báo ADTV luôn N/A trong trụ cột
+    # Market Structure. Dữ liệu volume lấy từ chính OHLCV vnstock đã fetch.
+    adtv_change_pct = (
+        compute_adtv_change_pct(df_latest_full, quarter)
+        if len(df_latest_full) > 0 else None
+    )
+    if adtv_change_pct is None:
+        logger.warning(
+            f"[ADTV] Không tính được ADTV change cho {quarter} — "
+            "chỉ báo ADTV sẽ bị loại khỏi trung bình trụ cột Market Structure (không dùng 50 giả)."
+        )
+
     # ── Xác định tình trạng FTSE theo lịch sử (nếu auto) ─────────────────────
     if args.ftse_status == "auto":
         y_str, q_str = quarter.split("-Q")
@@ -392,6 +409,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
         ml_pred_class=ml_pred_class,
         ml_confidence=ml_confidence,
         ftse_upgrade_status=actual_ftse_status,
+        adtv_change_pct=adtv_change_pct,
     )
 
     # ── Minh bạch point-in-time ───────────────────────────────────────────────
@@ -467,9 +485,17 @@ def run_pipeline(args: argparse.Namespace) -> None:
     # ── Summary ───────────────────────────────────────────────────────────────
     logger.info(f"\n{'='*60}")
     logger.info(f"HOÀN THÀNH — {quarter}")
-    logger.info(f"Tổng điểm   : {score_record['total_score']:.1f}/100")
-    logger.info(f"Phân loại   : {score_record['emoji']} {score_record['label']}")
-    logger.info(f"Khuyến nghị : {score_record['label_description']}")
+    logger.info(f"Tổng điểm (raw composite) : {score_record['total_score']:.1f}/100 → {score_record['emoji']} {score_record['label']}")
+    if score_record.get("calibration_applied"):
+        logger.info(
+            f"HÀNH ĐỘNG (calibrated)    : {score_record['calibrated_score']:.1f}/100 → "
+            f"{score_record['calibrated_emoji']} {score_record['calibrated_label']} "
+            f"(z={score_record['calibration_z']:+.2f} vs {score_record['calibration_n_history']} quý trước)"
+        )
+    else:
+        logger.info(f"HÀNH ĐỘNG (calibrated)    : chưa đủ lịch sử — giữ nguyên raw")
+    logger.info(f"Khuyến nghị : {score_record.get('calibrated_description', score_record['label_description'])}")
+    logger.info(f"Phân bổ     : {score_record.get('calibrated_allocation', score_record.get('label_allocation', 'N/A'))}")
     logger.info(f"Leading     : {score_record.get('most_divergent_pillar', score_record.get('leading_indicator', 'N/A'))}")
     logger.info(f"HTML report : {html_path}")
     logger.info(f"JSON export : {json_path}")

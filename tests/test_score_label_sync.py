@@ -57,6 +57,40 @@ class TestScoreLabelConfig:
             assert get_score_label(lo)[0] == lbl, f"get_score_label({lo}) returned wrong label"
             assert get_score_label(hi)[0] == lbl, f"get_score_label({hi}) returned wrong label"
 
+    def test_get_score_label_no_integer_gap_fallthrough(self):
+        """
+        FIX 09/2026: điểm THẬP rơi giữa 2 dải nguyên (34-35, 49-50, 64-65,
+        79-80) trước đây rơi vào fallback HOLD mặc định — sai ngữ nghĩa.
+        Half-open intervals: điểm thuộc dải MỚI ĐẠT ngưỡng dưới của nó.
+        """
+        cases = [
+            # (score, expected) — khoảng trống giữa các dải
+            (34.5,  "SELL"),       # chưa tới 35 → SELL
+            (34.99, "SELL"),
+            (34.51, "SELL"),       # đúng case 2026-Q4 calibrated thực tế
+            (49.5,  "REDUCE"),     # chưa tới 50 → REDUCE
+            (49.74, "REDUCE"),     # đúng case 2026-Q4 raw thực tế (trước fix)
+            (49.99, "REDUCE"),
+            (64.5,  "HOLD"),       # chưa tới 65 → HOLD
+            (64.99, "HOLD"),
+            (79.5,  "ACCUMULATE"), # chưa tới 80 → ACCUMULATE
+            (79.99, "ACCUMULATE"),
+            # biên nguyên — GIỐNG HỆT hành vi trước fix
+            (34.0,  "SELL"),
+            (35.0,  "REDUCE"),
+            (50.0,  "HOLD"),
+            (65.0,  "ACCUMULATE"),
+            (80.0,  "BUY"),
+            (100.0, "BUY"),
+            (0.0,   "SELL"),
+        ]
+        for score, expected in cases:
+            result = get_score_label(score)[0]
+            assert result == expected, (
+                f"get_score_label({score}) = {result!r}, expected {expected!r}. "
+                f"Điểm thập phân giữa 2 dải nguyên không được rơi vào fallback HOLD."
+            )
+
     def test_get_score_label_typical_values(self):
         """Test labels for typical historical score values."""
         # With thresholds 35-49=REDUCE, 50-64=HOLD, 65-79=ACCUMULATE:

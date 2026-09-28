@@ -210,6 +210,9 @@ _HTML_STYLE = """
   .alloc-marker { position: absolute; top: 0; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--text-main); }
   .alloc-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.3px; }
 
+  /* ── Calibrated Action chip (hero) ─────────────────────────────────── */
+  .action-chip { display: inline-block; padding: 10px 22px; border-radius: 999px; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 0.3px; box-shadow: 0 6px 18px -4px rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.35); }
+
   /* ── Data Coverage Panel ───────────────────────────────────────────── */
   .coverage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
   .coverage-item { padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); }
@@ -271,20 +274,26 @@ window.MathJax = {
 </script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script>
-  // Real-time Clock
-  function updateClock() {
-    const now = new Date();
+  // Real-time Clock (UTC+7 = Vietnam time, no DST) — clock-face emoji tracks the current hour
+  const CLOCK_EMOJIS = ['🕛','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚'];
+  function vnTimeParts(now) {
     const options = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    const formatter = new Intl.DateTimeFormat('sv-SE', options); // sv-SE gives ISO-like format YYYY-MM-DD HH:mm:ss
-    document.getElementById('clock').innerText = formatter.format(now) + ' ICT';
+    const text = new Intl.DateTimeFormat('sv-SE', options).format(now); // sv-SE gives ISO-like format YYYY-MM-DD HH:mm:ss
+    const hour = parseInt(text.substring(11, 13), 10); // hour of day in Vietnam (0-23)
+    return { text: text, emoji: CLOCK_EMOJIS[hour % 12] };
+  }
+  function updateClock() {
+    const p = vnTimeParts(new Date());
+    const clockEl = document.getElementById('clock');
+    if (clockEl) clockEl.innerText = p.emoji + ' ' + p.text + ' UTC+7';
   }
   setInterval(updateClock, 1000);
   updateClock();
 
   // "Generated at" — rendered at actual runtime (not hardcoded at build time)
   (function() {
-    const opts = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    const stamp = new Intl.DateTimeFormat('sv-SE', opts).format(new Date()) + ' ICT';
+    const p = vnTimeParts(new Date());
+    const stamp = p.emoji + ' ' + p.text + ' UTC+7';
     document.querySelectorAll('.js-generated-at').forEach(el => { el.textContent = stamp; });
   })();
 
@@ -441,28 +450,32 @@ window.MathJax = {
     if (lineCtx && window.chartDataLine) {
       if (lineChartInstance) lineChartInstance.destroy();
 
-      // MUTATE SCORE DATASET
+      // MUTATE SCORE DATASET (raw composite — dashed reference)
       if (window.chartDataLine && window.chartDataLine.datasets && window.chartDataLine.datasets.length > 0) {
-          window.chartDataLine.datasets[0].borderWidth = 3;
+          window.chartDataLine.datasets[0].borderWidth = 2;
           window.chartDataLine.datasets[0].pointRadius = 4;
           window.chartDataLine.datasets[0].tension = 0.3;
-          window.chartDataLine.datasets[0].order = 1;
+          window.chartDataLine.datasets[0].order = 2;
           window.chartDataLine.datasets[0].fill = false;
-          window.chartDataLine.datasets[0].label = document.body.classList.contains('lang-vi-active') ? 'Điểm tổng hợp' : 'Composite Score';
+          window.chartDataLine.datasets[0].borderDash = [6, 4];
+          window.chartDataLine.datasets[0].label = document.body.classList.contains('lang-vi-active') ? 'Điểm thô (tham chiếu)' : 'Raw Composite (ref)';
           window.chartDataLine.datasets[0].pointBorderColor = '#fff';
       }
-      
-      // MUTATE VN-INDEX DATASET
-      if (window.chartDataLine && window.chartDataLine.datasets && window.chartDataLine.datasets.length > 1) {
-          window.chartDataLine.datasets[1].borderColor = '#94a3b8';
-          window.chartDataLine.datasets[1].backgroundColor = 'rgba(148, 163, 184, 0.15)';
-          window.chartDataLine.datasets[1].borderWidth = 2;
-          window.chartDataLine.datasets[1].fill = true;
-          window.chartDataLine.datasets[1].pointRadius = 0;
-          window.chartDataLine.datasets[1].tension = 0.3;
-          window.chartDataLine.datasets[1].order = 2;
-          window.chartDataLine.datasets[1].pointHoverRadius = 4;
-          window.chartDataLine.datasets[1].yAxisID = 'y1';
+
+      // MUTATE VN-INDEX DATASET (tìm theo label — không phụ thuộc vị trí)
+      if (window.chartDataLine && window.chartDataLine.datasets) {
+          const vniDs = window.chartDataLine.datasets.find(d => d.label === 'VN-Index');
+          if (vniDs) {
+              vniDs.borderColor = '#94a3b8';
+              vniDs.backgroundColor = 'rgba(148, 163, 184, 0.15)';
+              vniDs.borderWidth = 2;
+              vniDs.fill = true;
+              vniDs.pointRadius = 0;
+              vniDs.tension = 0.3;
+              vniDs.order = 3;
+              vniDs.pointHoverRadius = 4;
+              vniDs.yAxisID = 'y1';
+          }
       }
 
       lineChartInstance = new Chart(lineCtx, {
@@ -560,6 +573,37 @@ window.MathJax = {
         }
       });
     }
+  }
+
+  // ── Dataset toggles (Raw Composite / VN-Index overlay) ───────────────
+  // Tích hợp thẳng từ scripts/inject_vnindex_chart.py (post-processing
+  // string-replacement đã loại bỏ — dễ gãy âm thầm khi template đổi).
+  // Listener gắn MỘT LẦN ngoài renderCharts để không bị chồng khi re-render.
+  const toggleVN = document.getElementById('toggleVNIndex');
+  if (toggleVN) {
+      toggleVN.addEventListener('change', function(e) {
+          if (lineChartInstance) {
+              const vniDs = lineChartInstance.data.datasets.find(d => d.label === 'VN-Index');
+              if (vniDs) {
+                  vniDs.hidden = !e.target.checked;
+                  lineChartInstance.options.scales.y1.display = e.target.checked;
+                  lineChartInstance.update();
+              }
+          }
+      });
+  }
+
+  const toggleCS = document.getElementById('toggleCompositeScore');
+  if (toggleCS) {
+      toggleCS.addEventListener('change', function(e) {
+          if (lineChartInstance) {
+              if (lineChartInstance.data.datasets.length > 0) {
+                  lineChartInstance.data.datasets[0].hidden = !e.target.checked;
+                  lineChartInstance.options.scales.y.display = e.target.checked;
+                  lineChartInstance.update();
+              }
+          }
+      });
   }
   
   // Initial render is handled at end of body
@@ -729,15 +773,26 @@ _GROUP_LABELS = {
 def _build_action_panel_html(score_record: dict, t) -> str:
     """
     Action Panel trong hero: khuyến nghị phân bổ cổ phiếu (equity allocation)
-    theo SCORE_LABELS (single source of truth) + dải regime 0-100 với marker
-    tại vị trí điểm hiện tại.
+    theo tầng CALIBRATED ACTION SIGNAL (z-score expanding, point-in-time).
+    Dải regime 0-100 + marker tại vị trí điểm calibrated; dòng z-diagnostic
+    (z, μ_hist, σ_hist, n) minh bạch cách hiệu chỉnh; điểm raw giữ làm tham chiếu.
     """
-    total = score_record.get("total_score", 50)
-    label = score_record.get("label", "HOLD")
-    allocation = score_record.get("label_allocation")
-    if not allocation:
-        _, _, _, allocation = get_score_label(total)
-    alloc_vi = allocation.replace("Equities", "Cổ phiếu")
+    # ── Tầng hành động: calibrated (fallback về raw nếu chưa đủ lịch sử) ──────
+    cal_total = score_record.get("calibrated_score")
+    cal_label = score_record.get("calibrated_label")
+    cal_alloc = score_record.get("calibrated_allocation")
+    if cal_total is None:
+        cal_total = score_record.get("total_score", 50)
+        cal_label = score_record.get("label", "HOLD")
+        cal_alloc = score_record.get("label_allocation")
+    if not cal_alloc:
+        _, _, _, cal_alloc = get_score_label(float(cal_total))
+    total = float(cal_total)
+
+    raw_total = score_record.get("total_score", 50)
+    raw_label = score_record.get("label", "HOLD")
+
+    alloc_vi = cal_alloc.replace("Equities", "Cổ phiếu")
 
     # Dải 5 regime, xếp từ thấp (SELL) đến cao (BUY)
     bands_html = ""
@@ -754,22 +809,102 @@ def _build_action_panel_html(score_record: dict, t) -> str:
         legend_html += f'<span>{t(lbl, _LABEL_VI.get(lbl, lbl))}</span>'
 
     marker_pos = max(0.0, min(100.0, float(total)))
-    active_color = _LABEL_COLORS.get(label, "#94a3b8")
+    active_color = _LABEL_COLORS.get(cal_label, "#94a3b8")
+
+    # ── Z-diagnostic: minh bạch phép hiệu chỉnh expanding window ─────────────
+    applied = bool(score_record.get("calibration_applied"))
+    if applied:
+        z = score_record.get("calibration_z")
+        mu = score_record.get("calibration_hist_mean")
+        sd = score_record.get("calibration_hist_std")
+        n_hist = score_record.get("calibration_n_history")
+        diag_en = (f"z = {z:+.2f} vs {n_hist} prior quarters "
+                   f"(μ = {mu:.1f}, σ = {sd:.1f}) — expanding window, point-in-time")
+        diag_vi = (f"z = {z:+.2f} so với {n_hist} quý trước "
+                   f"(μ = {mu:.1f}, σ = {sd:.1f}) — cửa sổ expanding, point-in-time")
+    else:
+        diag_en = "Insufficient history (< 4 prior quarters) — calibrated = raw composite"
+        diag_vi = "Chưa đủ lịch sử (< 4 quý trước) — calibrated = điểm thô"
 
     return f"""
       <div class="action-panel">
-        <div class="action-panel-title">⚡ {t('Action Panel — Recommended Allocation', 'Action Panel — Khuyến nghị Phân bổ')}</div>
-        <div class="alloc-value" style="color:{active_color};">{t(allocation, alloc_vi)}</div>
+        <div class="action-panel-title">⚡ {t('Action Panel — Calibrated Allocation', 'Action Panel — Khuyến nghị Phân bổ (Calibrated)')}</div>
+        <div class="alloc-value" style="color:{active_color};">{t(cal_alloc, alloc_vi)}</div>
         <div class="alloc-sub">
-          {t(f'Regime: {label} @ score {total:.1f}/100 — thresholds from config.py SCORE_LABELS',
-             f'Trạng thái: {label} @ điểm {total:.1f}/100 — ngưỡng lấy từ config.py SCORE_LABELS')}
+          {t(f'Action regime: {cal_label} @ calibrated {total:.1f}/100 (raw {raw_total:.1f} → {raw_label}) — thresholds from config.py SCORE_LABELS',
+             f'Trạng thái hành động: {cal_label} @ calibrated {total:.1f}/100 (điểm thô {raw_total:.1f} → {raw_label}) — ngưỡng lấy từ config.py SCORE_LABELS')}
         </div>
         <div class="alloc-track">
           <div class="alloc-marker" style="left:{marker_pos}%;" title="{total:.1f}"></div>
           <div class="alloc-bands">{bands_html}</div>
           <div class="alloc-legend">{legend_html}</div>
         </div>
+        <div class="alloc-sub" style="margin-top:10px; font-size:11.5px; opacity:.85;">📐 {t(diag_en, diag_vi)}</div>
       </div>"""
+
+
+def _load_vnindex_quarterly_prices(quarters: List[str]):
+    """
+    Giá đóng cửa VN-Index theo quý (alignment với danh sách quarters truyền vào).
+
+    Ưu tiên tính từ data/raw/vnindex_ohlcv.parquet (nếu có) và ghi cache
+    data/scores/vnindex_quarterly_close.json; fallback đọc cache khi thiếu
+    OHLCV gốc (rebuild HTML offline). Trả về list giá float hoặc None.
+
+    Logic này ĐÃ ĐƯỢC TÍCH HỢP thẳng vào report_builder (trước đây nằm ở
+    scripts/inject_vnindex_chart.py — post-processing string-replacement
+    dễ gãy âm thầm khi template đổi).
+    """
+    import json as _json
+    price_cache_path = Path("data/scores/vnindex_quarterly_close.json")
+    ohlcv_path = Path("data/raw/vnindex_ohlcv.parquet")
+
+    if not ohlcv_path.exists():
+        if price_cache_path.exists():
+            try:
+                with open(price_cache_path, "r", encoding="utf-8") as f:
+                    cache = _json.load(f)
+                return [cache.get(q) for q in quarters]
+            except Exception as exc:
+                logger.warning(f"[REPORT] Cannot read VN-Index price cache: {exc}")
+        logger.warning("[REPORT] No VN-Index OHLCV / price cache — chart overlay skipped")
+        return None
+
+    try:
+        ohlcv = pd.read_parquet(ohlcv_path)
+        ohlcv["date"] = pd.to_datetime(ohlcv["date"])
+        ohlcv = ohlcv.sort_values("date")
+        max_date = ohlcv["date"].max()
+
+        prices = []
+        for q in quarters:
+            y, qn = q.split("-Q")
+            y, qn = int(y), int(qn)
+            m = qn * 3
+            d = 31 if m in (3, 12) else 30
+            start_date = pd.Timestamp(f"{y}-{m-2:02d}-01")
+            end_date = pd.Timestamp(f"{y}-{m:02d}-{d:02d}")
+            if max_date < start_date:
+                p = None      # quý tương lai
+            else:
+                valid = ohlcv[(ohlcv["date"] >= start_date) & (ohlcv["date"] <= end_date)]
+                if len(valid) > 0:
+                    p = round(float(valid.iloc[-1]["close"]), 2)
+                else:
+                    valid_before = ohlcv[ohlcv["date"] <= end_date]
+                    p = round(float(valid_before.iloc[-1]["close"]), 2) if len(valid_before) else None
+            prices.append(p)
+
+        # Ghi cache để rebuild offline không mất overlay
+        try:
+            with open(price_cache_path, "w", encoding="utf-8") as f:
+                _json.dump({q: p for q, p in zip(quarters, prices)}, f, indent=1)
+        except Exception as exc:
+            logger.warning(f"[REPORT] Could not write VN-Index price cache: {exc}")
+        return prices
+    except Exception as exc:
+        logger.warning(f"[REPORT] VN-Index overlay failed: {exc}")
+        return None
 
 
 def _build_data_coverage_html(score_record: dict, t) -> str:
@@ -845,6 +980,18 @@ def build_html_report(
     leading = score_record.get("most_divergent_pillar", score_record.get("leading_indicator", ""))
     date_computed = score_record.get("date_computed", "")
 
+    # ── Tầng 2: Calibrated Action Signal ────────────────────────────────────
+    # Điểm thô giữ nguyên làm tầng tham chiếu (hero ghi chú "raw composite");
+    # chip nổi bật "HÀNH ĐỘNG" hiển thị nhãn hành động calibrated.
+    cal_total = score_record.get("calibrated_score")
+    cal_label = score_record.get("calibrated_label")
+    cal_emoji = score_record.get("calibrated_emoji", "🟡")
+    cal_alloc = score_record.get("calibrated_allocation", "")
+    if cal_total is None:
+        cal_total, cal_label = total, label
+        _, _, _, cal_alloc = get_score_label(float(total))
+    cal_color = _LABEL_COLORS.get(cal_label, "#94a3b8")
+
     score_color = _color_for_score(total)
     group_scores = score_record.get("group_scores", {})
     group_details = score_record.get("group_details", {})
@@ -879,8 +1026,20 @@ def build_html_report(
         &nbsp;|&nbsp; {t("Last Updated", "Cập nhật lần cuối")}: {date_computed}
       </div>
       <div class="score-big" style="color: {score_color};">{total:.1f}</div>
-      <div class="score-label" style="color: {score_color};">{emoji} {label}</div>
+      <div class="score-label" style="color: {score_color};">{emoji} {label}
+        <span style="font-size:13px; font-weight:500; opacity:.65;">({t('raw composite', 'điểm thô tổng hợp')})</span>
+      </div>
       <div class="score-desc">{t(desc)}</div>
+      <div style="margin-top: 16px;">
+        <span class="action-chip" style="background:{cal_color};"
+              title="{t('Calibrated Action Signal — z-score vs prior quarters (expanding, point-in-time)', 'Tín hiệu hành động hiệu chỉnh — z-score so với các quý trước (expanding, point-in-time)')}">
+          ⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}
+        </span>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
+          {t(f'Calibrated action signal (allocation: {cal_alloc}) — raw composite kept above for reference.',
+             f'Tín hiệu hành động hiệu chỉnh (phân bổ: {cal_alloc}) — điểm thô giữ ở trên để tham chiếu.')}
+        </div>
+      </div>
       <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
         <div class="progress-bar">
           <div class="progress-fill" style="width:{total}%; background:{score_color};"></div>
@@ -1122,8 +1281,9 @@ def build_html_report(
     history_html = ""
     if score_history is not None and len(score_history) > 1:
         score_history = score_history.sort_values("quarter").reset_index(drop=True)
+        score_history = score_history[score_history["quarter"] != "2099-Q1"]  # bỏ row test
         qtrs = score_history["quarter"].tolist()
-        scores_list = score_history["total_score"].tolist()
+        scores_list = [None if pd.isna(v) else float(v) for v in score_history["total_score"].tolist()]
         
         pct_labels = score_history["percentile_label"].fillna("N/A").tolist() if "percentile_label" in score_history.columns else ["N/A"] * len(qtrs)
         disp_levels = score_history["dispersion_level"].fillna("N/A").tolist() if "dispersion_level" in score_history.columns else ["N/A"] * len(qtrs)
@@ -1138,6 +1298,46 @@ def build_html_report(
                 point_colors.append("#eab308")
             else:
                 point_colors.append("#3b82f6")
+
+        # ── Calibrated Action dataset (tầng hành động, tô màu regime) ──────
+        has_cal = "calibrated_score" in score_history.columns
+        cal_dataset_js = ""
+        if has_cal:
+            cal_scores = [None if pd.isna(v) else float(v) for v in score_history["calibrated_score"].tolist()]
+            cal_labels_hist = (score_history["calibrated_label"].fillna("HOLD").tolist()
+                               if "calibrated_label" in score_history.columns else ["HOLD"] * len(qtrs))
+            cal_point_colors = [_LABEL_COLORS.get(c, "#3b82f6") for c in cal_labels_hist]
+            cal_dataset_js = f""",
+            {{
+              label: 'Calibrated Action',
+              data: {json.dumps(cal_scores)},
+              borderColor: '#8b5cf6',
+              backgroundColor: 'transparent',
+              borderWidth: 3,
+              pointBackgroundColor: {json.dumps(cal_point_colors)},
+              pointBorderColor: '#fff',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              fill: false,
+              tension: 0.3
+            }}"""
+
+        # ── VN-Index overlay (dataset ẩn, bật bằng toggle) ─────────────────
+        vnindex_prices = _load_vnindex_quarterly_prices(qtrs)
+        vnindex_dataset_js = ""
+        if vnindex_prices is not None:
+            vnindex_dataset_js = f""",
+            {{
+              label: 'VN-Index',
+              data: {json.dumps(vnindex_prices)},
+              borderColor: '#10b981',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y1',
+              hidden: true
+            }}"""
                 
         chart_js_data += f"""
         <script>
@@ -1151,22 +1351,45 @@ def build_html_report(
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               borderWidth: 3,
+              borderDash: [6, 4],
               pointBackgroundColor: {json.dumps(point_colors)},
               pointBorderColor: '#fff',
               pointRadius: 5,
               pointHoverRadius: 7,
               fill: true,
               tension: 0.3
-            }}]
+            }}{cal_dataset_js}{vnindex_dataset_js}]
           }};
         </script>
         """
         
+        # Toggle cho VN-Index overlay (nếu có dữ liệu giá)
+        vnindex_toggle_html = ""
+        if vnindex_prices is not None:
+            vnindex_toggle_html = f"""
+              <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
+                <input type="checkbox" id="toggleVNIndex" style="width:16px; height:16px; accent-color: var(--color-blue);">
+                <span class="lang-en">VN-Index</span><span class="lang-vi">VN-Index</span>
+              </label>"""
+
         history_html = f"""
         <div class="section">
-          <h2>📈 {t('Historical Score Trend', 'Lịch sử Điểm số Theo Quý')}</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h2 style="margin-bottom: 0;">📈 {t('Historical Score Trend', 'Lịch sử Điểm số Theo Quý')}</h2>
+            <div style="display:flex; gap:16px; justify-content: flex-end; flex-wrap: wrap;">
+              <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
+                <input type="checkbox" id="toggleCompositeScore" checked style="width:16px; height:16px; accent-color: var(--color-amber);">
+                <span class="lang-en">Raw Composite</span><span class="lang-vi">Điểm thô</span>
+              </label>
+              {vnindex_toggle_html}
+            </div>
+          </div>
           <div class="chart-container" style="height: 380px; padding: 24px; border-radius: 12px; box-shadow: var(--card-shadow); background-color: var(--bg-card); margin-top: 16px;">
             <canvas id="lineChart" aria-label="Historical Score Trend Chart" role="img"></canvas>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+            💡 {t('Solid line = Calibrated Action Signal (points colored by regime); dashed = raw composite reference.',
+                  'Đường liền = Tín hiệu hành động Calibrated (điểm tô màu theo regime); nét đứt = điểm thô tham chiếu.')}
           </div>
         </div>"""
 
@@ -1473,7 +1696,7 @@ def build_html_report(
 
       <div class="disclaimer">
         <strong>⚠️ Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model v1.0.0. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu và tham khảo. Không phải khuyến nghị đầu tư.')}<br>
-        🕒 Generated at: <span class="js-generated-at">…</span>
+        Generated at: <span class="js-generated-at">…</span>
       </div>
     </div>
   </div>
@@ -1571,12 +1794,17 @@ def build_html_report(
 
 
 def _load_quarter_summaries(reports: List[str]) -> List[Dict[str, Any]]:
-    """Đọc exports/score_*.json để lấy tóm tắt điểm cho từng quý (asc order)."""
+    """Đọc exports/score_*.json để lấy tóm tắt điểm cho từng quý (asc order).
+
+    Ưu tiên tầng CALIBRATED ACTION SIGNAL (calibrated_score/calibrated_label)
+    cho màu thẻ & timeline; điểm thô (total_score) giữ lại làm đường tham chiếu.
+    """
     summaries = []
     for q in sorted(reports):  # ascending: 2021_Q1 ... 2026_Q4
         export_path = EXPORTS_DIR / f"score_{q}.json"
         item = {"dir": q, "quarter": q.replace("_", "-"), "score": None,
-                "label": "N/A", "emoji": "⚪", "allocation": ""}
+                "label": "N/A", "emoji": "⚪", "allocation": "",
+                "raw_score": None, "raw_label": "N/A"}
         if export_path.exists():
             try:
                 with open(export_path, "r", encoding="utf-8") as f:
@@ -1591,6 +1819,18 @@ def _load_quarter_summaries(reports: List[str]) -> List[Dict[str, Any]]:
                         "emoji": qs.get("emoji", em),
                         "allocation": qs.get("label_allocation", alloc),
                     })
+                    # Tầng calibrated (fallback về raw nếu JSON chưa backfill)
+                    cal = qs.get("calibrated_score")
+                    if cal is not None:
+                        cal_lbl, cal_em, _, cal_alloc = get_score_label(float(cal))
+                        item.update({
+                            "score": float(cal),
+                            "label": qs.get("calibrated_label", cal_lbl),
+                            "emoji": qs.get("calibrated_emoji", cal_em),
+                            "allocation": qs.get("calibrated_allocation", cal_alloc),
+                        })
+                    item["raw_score"] = float(score)
+                    item["raw_label"] = qs.get("label", lbl)
             except Exception as exc:  # pragma: no cover - defensive
                 logger.warning(f"[REPORT] Cannot read export for {q}: {exc}")
         summaries.append(item)
@@ -1618,12 +1858,15 @@ def build_root_index_html():
     latest = next((s for s in summaries if s["dir"] == latest_quarter), summaries[-1])
 
     # ── Chart.js data (ascending timeline) ─────────────────────────────
+    # Line chính = CALIBRATED ACTION SIGNAL (tô màu theo regime calibrated);
+    # đường RAW COMPOSITE giữ nét đứt làm tham chiếu.
     tl_labels = [s["quarter"] for s in summaries]
     tl_scores = [round(s["score"], 2) if s["score"] is not None else None for s in summaries]
+    tl_raws   = [round(s["raw_score"], 2) if s["raw_score"] is not None else None for s in summaries]
     tl_colors = [_LABEL_COLORS.get(s["label"], "#94a3b8") for s in summaries]
     tl_hrefs  = [f'{s["dir"]}/index.html' for s in summaries]
 
-    # ── Quarter cards (newest first) ────────────────────────────────────
+    # ── Quarter cards (newest first) — màu theo calibrated regime ────────
     cards_html = ""
     for s in reversed(summaries):
         color = _LABEL_COLORS.get(s["label"], "#94a3b8")
@@ -1632,6 +1875,8 @@ def build_root_index_html():
         latest_badge = (
             '<span class="latest-badge">LATEST</span>' if s["dir"] == latest_quarter else ""
         )
+        raw_txt = (f'raw {s["raw_score"]:.1f} · {s["raw_label"]}'
+                   if s["raw_score"] is not None else "")
         cards_html += f"""
         <a class="q-card" href="{s['dir']}/index.html" style="--q-color:{color};">
           <div class="q-card-top">
@@ -1641,6 +1886,7 @@ def build_root_index_html():
           <div class="q-label" style="color:{color};">{s['emoji']} {s['label']}</div>
           <div class="q-bar"><div class="q-bar-fill" style="width:{width}%; background:{color};"></div></div>
           <div class="q-alloc">{s['allocation']}</div>
+          <div class="q-raw-ref">{raw_txt}</div>
         </a>"""
 
     latest_color = _LABEL_COLORS.get(latest["label"], "#94a3b8")
@@ -1670,6 +1916,7 @@ def build_root_index_html():
     body {{ font-family: 'Outfit', sans-serif; background: var(--bg-primary); color: var(--text-main); margin: 0; line-height: 1.6; }}
     .navbar {{ background: var(--bg-card); backdrop-filter: blur(12px); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }}
     .brand {{ font-weight: 700; font-size: 18px; color: var(--color-blue); }}
+    .clock {{ font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--color-blue); background: var(--bg-primary); padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border-color); letter-spacing: 0.5px; }}
     .nav-right {{ display: flex; gap: 12px; }}
     .btn {{ cursor: pointer; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }}
     .btn:hover {{ background: var(--bg-primary); transform: translateY(-1px); }}
@@ -1695,6 +1942,8 @@ def build_root_index_html():
     body.dark-mode .q-bar {{ background: rgba(255,255,255,0.08); }}
     .q-bar-fill {{ height: 100%; border-radius: 6px; }}
     .q-alloc {{ font-size: 12px; color: var(--text-muted); margin-top: 8px; }}
+    .q-raw-ref {{ font-size: 10.5px; color: var(--text-muted); margin-top: 4px; opacity: 0.75; font-family: 'JetBrains Mono', monospace; }}
+    .legend-dot {{ display:inline-block; width:10px; height:10px; border-radius:50%; margin: 0 3px -1px 10px; }}
     .disclaimer {{ color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0 40px 0; opacity: 0.8; }}
     .lang-vi {{ display: none; }}
     body.lang-vi-active .lang-vi {{ display: inline; }}
@@ -1708,7 +1957,7 @@ def build_root_index_html():
       .hero-score {{ font-size: 54px; }}
       .chart-box {{ height: 260px; }}
     }}
-    @media (max-width: 520px) {{ .q-grid {{ grid-template-columns: 1fr; }} }}
+    @media (max-width: 520px) {{ .q-grid {{ grid-template-columns: 1fr; }} .clock {{ display: none; }} }}
     @media print {{
       body {{ background: #fff !important; }}
       .navbar, .btn {{ display: none !important; }}
@@ -1719,6 +1968,7 @@ def build_root_index_html():
 <body>
   <div class="navbar">
     <div class="brand">📊 VNI Quant Dashboard</div>
+    <div class="clock" id="clock">Loading time...</div>
     <div class="nav-right">
       <a class="btn btn-primary" href="{latest_quarter}/index.html">🚀 <span class="lang-en">Latest Report</span><span class="lang-vi">Báo cáo mới nhất</span></a>
       <button class="btn" id="print-btn" title="Print / Save as PDF">🖨️</button>
@@ -1727,7 +1977,7 @@ def build_root_index_html():
     </div>
   </div>
 
-  <div class="wrap">
+    <div class="wrap">
     <div class="hero">
       <div class="hero-sub">
         {t('VN-INDEX QUARTERLY QUANTITATIVE SCORING MODEL', 'HỆ THỐNG CHẤM ĐIỂM ĐỊNH LƯỢNG VN-INDEX THEO QUÝ')}
@@ -1735,7 +1985,11 @@ def build_root_index_html():
       </div>
       <div class="hero-score" style="color:{latest_color};">{latest_score_txt}</div>
       <div class="hero-label" style="color:{latest_color};">{latest['emoji']} {latest['label']} — {latest['quarter']}</div>
-      <div class="hero-alloc">⚡ {t('Recommended allocation', 'Khuyến nghị phân bổ')}: <strong>{latest['allocation']}</strong></div>
+      <div class="hero-alloc">⚡ {t('Calibrated action — recommended allocation', 'HÀNH ĐỘNG (calibrated) — khuyến nghị phân bổ')}: <strong>{latest['allocation']}</strong></div>
+      <div class="hero-alloc" style="font-size: 12.5px; opacity: .85;">
+        📐 {t(f"Raw composite reference: {(latest.get('raw_score') or 0):.1f} → {latest.get('raw_label', 'N/A')} — action signal is z-calibrated vs prior quarters (point-in-time).",
+              f"Tham chiếu điểm thô: {(latest.get('raw_score') or 0):.1f} → {latest.get('raw_label', 'N/A')} — tín hiệu hành động được hiệu chỉnh z-score so với các quý trước (point-in-time).")}
+      </div>
       <div style="margin-top: 18px;">
         <a class="btn btn-primary" href="{latest_quarter}/index.html" style="font-size: 15px;">
           📈 <span class="lang-en">Open {latest['quarter']} Report</span><span class="lang-vi">Mở Báo cáo {latest['quarter']}</span>
@@ -1744,8 +1998,18 @@ def build_root_index_html():
     </div>
 
     <div class="section">
-      <h2>📈 {t(f'Composite Score Timeline ({n_quarters} Quarters)', f'Timeline Điểm Tổng hợp ({n_quarters} Quý)')}</h2>
-      <div class="chart-box"><canvas id="timelineChart" aria-label="Composite Score Timeline" role="img"></canvas></div>
+      <h2>📈 {t(f'Calibrated Action Timeline ({n_quarters} Quarters)', f'Timeline Hành động Calibrated ({n_quarters} Quý)')}</h2>
+      <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px;">
+        <strong>{t('Calibrated action signal', 'Tín hiệu hành động calibrated')}</strong>
+        {t('— solid line, points colored by regime', '— đường liền, điểm tô màu theo regime')}
+        <span class="legend-dot" style="background:#10b981;"></span>BUY
+        <span class="legend-dot" style="background:#3b82f6;"></span>ACCUMULATE
+        <span class="legend-dot" style="background:#eab308;"></span>HOLD
+        <span class="legend-dot" style="background:#f97316;"></span>REDUCE
+        <span class="legend-dot" style="background:#ef4444;"></span>SELL
+        &nbsp;|&nbsp; <strong>{t('raw composite', 'điểm thô')}</strong> {t('— dashed reference', '— nét đứt tham chiếu')}
+      </div>
+      <div class="chart-box"><canvas id="timelineChart" aria-label="Calibrated Action Timeline" role="img"></canvas></div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
         💡 {t("Click any point to open that quarter's report.", 'Nhấp vào bất kỳ điểm nào để mở báo cáo của quý đó.')}
       </div>
@@ -1759,7 +2023,7 @@ def build_root_index_html():
 
     <div class="disclaimer">
       <strong>⚠️ Disclaimer:</strong> {t('Generated by VN_Index_Scoring_Quarterly_Quant_Model. For research purposes only. Not financial advice.', 'Báo cáo được tạo tự động bởi hệ thống định lượng. Phục vụ mục đích nghiên cứu. Không phải khuyến nghị đầu tư.')}<br>
-      🕒 Generated at: <span class="js-generated-at">…</span>
+      Generated at: <span class="js-generated-at">…</span>
     </div>
   </div>
 
@@ -1767,6 +2031,7 @@ def build_root_index_html():
   <script>
     const TL_LABELS = {json.dumps(tl_labels)};
     const TL_SCORES = {json.dumps(tl_scores)};
+    const TL_RAW    = {json.dumps(tl_raws)};
     const TL_COLORS = {json.dumps(tl_colors)};
     const TL_HREFS  = {json.dumps(tl_hrefs)};
 
@@ -1801,10 +2066,25 @@ def build_root_index_html():
     // Print
     document.getElementById('print-btn').addEventListener('click', () => window.print());
 
+    // Real-time Clock (UTC+7 = Vietnam time) — clock-face emoji tracks the current hour
+    const CLOCK_EMOJIS = ['🕛','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚'];
+    function updateClock() {{
+      const opts = {{ timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }};
+      const text = new Intl.DateTimeFormat('sv-SE', opts).format(new Date()); // ISO-like YYYY-MM-DD HH:mm:ss
+      const hour = parseInt(text.substring(11, 13), 10); // hour of day in Vietnam (0-23)
+      const emoji = CLOCK_EMOJIS[hour % 12];
+      const clockEl = document.getElementById('clock');
+      if (clockEl) clockEl.innerText = emoji + ' ' + text + ' UTC+7';
+    }}
+    setInterval(updateClock, 1000);
+    updateClock();
+
     // "Generated at" — rendered at actual runtime (not hardcoded at build time)
     (function() {{
       const opts = {{ timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }};
-      const stamp = new Intl.DateTimeFormat('sv-SE', opts).format(new Date()) + ' ICT';
+      const text = new Intl.DateTimeFormat('sv-SE', opts).format(new Date());
+      const hour = parseInt(text.substring(11, 13), 10);
+      const stamp = CLOCK_EMOJIS[hour % 12] + ' ' + text + ' UTC+7';
       document.querySelectorAll('.js-generated-at').forEach(el => {{ el.textContent = stamp; }});
     }})();
 
@@ -1822,7 +2102,7 @@ def build_root_index_html():
         data: {{
           labels: TL_LABELS,
           datasets: [{{
-            label: 'Composite Score',
+            label: 'Calibrated Action',
             data: TL_SCORES,
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59,130,246,0.10)',
@@ -1833,6 +2113,20 @@ def build_root_index_html():
             pointHoverRadius: 8,
             pointBackgroundColor: TL_COLORS,
             pointBorderColor: '#fff',
+            spanGaps: true
+          }},
+          {{
+            label: 'Raw Composite (ref)',
+            data: TL_RAW,
+            borderColor: '#94a3b8',
+            borderWidth: 2,
+            borderDash: [6, 4],
+            backgroundColor: 'transparent',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#94a3b8',
             spanGaps: true
           }}]
         }},
@@ -1848,13 +2142,14 @@ def build_root_index_html():
           scales: {{
             x: {{ grid: {{ display: false }}, ticks: {{ color: textColor, font: {{ size: 11 }}, maxRotation: 60 }} }},
             y: {{ min: 0, max: 100, grid: {{ color: gridColor }}, ticks: {{ color: textColor }},
-                 title: {{ display: true, text: 'Composite Score (0-100)', color: textColor, font: {{ weight: 'bold' }} }} }}
+                 title: {{ display: true, text: 'Score (0-100)', color: textColor, font: {{ weight: 'bold' }} }} }}
           }},
           plugins: {{
-            legend: {{ display: false }},
+            legend: {{ display: true, position: 'top', align: 'end',
+                       labels: {{ usePointStyle: true, pointStyle: 'circle', font: {{ size: 12, weight: '600' }}, color: textColor }} }},
             tooltip: {{
               callbacks: {{
-                afterLabel: (c) => 'Click to open report'
+                afterLabel: (c) => c.datasetIndex === 0 ? 'Click to open report' : ''
               }}
             }}
           }}

@@ -4,12 +4,21 @@ quarterly_scorer.py — Hệ thống Chấm điểm Tổng hợp Theo Quý
 Hệ thống chấm điểm 6 nhóm (tổng 100 điểm) cho VN-Index mỗi quý.
 Mỗi nhóm được tính điểm 0–100 rồi nhân trọng số.
 
-Phân loại kết quả:
+HAI TẦNG ĐIỂM (two-tier scoring):
+  TẦNG 1 — RAW COMPOSITE (total_score): điểm tổng hợp 0–100 từ 6 trụ cột.
+    Giữ nguyên làm tầng tham chiếu, dùng cho backtest & so sánh lịch sử.
+  TẦNG 2 — CALIBRATED ACTION SIGNAL (calibrated_score): chuẩn hoá z-score
+    điểm thô so với lịch sử expanding (CHỈ các quý trước — point-in-time):
+      calibrated = clip(50 + 15 × z, 0, 100)
+    Nhãn hành động (HOLD/REDUCE/SELL/...) lấy từ get_score_label().
+    Khắc phục hiện tượng "HOLD mãn tính" do điểm thô bị nén quanh 45–61.
+
+Phân loại kết quả (áp dụng cho CẢ hai tầng — single source of truth):
   80–100 → BUY        🟢
-  60–79  → ACCUMULATE 🔵
-  40–59  → HOLD       🟡
-  20–39  → REDUCE     🟠
-  0–19   → SELL       🔴
+  65–79  → ACCUMULATE 🔵
+  50–64  → HOLD       🟡
+  35–49  → REDUCE     🟠
+  0–34   → SELL       🔴
 
 Thiết kế: Mỗi nhóm có hàm scorer riêng, nhận DataFrame features và trả về
   dict(raw_score=0-100, weighted_score, details=dict, rationale=str)
@@ -26,7 +35,7 @@ from src.utils.config import (
     SCORING_WEIGHTS, SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label,
     PE_ZSCORE_OVERBOUGHT, PE_ZSCORE_OVERSOLD,
     PB_ZSCORE_OVERBOUGHT, PB_ZSCORE_OVERSOLD,
-    SCORES_DIR, FTSE_PASSIVE_INFLOW_BASE_USD
+    SCORE_CALIBRATION, SCORES_DIR, FTSE_PASSIVE_INFLOW_BASE_USD
 )
 
 logger = logging.getLogger(__name__)
@@ -44,6 +53,84 @@ def _clamp_score(s: float, lo: float = 0.0, hi: float = 100.0) -> float:
 def _invert(score: float) -> float:
     """Đảo chiều: 100 → 0, 0 → 100."""
     return 100.0 - score
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 0. Calibrated Action Signal (Tầng hành động — chống "HOLD mãn tính")
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def calibrate_total_score(
+    total_score: float,
+    hist_scores,
+) -> Dict[str, Any]:
+    """
+    Chuẩn hoá điểm thô thành Calibrated Action Signal theo spec config.SCORE_CALIBRATION:
+
+        calibrated = clip(center + z_scale × (total − μ_hist) / σ_hist, clip_low, clip_high)
+
+    Nguyên tắc point-in-time (BẤT BIẾN):
+      - `hist_scores` PHẢI chỉ chứa điểm của các quý TRƯỚC quý hiện tại
+        (expanding window, không look-ahead). Hàm này không tự lọc —
+        caller chịu trách nhiệm truyền đúng lịch sử.
+      - < min_history điểm lịch sử, σ_hist ≈ 0, hoặc total_score là NaN
+        → GIỮ NGUYÊN điểm thô, applied=False (fallback an toàn).
+
+    Parameters
+    ----------
+    total_score : điểm thô 0-100 của quý hiện tại
+    hist_scores : iterable điểm thô của các quý trước đó (thứ tự bất kỳ)
+
+    Returns
+    -------
+    dict: calibrated_score, applied, calibration_z, calibration_hist_mean,
+          calibration_hist_std, calibration_n_history
+    """
+    cfg = SCORE_CALIBRATION
+    hist = [float(s) for s in hist_scores if s is not None and not pd.isna(s)]
+    n = len(hist)
+
+    def _fallback(value):
+        return {
+            "calibrated_score":      value,
+            "applied":               False,
+            "calibration_z":         None,
+            "calibration_hist_mean": None,
+            "calibration_hist_std":  None,
+            "calibration_n_history": n,
+        }
+
+    if total_score is None:
+        return _fallback(50.0)
+
+    raw_total = float(total_score)
+
+    # NaN → fallback: giữ nguyên điểm thô (NaN), applied=False
+    if pd.isna(raw_total):
+        return _fallback(raw_total)
+    if not cfg.get("enabled", True):
+        return _fallback(raw_total)
+    if n < int(cfg.get("min_history", 4)):
+        return _fallback(raw_total)
+
+    mu = float(np.mean(hist))
+    sigma = float(np.std(hist, ddof=1))   # sample std — khớp pandas .std()
+    if not np.isfinite(sigma) or sigma < 1e-9:
+        return _fallback(raw_total)
+
+    z = (float(total_score) - mu) / sigma
+    calibrated = float(np.clip(
+        cfg.get("center", 50.0) + cfg.get("z_scale", 15.0) * z,
+        cfg.get("clip_low", 0.0), cfg.get("clip_high", 100.0),
+    ))
+
+    return {
+        "calibrated_score":      round(calibrated, 2),
+        "applied":               True,
+        "calibration_z":         round(z, 4),
+        "calibration_hist_mean": round(mu, 4),
+        "calibration_hist_std":   round(sigma, 4),
+        "calibration_n_history": n,
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -391,30 +478,44 @@ def score_quant_model(
       - MLR/VAR dự báo dương → điểm cao
       - Adj-R² cao → model reliable → tăng confidence
       - Nhiều biến Granger-cause → hệ thống có thông tin dự báo tốt
+
+    Chống nén tín hiệu (calibrated gains):
+      - MLR: gain 20000 → ±0.10%/ngày map về 70/30 (trước đây gain 3000
+        khiến dự báo ±0.1%/ngày chỉ dịch điểm 50→53 — tín hiệu bị bóp chết).
+      - VAR T+5: gain 5000 (trước đây 3000).
+      - Tín hiệu MISSING KHÔNG tham gia trung bình — trung bình được
+        renormalize theo số tín hiệu có thật (trước đây thiếu signal kéo
+        pillar về 50, tạo "điểm trung bình giả").
     """
     scores = {}
     details = {}
 
+    # Gain chuyển đổi (tách hằng để dễ audit — chống nén tín hiệu tại nguồn)
+    MLR_GAIN = 20000.0   # ±0.10%/ngày → 70/30
+    VAR_GAIN = 5000.0    # VAR T+5 return
+
     # ── MLR Prediction (forward: mean log-return/ngày của ~1 tháng kế tiếp) ──
-    if mlr_pred is not None and pd.notna(mlr_pred):
-        # Chuẩn hóa per-day: +1%/ngày → 80, -1%/ngày → 20 (clamp 0-100)
-        mlr_score = _clamp_score(50 + mlr_pred * 3000)
+    mlr_present = mlr_pred is not None and pd.notna(mlr_pred)
+    if mlr_present:
+        # Chuẩn hóa per-day: ±0.10%/ngày → 70/30 (clamp 0-100)
+        mlr_score = _clamp_score(50 + mlr_pred * MLR_GAIN)
         scores["mlr_signal_score"] = mlr_score
         details["mlr_forecast"] = (
             f"Forward log-return/day (next ~1M) = {mlr_pred:.4f} → score {mlr_score:.0f}"
         )
     else:
-        mlr_score = 50.0
-        details["mlr_forecast"] = "<MISSING> No MLR forecast"
+        mlr_score = None   # MISSING → không tham gia trung bình
+        details["mlr_forecast"] = "<MISSING> No MLR forecast (excluded from pillar average)"
 
     # ── VAR Forecast ─────────────────────────────────────────────────────────
-    if var_forecast is not None and pd.notna(var_forecast):
-        var_score = _clamp_score(50 + var_forecast * 3000)
+    var_present = var_forecast is not None and pd.notna(var_forecast)
+    if var_present:
+        var_score = _clamp_score(50 + var_forecast * VAR_GAIN)
         scores["var_signal_score"] = var_score
         details["var_forecast"] = f"VAR T+5 return = {var_forecast:.4f} → score {var_score:.0f}"
     else:
-        var_score = 50.0
-        details["var_forecast"] = "<MISSING> No VAR forecast"
+        var_score = None   # MISSING → không tham gia trung bình
+        details["var_forecast"] = "<MISSING> No VAR forecast (excluded from pillar average)"
 
     # ── Model Quality Bonus ───────────────────────────────────────────────────
     if mlr_adj_r2 is not None and pd.notna(mlr_adj_r2):
@@ -435,9 +536,25 @@ def score_quant_model(
         granger_bonus = 0
         details["granger_leaders"] = "<MISSING> N/A"
 
-    raw = (mlr_score * 0.5 + var_score * 0.5) + quality_bonus + granger_bonus
-    raw = _clamp_score(raw)
+    # ── Trung bình CHỈ trên tín hiệu có thật (renormalize) ────────────────────
+    # Trước đây: (mlr*0.5 + var*0.5) với MISSING=50 → pillar bị kéo về 50
+    # khi 1 trong 2 mô hình không chạy — nén tín hiệu về trung lập giả.
+    live_signals = [s for s in (mlr_score, var_score) if s is not None]
+    if live_signals:
+        base = float(np.mean(live_signals))
+    else:
+        base = 50.0   # cả hai đều MISSING → trung lập thực sự
+        details["signal_coverage"] = "No live model signal — pillar neutral (both MLR & VAR missing)"
+    if len(live_signals) == 2:
+        details["signal_coverage"] = "Both MLR & VAR live — simple average (50/50)"
+    elif len(live_signals) == 1:
+        which = "MLR" if mlr_score is not None else "VAR"
+        details["signal_coverage"] = f"Only {which} live — pillar = {which} score alone (renormalized)"
 
+    raw = _clamp_score(base + quality_bonus + granger_bonus)
+
+    mlr_str = f"{mlr_score:.0f}" if mlr_score is not None else "MISSING"
+    var_str = f"{var_score:.0f}" if var_score is not None else "MISSING"
     r2_str = f"{mlr_adj_r2:.3f}" if mlr_adj_r2 is not None and pd.notna(mlr_adj_r2) else "N/A"
     granger_str = str(granger_leaders) if granger_leaders is not None else "N/A"
 
@@ -448,7 +565,7 @@ def score_quant_model(
         "weighted_score": round(raw * SCORING_WEIGHTS["quant_model"], 2),
         "sub_scores":     scores,
         "details":        details,
-        "rationale":      (f"MLR={mlr_score:.0f} | VAR={var_score:.0f} | "
+        "rationale":      (f"MLR={mlr_str} | VAR={var_str} | "
                           f"R²={r2_str} | Granger={granger_str}")
     }
 
@@ -580,18 +697,20 @@ def score_market_structure(
     )
 
     # ── ADTV Improvement ─────────────────────────────────────────────────────
+    # MISSING → KHÔNG tham gia trung bình pillar (renormalize theo cấu phần
+    # có dữ liệu — trước đây ADTV thiếu kéo pillar về 50, nén tín hiệu).
     if adtv_change_pct is not None and pd.notna(adtv_change_pct):
         adtv_score = _clamp_score(50 + adtv_change_pct * 100)
         scores["adtv_score"] = adtv_score
         details["adtv"] = f"ADTV change {adtv_change_pct:+.1%} QoQ → score {adtv_score:.0f}"
     else:
-        adtv_score = 50.0   # Neutral when data unavailable
-        details["adtv"] = "<MISSING> ADTV data unavailable → neutral score 50"
-        
+        adtv_score = None   # MISSING → excluded from pillar average
+        details["adtv"] = "<MISSING> ADTV data unavailable → excluded from pillar average"
+
     # ── ETF Passive Flows ────────────────────────────────────────────────────
     etf_z = df_latest.get("etf_flow_q_zscore_live", np.nan)
     etf_q_sum = df_latest.get("etf_flow_q_ytd", np.nan)
-    
+
     if pd.notna(etf_z):
         etf_score = _clamp_score(50 + etf_z * 15)
         scores["etf_flow_score"] = etf_score
@@ -600,11 +719,20 @@ def score_market_structure(
         if pd.notna(etf_q_sum):
             details["etf_flow_q_ytd"] = f"{etf_q_sum:.2%} of Market Cap (YTD in Q)"
     else:
-        etf_score = 50.0
-        details["etf_flow"] = "<MISSING> Not enough data for Z-score (2021) → default 50"
+        etf_score = None    # MISSING → excluded from pillar average
+        details["etf_flow"] = "<MISSING> Not enough data for Z-score (2021) → excluded from pillar average"
 
-    # Cập nhật công thức tính raw score có include etf_score (với tỷ trọng phù hợp)
-    raw = _clamp_score(np.mean([ftse_score + rebal_bonus, adtv_score, etf_score]))
+    # Trung bình CHỈ trên các cấu phần có dữ liệu. FTSE status là tham số
+    # bắt buộc nên luôn có; ADTV/ETF thiếu sẽ không còn kéo pillar về 50.
+    components = [ftse_score + rebal_bonus]
+    if adtv_score is not None:
+        components.append(adtv_score)
+    if etf_score is not None:
+        components.append(etf_score)
+    details["pillar_components_used"] = (
+        f"{len(components)}/{3} components with data → average over {len(components)}"
+    )
+    raw = _clamp_score(np.mean(components))
 
     rat_parts = [f"FTSE: {ftse_upgrade_status.upper()}"]
     if adtv_change_pct: rat_parts.append(f"ADTV: {adtv_change_pct:+.0%}")
@@ -726,10 +854,13 @@ def compute_quarterly_score(
     _dispersion_level = "MEDIUM"   # default
     _percentile_p15   = None
     _percentile_p85   = None
+    _hist_scores_for_calibration = []
     if history_path.exists():
         _hist = pd.read_parquet(history_path)
         # Expanding: chỉ nhìn các quý TRƯỚC quý hiện tại
         _hist = _hist[_hist["quarter"] < quarter].sort_values("quarter")
+        # Bảo vệ: lọc bỏ row test (vd 2099-Q1) không bao giờ nằm trong lịch sử
+        _hist = _hist[_hist["quarter"] != "2099-Q1"]
         if len(_hist) >= 4:  # Cần ít nhất 4 điểm để percentile có ý nghĩa
             _scores_hist = _hist["total_score"].values
             _percentile_p15 = float(np.percentile(_scores_hist, 15))
@@ -753,6 +884,19 @@ def compute_quarterly_score(
                         _dispersion_level = "LOW"
                     else:
                         _dispersion_level = "MEDIUM"
+        # Lịch sử điểm thô cho Calibrated Action Signal (chỉ quý TRƯỚC — point-in-time)
+        _hist_scores_for_calibration = _hist["total_score"].tolist()
+
+    # ── Calibrated Action Signal (Tầng hành động) ─────────────────────────────
+    # calibrate_total_score nhận DS các quý trước đó → expanding window,
+    # không look-ahead. Nhãn lấy từ get_score_label() (single source of truth).
+    _cal = calibrate_total_score(total_weighted, _hist_scores_for_calibration)
+    if _cal["applied"]:
+        cal_label, cal_emoji, cal_desc, cal_alloc = get_score_label(_cal["calibrated_score"])
+    else:
+        # Fallback: giữ nguyên tầng raw (đủ lịch sử chưa / σ≈0 / disabled)
+        cal_label, cal_emoji, cal_desc, cal_alloc = label, emoji, label_desc, label_alloc
+    _calibrated_score = _cal["calibrated_score"]
 
     # ── Lưu lịch sử ──────────────────────────────────────────────────────────
     score_record = {
@@ -773,6 +917,19 @@ def compute_quarterly_score(
         "dispersion_level":      _dispersion_level,
         # Allocation gợi ý từ SCORE_LABELS
         "label_allocation":      label_alloc,
+        # ── Tầng 2: Calibrated Action Signal (point-in-time, expanding window) ──
+        # Điểm thô (total_score) được GIỮ NGUYÊN làm tầng tham chiếu;
+        # calibrated là tầng nhãn hành động cho phân bổ tài sản.
+        "calibrated_score":      round(float(_calibrated_score), 2),
+        "calibrated_label":      cal_label,
+        "calibrated_emoji":      cal_emoji,
+        "calibrated_description": cal_desc,
+        "calibrated_allocation": cal_alloc,
+        "calibration_applied":   bool(_cal["applied"]),
+        "calibration_z":         _cal["calibration_z"],
+        "calibration_hist_mean": _cal["calibration_hist_mean"],
+        "calibration_hist_std":  _cal["calibration_hist_std"],
+        "calibration_n_history": _cal["calibration_n_history"],
         "group_scores": {
             g["group"]: {
                 "raw_score":      g["raw_score"],
@@ -787,7 +944,7 @@ def compute_quarterly_score(
         }
     }
 
-    # Append vào lịch sử parquet (gồm cả cột percentile + dispersion mới)
+    # Append vào lịch sử parquet (gồm cả cột percentile + dispersion + calibrated mới)
     new_row = pd.DataFrame([{
         "quarter":          quarter,
         "date_computed":    score_record["date_computed"],
@@ -797,6 +954,8 @@ def compute_quarterly_score(
         "pillar_std":       round(pillar_std, 2),
         "pillar_range":     round(pillar_range, 2),
         "dispersion_level": _dispersion_level,
+        "calibrated_score": score_record["calibrated_score"],
+        "calibrated_label": score_record["calibrated_label"],
         **{f"score_{g['group']}": g["weighted_score"] for g in groups}
     }])
     if history_path.exists():
@@ -810,7 +969,9 @@ def compute_quarterly_score(
     combined.to_parquet(history_path, index=False)
 
     logger.info(
-        f"[SCORER] {quarter}: {emoji} {label} — {total_weighted:.1f}/100\n"
+        f"[SCORER] {quarter}: {emoji} {label} — {total_weighted:.1f}/100 (raw composite)\n"
+        f"  Calibrated Action: {cal_emoji} {cal_label} — {_calibrated_score:.1f}/100"
+        f"{' (z={:.2f}, μ={:.1f}, σ={:.1f}, n={})'.format(_cal['calibration_z'], _cal['calibration_hist_mean'], _cal['calibration_hist_std'], _cal['calibration_n_history']) if _cal['applied'] else ' (insufficient history — raw kept)'}\n"
         f"  Most divergent pillar: {most_divergent_pillar} ({group_raw[most_divergent_pillar]:.1f})"
     )
     return score_record

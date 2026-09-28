@@ -1,0 +1,630 @@
+{
+  "description": "Inputs dữ liệu thật dùng re-score macro_monetary + valuation_leverage trong backfill 09/2026 (bonds full-history, M2 ADB/GSO, PE/PB/EYG Z min_periods=252)",
+  "updated_at": "2026-09-28 12:11",
+  "quarters": {
+    "2021-Q1": {
+      "quarter": "2021-Q1",
+      "as_of": "2020-12-31",
+      "bonds": {
+        "vn1y_yield": 0.4326,
+        "delta_vn1y_yield": -0.064174,
+        "vn10y_yield": 2.0246,
+        "vn_yield_spread": 1.3872,
+        "bond_date": "2020-12-31"
+      },
+      "m2": {
+        "year": 2020,
+        "m2_yoy_pct": 14.53
+      },
+      "fx_zscore": -2.68,
+      "pepb_z": {
+        "pe": null,
+        "pb": null,
+        "eyg": null,
+        "composite": null
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2021-Q2": {
+      "quarter": "2021-Q2",
+      "as_of": "2021-03-31",
+      "bonds": {
+        "vn1y_yield": 0.464,
+        "delta_vn1y_yield": -0.013805,
+        "vn10y_yield": 2.2209,
+        "vn_yield_spread": 1.669,
+        "bond_date": "2021-03-31"
+      },
+      "m2": {
+        "year": 2020,
+        "m2_yoy_pct": 14.53
+      },
+      "fx_zscore": 0.6,
+      "pepb_z": {
+        "pe": null,
+        "pb": null,
+        "eyg": null,
+        "composite": null
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2021-Q3": {
+      "quarter": "2021-Q3",
+      "as_of": "2021-06-30",
+      "bonds": {
+        "vn1y_yield": 0.5013,
+        "delta_vn1y_yield": 0.001505,
+        "vn10y_yield": 2.057,
+        "vn_yield_spread": 1.3519,
+        "bond_date": "2021-06-30"
+      },
+      "m2": {
+        "year": 2020,
+        "m2_yoy_pct": 14.53
+      },
+      "fx_zscore": 0.18,
+      "pepb_z": {
+        "pe": null,
+        "pb": null,
+        "eyg": null,
+        "composite": null
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2021-Q4": {
+      "quarter": "2021-Q4",
+      "as_of": "2021-09-30",
+      "bonds": {
+        "vn1y_yield": 0.5017,
+        "delta_vn1y_yield": 0.001321,
+        "vn10y_yield": 1.9128,
+        "vn_yield_spread": 1.2312,
+        "bond_date": "2021-09-30"
+      },
+      "m2": {
+        "year": 2020,
+        "m2_yoy_pct": 14.53
+      },
+      "fx_zscore": -0.65,
+      "pepb_z": {
+        "pe": null,
+        "pb": null,
+        "eyg": null,
+        "composite": null
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2022-Q1": {
+      "quarter": "2022-Q1",
+      "as_of": "2021-12-31",
+      "bonds": {
+        "vn1y_yield": 0.4944,
+        "delta_vn1y_yield": 0.017019,
+        "vn10y_yield": 2.007,
+        "vn_yield_spread": 1.4797,
+        "bond_date": "2021-12-31"
+      },
+      "m2": {
+        "year": 2021,
+        "m2_yoy_pct": 10.66
+      },
+      "fx_zscore": -0.05,
+      "pepb_z": {
+        "pe": 1.3716286434374625,
+        "pb": 1.7244120357265014,
+        "eyg": -0.8927076300128868,
+        "composite": 26.43
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2022-Q2": {
+      "quarter": "2022-Q2",
+      "as_of": "2022-03-31",
+      "bonds": {
+        "vn1y_yield": 1.3143,
+        "delta_vn1y_yield": -0.060524,
+        "vn10y_yield": 2.424,
+        "vn_yield_spread": 0.9445,
+        "bond_date": "2022-03-31"
+      },
+      "m2": {
+        "year": 2021,
+        "m2_yoy_pct": 10.66
+      },
+      "fx_zscore": 1.02,
+      "pepb_z": {
+        "pe": 1.247339660646479,
+        "pb": 1.5929062919509496,
+        "eyg": -0.8512428058229228,
+        "composite": 33.2
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2022-Q3": {
+      "quarter": "2022-Q3",
+      "as_of": "2022-06-30",
+      "bonds": {
+        "vn1y_yield": 1.8151,
+        "delta_vn1y_yield": -0.005296,
+        "vn10y_yield": 3.2011,
+        "vn_yield_spread": 1.1263,
+        "bond_date": "2022-06-30"
+      },
+      "m2": {
+        "year": 2021,
+        "m2_yoy_pct": 10.66
+      },
+      "fx_zscore": 1.35,
+      "pepb_z": {
+        "pe": 0.006185232620439785,
+        "pb": -0.12402402120330817,
+        "eyg": -0.39697033055821174,
+        "composite": 79.56
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2022-Q4": {
+      "quarter": "2022-Q4",
+      "as_of": "2022-09-30",
+      "bonds": {
+        "vn1y_yield": 4.0572,
+        "delta_vn1y_yield": 0.202285,
+        "vn10y_yield": 4.674,
+        "vn_yield_spread": 0.5962,
+        "bond_date": "2022-09-30"
+      },
+      "m2": {
+        "year": 2021,
+        "m2_yoy_pct": 10.66
+      },
+      "fx_zscore": 2.82,
+      "pepb_z": {
+        "pe": -0.2126038587946046,
+        "pb": -0.4172856437916561,
+        "eyg": -0.4208818841813037,
+        "composite": 81.59
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2023-Q1": {
+      "quarter": "2023-Q1",
+      "as_of": "2022-12-30",
+      "bonds": {
+        "vn1y_yield": 4.6775,
+        "delta_vn1y_yield": -0.03116,
+        "vn10y_yield": 4.8245,
+        "vn_yield_spread": 0.1576,
+        "bond_date": "2022-12-30"
+      },
+      "m2": {
+        "year": 2021,
+        "m2_yoy_pct": 10.66
+      },
+      "fx_zscore": -1.39,
+      "pepb_z": {
+        "pe": -0.6946819418923456,
+        "pb": -1.049413518514857,
+        "eyg": -0.0493596837226597,
+        "composite": 96.74
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2023-Q2": {
+      "quarter": "2023-Q2",
+      "as_of": "2023-03-31",
+      "bonds": {
+        "vn1y_yield": 3.3908,
+        "delta_vn1y_yield": -0.068954,
+        "vn10y_yield": 3.5545,
+        "vn_yield_spread": 0.1561,
+        "bond_date": "2023-03-31"
+      },
+      "m2": {
+        "year": 2022,
+        "m2_yoy_pct": 6.15
+      },
+      "fx_zscore": -0.76,
+      "pepb_z": {
+        "pe": -0.4842622488177234,
+        "pb": -0.7470652616011775,
+        "eyg": -0.007539493466672935,
+        "composite": 93.11
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2023-Q3": {
+      "quarter": "2023-Q3",
+      "as_of": "2023-06-30",
+      "bonds": {
+        "vn1y_yield": 2.1614,
+        "delta_vn1y_yield": -0.006956,
+        "vn10y_yield": 2.5684,
+        "vn_yield_spread": 0.3695,
+        "bond_date": "2023-06-30"
+      },
+      "m2": {
+        "year": 2022,
+        "m2_yoy_pct": 6.15
+      },
+      "fx_zscore": 2.97,
+      "pepb_z": {
+        "pe": 0.055005502776456126,
+        "pb": -0.10455154333982296,
+        "eyg": -0.21206363894149216,
+        "composite": 83.2
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2023-Q4": {
+      "quarter": "2023-Q4",
+      "as_of": "2023-09-29",
+      "bonds": {
+        "vn1y_yield": 1.868,
+        "delta_vn1y_yield": 0.029032,
+        "vn10y_yield": 2.4762,
+        "vn_yield_spread": 0.5369,
+        "bond_date": "2023-09-29"
+      },
+      "m2": {
+        "year": 2022,
+        "m2_yoy_pct": 6.15
+      },
+      "fx_zscore": 1.82,
+      "pepb_z": {
+        "pe": 0.34176328089811797,
+        "pb": 0.36886409252386176,
+        "eyg": -0.3459510356149464,
+        "composite": 72.46
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2024-Q1": {
+      "quarter": "2024-Q1",
+      "as_of": "2023-12-29",
+      "bonds": {
+        "vn1y_yield": 1.6115,
+        "delta_vn1y_yield": 0.010374,
+        "vn10y_yield": 2.2174,
+        "vn_yield_spread": 0.5376,
+        "bond_date": "2023-12-29"
+      },
+      "m2": {
+        "year": 2022,
+        "m2_yoy_pct": 6.15
+      },
+      "fx_zscore": -0.96,
+      "pepb_z": {
+        "pe": 0.4231462359114922,
+        "pb": 0.39293487249851544,
+        "eyg": -0.33528921079154417,
+        "composite": 70.76
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2024-Q2": {
+      "quarter": "2024-Q2",
+      "as_of": "2024-03-29",
+      "bonds": {
+        "vn1y_yield": 1.5461,
+        "delta_vn1y_yield": 0.022309,
+        "vn10y_yield": 2.4651,
+        "vn_yield_spread": 0.8931,
+        "bond_date": "2024-03-29"
+      },
+      "m2": {
+        "year": 2023,
+        "m2_yoy_pct": 12.46
+      },
+      "fx_zscore": 1.68,
+      "pepb_z": {
+        "pe": 1.1112194738373706,
+        "pb": 1.255886961070347,
+        "eyg": -0.6695695077539148,
+        "composite": 49.07
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2024-Q3": {
+      "quarter": "2024-Q3",
+      "as_of": "2024-06-28",
+      "bonds": {
+        "vn1y_yield": 2.0678,
+        "delta_vn1y_yield": 0.0517,
+        "vn10y_yield": 2.7738,
+        "vn_yield_spread": 0.6057,
+        "bond_date": "2024-06-28"
+      },
+      "m2": {
+        "year": 2023,
+        "m2_yoy_pct": 12.46
+      },
+      "fx_zscore": 0.56,
+      "pepb_z": {
+        "pe": 1.2951724869138366,
+        "pb": 1.4665090668110239,
+        "eyg": -0.7854970100166639,
+        "composite": 36.35
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2024-Q4": {
+      "quarter": "2024-Q4",
+      "as_of": "2024-09-30",
+      "bonds": {
+        "vn1y_yield": 1.8875,
+        "delta_vn1y_yield": -0.044628,
+        "vn10y_yield": 2.8461,
+        "vn_yield_spread": 0.8262,
+        "bond_date": "2024-09-30"
+      },
+      "m2": {
+        "year": 2023,
+        "m2_yoy_pct": 12.46
+      },
+      "fx_zscore": -1.33,
+      "pepb_z": {
+        "pe": 1.2345458468269943,
+        "pb": 1.3854181348905492,
+        "eyg": -0.7752907247895523,
+        "composite": 40.25
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2025-Q1": {
+      "quarter": "2025-Q1",
+      "as_of": "2024-12-31",
+      "bonds": {
+        "vn1y_yield": 2.0566,
+        "delta_vn1y_yield": -0.00398,
+        "vn10y_yield": 2.8181,
+        "vn_yield_spread": 0.6599,
+        "bond_date": "2024-12-31"
+      },
+      "m2": {
+        "year": 2024,
+        "m2_yoy_pct": 11.97
+      },
+      "fx_zscore": 0.94,
+      "pepb_z": {
+        "pe": 1.3987242232805273,
+        "pb": 1.568734846260315,
+        "eyg": -0.8231059070010005,
+        "composite": 31.14
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2025-Q2": {
+      "quarter": "2025-Q2",
+      "as_of": "2025-03-31",
+      "bonds": {
+        "vn1y_yield": 2.0859,
+        "delta_vn1y_yield": -0.001884,
+        "vn10y_yield": 2.8775,
+        "vn_yield_spread": 0.687,
+        "bond_date": "2025-03-31"
+      },
+      "m2": {
+        "year": 2024,
+        "m2_yoy_pct": 11.97
+      },
+      "fx_zscore": 0.92,
+      "pepb_z": {
+        "pe": 1.447042625406603,
+        "pb": 1.621584721505385,
+        "eyg": -0.8493534471665757,
+        "composite": 28.1
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2025-Q3": {
+      "quarter": "2025-Q3",
+      "as_of": "2025-06-30",
+      "bonds": {
+        "vn1y_yield": 2.4271,
+        "delta_vn1y_yield": 0.087095,
+        "vn10y_yield": 2.9562,
+        "vn_yield_spread": 0.4747,
+        "bond_date": "2025-06-30"
+      },
+      "m2": {
+        "year": 2024,
+        "m2_yoy_pct": 11.97
+      },
+      "fx_zscore": 1.1,
+      "pepb_z": {
+        "pe": 1.4896269046867365,
+        "pb": 1.6651868059486106,
+        "eyg": -0.8714508975744635,
+        "composite": 25.96
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2025-Q4": {
+      "quarter": "2025-Q4",
+      "as_of": "2025-09-30",
+      "bonds": {
+        "vn1y_yield": 2.8134,
+        "delta_vn1y_yield": 0.006067,
+        "vn10y_yield": 3.4571,
+        "vn_yield_spread": 0.5566,
+        "bond_date": "2025-09-30"
+      },
+      "m2": {
+        "year": 2024,
+        "m2_yoy_pct": 11.97
+      },
+      "fx_zscore": 1.4,
+      "pepb_z": {
+        "pe": 2.2332687878035995,
+        "pb": 2.4566279047120165,
+        "eyg": -1.1970885438816168,
+        "composite": 15.03
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2026-Q1": {
+      "quarter": "2026-Q1",
+      "as_of": "2025-12-31",
+      "bonds": {
+        "vn1y_yield": 3.041,
+        "delta_vn1y_yield": 0.027362,
+        "vn10y_yield": 3.8573,
+        "vn_yield_spread": 0.7896,
+        "bond_date": "2025-12-31"
+      },
+      "m2": {
+        "year": 2025,
+        "m2_yoy_pct": 14.98
+      },
+      "fx_zscore": -2.83,
+      "pepb_z": {
+        "pe": 2.5350664281389914,
+        "pb": 2.4160335935033572,
+        "eyg": -1.3653126311896808,
+        "composite": 10.75
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2026-Q2": {
+      "quarter": "2026-Q2",
+      "as_of": "2026-03-31",
+      "bonds": {
+        "vn1y_yield": 3.52,
+        "delta_vn1y_yield": 0.084721,
+        "vn10y_yield": 4.0281,
+        "vn_yield_spread": 0.4519,
+        "bond_date": "2026-03-31"
+      },
+      "m2": {
+        "year": 2025,
+        "m2_yoy_pct": 14.98
+      },
+      "fx_zscore": 1.28,
+      "pepb_z": {
+        "pe": 2.1646248447429035,
+        "pb": 1.9710432507046727,
+        "eyg": -1.8684891792541614,
+        "composite": 11.65
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2026-Q3": {
+      "quarter": "2026-Q3",
+      "as_of": "2026-06-30",
+      "bonds": {
+        "vn1y_yield": 3.7228,
+        "delta_vn1y_yield": 0.003593,
+        "vn10y_yield": 4.3985,
+        "vn_yield_spread": 0.5591,
+        "bond_date": "2026-06-30"
+      },
+      "m2": {
+        "year": 2025,
+        "m2_yoy_pct": 14.98
+      },
+      "fx_zscore": -2.12,
+      "pepb_z": {
+        "pe": 1.8348218954196371,
+        "pb": 1.6991138596691007,
+        "eyg": -1.891629452375064,
+        "composite": 15.33
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    },
+    "2026-Q4": {
+      "quarter": "2026-Q4",
+      "as_of": "2026-09-25",
+      "bonds": {
+        "vn1y_yield": 3.8615,
+        "delta_vn1y_yield": 0.004357,
+        "vn10y_yield": 4.4753,
+        "vn_yield_spread": 0.5289,
+        "bond_date": "2026-09-25"
+      },
+      "m2": {
+        "year": 2025,
+        "m2_yoy_pct": 14.98
+      },
+      "fx_zscore": -1.27,
+      "pepb_z": {
+        "pe": 0.8055707548717673,
+        "pb": 0.6810894520369312,
+        "eyg": -1.2509962353563078,
+        "composite": 48.64
+      },
+      "rescored": {
+        "macro_monetary": true,
+        "valuation_leverage": false
+      }
+    }
+  }
+}

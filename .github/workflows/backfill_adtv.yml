@@ -1,0 +1,122 @@
+name: "📈 Backfill ADTV (Market Structure)"
+
+# Backfill chỉ báo ADTV (Average Daily Trading Volume) cho lịch sử 24 quý.
+# Sandbox/dev không có mạng thị trường → chạy trên Actions nơi vnstock hoạt động.
+# Pipeline: backfill_adtv → backfill_calibrated → rebuild HTML/Excel → README → commit.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run (chỉ in so sánh, KHÔNG ghi/commit)"
+        required: false
+        default: false
+        type: boolean
+
+  # Cách kích hoạt trên branch feature (workflow_dispatch cần file nằm trên
+  # default branch): push commit chạm tới chính file này → chạy 1 lần.
+  # Commit kết quả của workflow không chạm file này → không loop.
+  push:
+    branches:
+      - arena/01a0e760-vn-index-scoring-quarterly-qua
+    paths:
+      - ".github/workflows/backfill_adtv.yml"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  backfill-adtv:
+    name: "Backfill ADTV + rescore Market Structure"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────
+      - name: "📁 Checkout repository"
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ───────────────────────────────────────────────────
+      - name: "🐍 Setup Python ${{ env.PYTHON_VERSION }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      # ── 3. Install dependencies ────────────────────────────────────────────
+      - name: "📦 Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── 4. Backfill ADTV (fetch OHLCV vnstock → re-score market_structure) ─
+      # Fail loudly nếu cột volume không dùng được — KHÔNG tự ý dùng số giả.
+      - name: "📊 Backfill ADTV"
+        env:
+          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
+        run: |
+          set -euo pipefail
+          python scripts/backfill_adtv.py --force-fetch ${{ (github.event.inputs.dry_run == 'true') && '--dry-run' || '' }} 2>&1 | tee /tmp/backfill_adtv.log
+          {
+            echo "## 📈 ADTV Backfill"
+            echo '```'
+            cat /tmp/backfill_adtv.log
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
+      # ── 5. Tầng calibrated theo total mới (expanding, point-in-time) ──────
+      - name: "🎯 Recompute calibrated layer"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/backfill_calibrated_scores.py
+
+      # ── 6. Rebuild báo cáo HTML + validators + Excel ───────────────────────
+      - name: "📄 Rebuild HTML reports + Excel"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/rebuild_html.py
+
+      # ── 7. Update README auto-section ──────────────────────────────────────
+      - name: "📝 Update README results"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/update_readme_results.py
+
+      # ── 8. Run tests (đảm bảo không phá gì) ────────────────────────────────
+      # Lưu ý: pytest KHÔNG nằm trong requirements.txt (runtime deps) —
+      # ci_tests.yml cũng phải cài riêng. Quên cài → "No module named pytest".
+      - name: "✅ Unit tests"
+        run: |
+          pip install pytest
+          python -m pytest tests/ -q
+
+      # ── 9. Commit kết quả (plain git — same convention quarterly_scoring.yml)
+      - name: "💾 Commit backfilled outputs"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/scores output/reports output/exports README.md
+          echo "Files staged:"
+          git status --short | head -40
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "feat(adtv): backfill ADTV từ vnindex volume — bỏ N/A 24/24 quý (market_structure)"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
+
+      # ── 10. Summary ────────────────────────────────────────────────────────
+      - name: "📋 Distribution summary"
+        if: always()
+        run: |
+          {
+            echo "## 📊 Phân bố nhãn sau backfill"
+            python - <<'EOF' || true
+          import pandas as pd
+          df = pd.read_parquet("data/scores/quarterly_scores_history.parquet")
+          if {"label", "calibrated_label"} <= set(df.columns):
+              print(df["label"].value_counts().to_string())
+              print()
+              print(df["calibrated_label"].value_counts().to_string())
+          EOF
+          } >> $GITHUB_STEP_SUMMARY

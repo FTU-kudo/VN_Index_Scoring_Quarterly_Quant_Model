@@ -194,11 +194,24 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
     emoji = latest_score.get("emoji", "🟡")
     alloc = latest_score.get("label_allocation") or get_score_label(total)[3]
 
+    # ── Calibrated Action Signal (Tầng 2) ──────────────────────────────────
+    cal_total = latest_score.get("calibrated_score")
+    if cal_total is None:
+        cal_total, cal_label, cal_emoji = total, label, emoji
+        cal_alloc = alloc
+        cal_applied = False
+    else:
+        cal_label = latest_score.get("calibrated_label", get_score_label(float(cal_total))[0])
+        cal_emoji = latest_score.get("calibrated_emoji", "🟡")
+        cal_alloc = latest_score.get("calibrated_allocation", get_score_label(float(cal_total))[3])
+        cal_applied = bool(latest_score.get("calibration_applied"))
+
     # KPI block
     ws.merge_range("B5:C7", f"{total:.1f}", F["big"])
     kpis = [
-        ("Regime / Label",       f"{emoji} {label}"),
-        ("Recommended Equity",   alloc),
+        ("Raw Regime / Label",   f"{emoji} {label} (raw composite)"),
+        ("CALIBRATED ACTION",    f"{cal_emoji} {cal_label} — {float(cal_total):.1f}"),
+        ("Recommended Equity",   f"{cal_alloc} (calibrated)"),
         ("Percentile Signal",    str(latest_score.get("percentile_label", "N/A"))),
         ("Pillar Dispersion",    f'{latest_score.get("dispersion_level", "N/A")} (σ={latest_score.get("pillar_std", "N/A")})'),
         ("Data As-Of",           str(latest_score.get("data_as_of", "N/A"))),
@@ -264,12 +277,14 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
     ws = _sheet("01_Score_History", "#3b82f6")
     ws.set_column("A:A", 2)
     ws.write("B2", "COMPOSITE SCORE HISTORY vs VN-INDEX", F["title"])
-    ws.write("B3", "Pillar columns are weighted contributions (raw × weight). Fwd Return = VN-Index return of the NEXT quarter (signal evaluation).", F["subtitle"])
+    ws.write("B3", "Two-tier scores: Total Score = raw composite (reference) | Calibrated Score = action signal (z-score vs prior quarters, point-in-time). "
+                   "Pillar columns are weighted contributions (raw × weight). Fwd Return = VN-Index return of the NEXT quarter (signal evaluation).", F["subtitle"])
 
-    headers = ["Quarter", "Total Score", "Label", "Percentile Signal", "Dispersion"] + \
+    headers = ["Quarter", "Total Score", "Label (Raw)", "Calibrated Score", "Calibrated Label",
+               "Percentile Signal", "Dispersion"] + \
               [PILLAR_NAMES[k] for k in PILLAR_NAMES] + \
               ["VN-Index Close", "QoQ Return", "Fwd Return (t+1)"]
-    widths = [10, 12, 12, 16, 12] + [19] * 6 + [14, 12, 15]
+    widths = [10, 12, 13, 14, 15, 16, 12] + [19] * 6 + [14, 12, 15]
     r0 = _header(ws, 4, 1, headers, widths)
 
     hist_rows = []
@@ -282,64 +297,81 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
             rets.append((b / a - 1) if (a and b) else None)
         fwd = rets[1:] + [None]
 
+        has_cal = "calibrated_score" in history.columns
         r = r0
         for i, (_, row) in enumerate(history.iterrows()):
+            cal_v = row.get("calibrated_score") if has_cal else None
+            cal_l = str(row.get("calibrated_label") or row["label"]) if has_cal else str(row["label"])
             ws.write(r, 1, row["quarter"], F["td_c"])
             ws.write_number(r, 2, float(row["total_score"]), F["num2"])
             ws.write(r, 3, str(row["label"]), F["td_c"])
-            ws.write(r, 4, str(row.get("percentile_label") or "N/A"), F["td_c"])
-            ws.write(r, 5, str(row.get("dispersion_level") or "N/A"), F["td_c"])
+            if pd.notna(cal_v):
+                ws.write_number(r, 4, float(cal_v), F["num2"])
+            else:
+                ws.write(r, 4, "N/A", F["td_c"])
+            ws.write(r, 5, cal_l, F["td_c"])
+            ws.write(r, 6, str(row.get("percentile_label") or "N/A"), F["td_c"])
+            ws.write(r, 7, str(row.get("dispersion_level") or "N/A"), F["td_c"])
             for j, k in enumerate(PILLAR_NAMES):
                 v = row.get(f"score_{k}")
                 if pd.notna(v):
-                    ws.write_number(r, 6 + j, float(v), F["num2"])
+                    ws.write_number(r, 8 + j, float(v), F["num2"])
                 else:
-                    ws.write(r, 6 + j, "N/A", F["td_c"])
+                    ws.write(r, 8 + j, "N/A", F["td_c"])
             if closes[i] is not None:
-                ws.write_number(r, 12, float(closes[i]), F["num2"])
+                ws.write_number(r, 14, float(closes[i]), F["num2"])
             else:
-                ws.write(r, 12, "N/A", F["td_c"])
-            for cc, val in ((13, rets[i]), (14, fwd[i])):
+                ws.write(r, 14, "N/A", F["td_c"])
+            for cc, val in ((15, rets[i]), (16, fwd[i])):
                 if val is not None:
                     ws.write_number(r, cc, val, F["pct1"])
                 else:
                     ws.write(r, cc, "N/A", F["td_c"])
             hist_rows.append({"quarter": row["quarter"], "score": float(row["total_score"]),
                               "label": str(row["label"]),
+                              "cal_score": float(cal_v) if pd.notna(cal_v) else float(row["total_score"]),
+                              "cal_label": cal_l,
                               "pct_label": str(row.get("percentile_label") or "N/A"),
                               "close": closes[i], "ret": rets[i], "fwd": fwd[i]})
             r += 1
         r_end = r - 1
         ws.freeze_panes(r0, 2)
-        ws.conditional_format(r0, 2, r_end, 2,
-                              {"type": "3_color_scale", "min_color": "#ef4444",
-                               "mid_color": "#fde047", "max_color": "#22c55e",
-                               "min_type": "num", "min_value": 0,
-                               "mid_type": "num", "mid_value": 50,
-                               "max_type": "num", "max_value": 100})
-        ws.conditional_format(r0, 13, r_end, 14,
+        for col in (2, 4):
+            ws.conditional_format(r0, col, r_end, col,
+                                  {"type": "3_color_scale", "min_color": "#ef4444",
+                                   "mid_color": "#fde047", "max_color": "#22c55e",
+                                   "min_type": "num", "min_value": 0,
+                                   "mid_type": "num", "mid_value": 50,
+                                   "max_type": "num", "max_value": 100})
+        ws.conditional_format(r0, 15, r_end, 16,
                               {"type": "3_color_scale", "min_color": "#ef4444",
                                "mid_color": "#ffffff", "max_color": "#22c55e",
                                "min_type": "num", "min_value": -0.2,
                                "mid_type": "num", "mid_value": 0,
                                "max_type": "num", "max_value": 0.2})
 
-        # Dual-axis chart: score vs VN-Index
+        # Dual-axis chart: calibrated score + raw score vs VN-Index
         ch = wb.add_chart({"type": "line"})
         ch.add_series({
-            "name": "Composite Score",
+            "name": "Calibrated Action Score",
+            "categories": ["01_Score_History", r0, 1, r_end, 1],
+            "values":     ["01_Score_History", r0, 4, r_end, 4],
+            "line": {"color": "#8b5cf6", "width": 2.5},
+        })
+        ch.add_series({
+            "name": "Raw Composite Score",
             "categories": ["01_Score_History", r0, 1, r_end, 1],
             "values":     ["01_Score_History", r0, 2, r_end, 2],
-            "line": {"color": "#3b82f6", "width": 2.5},
+            "line": {"color": "#3b82f6", "width": 1.5, "dash_type": "dash"},
         })
         ch.add_series({
             "name": "VN-Index Close",
             "categories": ["01_Score_History", r0, 1, r_end, 1],
-            "values":     ["01_Score_History", r0, 12, r_end, 12],
+            "values":     ["01_Score_History", r0, 14, r_end, 14],
             "line": {"color": "#94a3b8", "width": 1.5, "dash_type": "dash"},
             "y2_axis": True,
         })
-        ch.set_title({"name": "Composite Score (LHS) vs VN-Index (RHS)", "name_font": {"size": 11, "bold": True}})
+        ch.set_title({"name": "Calibrated Action (solid) + Raw Composite (dashed) vs VN-Index (RHS)", "name_font": {"size": 11, "bold": True}})
         ch.set_y_axis({"min": 0, "max": 100, "name": "Score (0-100)"})
         ch.set_y2_axis({"name": "VN-Index"})
         ch.set_size({"width": 900, "height": 320})
@@ -580,28 +612,38 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
     ws.autofilter(4, 1, r - 1, 6)
 
     # ══════════════════════════════════════════════════════════════════════
-    # SHEET 06 — SIGNAL EFFICACY (backtest)
+    # SHEET 06 — SIGNAL EFFICACY (backtest theo tín hiệu CALIBRATED)
     # ══════════════════════════════════════════════════════════════════════
     ws = _sheet("06_Signal_Efficacy", "#ef4444")
     ws.set_column("A:A", 2)
-    ws.write("B2", "SIGNAL EFFICACY — DOES THE SCORE PREDICT NEXT-QUARTER RETURNS?", F["title"])
-    ws.write("B3", "Score at quarter t is evaluated against the VN-Index return over quarter t+1 (point-in-time, no look-ahead).", F["subtitle"])
+    ws.write("B2", "SIGNAL EFFICACY — DOES THE CALIBRATED ACTION SIGNAL PREDICT NEXT-QUARTER RETURNS?", F["title"])
+    ws.write("B3", "Primary test = CALIBRATED action signal (z-score vs prior quarters, point-in-time). Signal at quarter t is evaluated "
+                   "against the VN-Index return over quarter t+1. Raw composite shown as comparison. No look-ahead.", F["subtitle"])
 
     eff = pd.DataFrame([h for h in hist_rows if h["fwd"] is not None])
     if not eff.empty:
-        # Strategy simulation: allocation mid-point × fwd return
-        eff["alloc"] = eff["label"].map(ALLOCATION_MID).fillna(0.5)
+        # Strategy simulation theo tín hiệu CALIBRATED: allocation mid-point × fwd return
+        eff["alloc"] = eff["cal_label"].map(ALLOCATION_MID).fillna(0.5)
         eff["strat_ret"] = eff["alloc"] * eff["fwd"]
-        eff["hit"] = np.where(eff["score"] >= 50, eff["fwd"] > 0, eff["fwd"] < 0)
+        eff["hit"] = np.where(eff["cal_score"] >= 50, eff["fwd"] > 0, eff["fwd"] < 0)
         eff["cum_strategy"] = (1 + eff["strat_ret"]).cumprod() * 100
         eff["cum_bh"] = (1 + eff["fwd"]).cumprod() * 100
 
-        # KPIs
-        ic_p = float(eff["score"].corr(eff["fwd"]))
-        ic_s = _spearman(eff["score"], eff["fwd"])
+        # Raw-composite comparison strategy (cùng cơ chế, nhãn raw)
+        eff["raw_alloc"] = eff["label"].map(ALLOCATION_MID).fillna(0.5)
+        eff["raw_strat_ret"] = eff["raw_alloc"] * eff["fwd"]
+        eff["raw_cum_strategy"] = (1 + eff["raw_strat_ret"]).cumprod() * 100
+
+        # KPIs (calibrated) + comparison (raw)
+        ic_p = float(eff["cal_score"].corr(eff["fwd"]))
+        ic_s = _spearman(eff["cal_score"], eff["fwd"])
+        ic_p_raw = float(eff["score"].corr(eff["fwd"]))
+        ic_s_raw = _spearman(eff["score"], eff["fwd"])
         hit_rate = float(eff["hit"].mean())
+        raw_hit = float(np.where(eff["score"] >= 50, eff["fwd"] > 0, eff["fwd"] < 0).mean())
         n = len(eff)
         strat_tot = eff["cum_strategy"].iloc[-1] / 100 - 1
+        raw_strat_tot = eff["raw_cum_strategy"].iloc[-1] / 100 - 1
         bh_tot = eff["cum_bh"].iloc[-1] / 100 - 1
         strat_vol = float(eff["strat_ret"].std())
         bh_vol = float(eff["fwd"].std())
@@ -609,14 +651,18 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
         sharpe_b = float(eff["fwd"].mean() / bh_vol * np.sqrt(4)) if bh_vol else np.nan
 
         kpi_rows = [
-            ("Quarters evaluated (N)",                 n,        "td_c"),
-            ("Information Coefficient (Pearson)",      ic_p,     "num4"),
-            ("Information Coefficient (Spearman)",     ic_s,     "num4"),
-            ("Directional Hit Rate (score≥50 → up)",   hit_rate, "pct1"),
-            ("Strategy total return (score-scaled)",   strat_tot, "pct1"),
-            ("Buy & Hold total return",                bh_tot,   "pct1"),
-            ("Strategy Sharpe (annualised, rf=0)",     sharpe_s, "num2"),
-            ("Buy & Hold Sharpe (annualised, rf=0)",   sharpe_b, "num2"),
+            ("Quarters evaluated (N)",                          n,             "td_c"),
+            ("IC Calibrated (Pearson)",                         ic_p,          "num4"),
+            ("IC Calibrated (Spearman)",                        ic_s,          "num4"),
+            ("IC Raw composite (Pearson) — comparison",         ic_p_raw,      "num4"),
+            ("IC Raw composite (Spearman) — comparison",        ic_s_raw,      "num4"),
+            ("Directional Hit Rate — calibrated (≥50 → up)",    hit_rate,      "pct1"),
+            ("Directional Hit Rate — raw (comparison)",         raw_hit,       "pct1"),
+            ("Strategy total return — calibrated signal",       strat_tot,     "pct1"),
+            ("Strategy total return — raw signal (comparison)", raw_strat_tot, "pct1"),
+            ("Buy & Hold total return",                         bh_tot,        "pct1"),
+            ("Strategy Sharpe (annualised, rf=0)",              sharpe_s,      "num2"),
+            ("Buy & Hold Sharpe (annualised, rf=0)",            sharpe_b,      "num2"),
         ]
         r = 4
         for name, val, fmt in kpi_rows:
@@ -626,18 +672,18 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
             else:
                 ws.write_number(r, 2, float(val), F[fmt])
             r += 1
-        ws.set_column("B:B", 36)
+        ws.set_column("B:B", 44)
         ws.set_column("C:C", 13)
 
-        # Bucket analysis by label
+        # Bucket analysis by CALIBRATED regime
         r += 1
-        ws.write(r, 1, "FORWARD RETURN BY REGIME BUCKET", F["h2"])
+        ws.write(r, 1, "FORWARD RETURN BY CALIBRATED REGIME BUCKET", F["h2"])
         r = _header(ws, r + 1, 1,
-                    ["Regime (Label)", "N", "Avg Fwd Return", "Median Fwd Return", "Win Rate (fwd>0)"],
+                    ["Calibrated Regime", "N", "Avg Fwd Return", "Median Fwd Return", "Win Rate (fwd>0)"],
                     [18, 6, 15, 17, 16])
         order = ["BUY", "ACCUMULATE", "HOLD", "REDUCE", "SELL"]
         for lbl in order:
-            sub = eff[eff["label"] == lbl]
+            sub = eff[eff["cal_label"] == lbl]
             if sub.empty:
                 continue
             ws.write(r, 1, lbl, F["td_c"])
@@ -647,47 +693,52 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
             ws.write_number(r, 5, float((sub["fwd"] > 0).mean()), F["pct1"])
             r += 1
 
-        # Detail table
+        # Detail table — calibrated ledger (raw giữ cột tham chiếu)
         r += 1
-        ws.write(r, 1, "QUARTER-BY-QUARTER SIGNAL LEDGER", F["h2"])
+        ws.write(r, 1, "QUARTER-BY-QUARTER SIGNAL LEDGER (calibrated)", F["h2"])
         r = _header(ws, r + 1, 1,
-                    ["Quarter", "Score (t)", "Label (t)", "Equity Allocation", "Fwd Return (t+1)",
+                    ["Quarter", "Calibrated (t)", "Calibrated Label", "Equity Allocation",
+                     "Raw Score (t)", "Raw Label", "Fwd Return (t+1)",
                      "Strategy Return", "Hit?", "Strategy Index", "Buy&Hold Index"],
-                    [10, 10, 12, 16, 15, 15, 8, 14, 14])
+                    [10, 14, 16, 16, 12, 11, 15, 15, 8, 14, 14])
         l_start = r
         for _, row in eff.iterrows():
             ws.write(r, 1, row["quarter"], F["td_c"])
-            ws.write_number(r, 2, row["score"], F["num2"])
-            ws.write(r, 3, row["label"], F["td_c"])
+            ws.write_number(r, 2, row["cal_score"], F["num2"])
+            ws.write(r, 3, row["cal_label"], F["td_c"])
             ws.write_number(r, 4, row["alloc"], F["pct0"])
-            ws.write_number(r, 5, row["fwd"], F["pct1"])
-            ws.write_number(r, 6, row["strat_ret"], F["pct1"])
-            ws.write(r, 7, "✓" if row["hit"] else "✗", F["good"] if row["hit"] else F["bad"])
-            ws.write_number(r, 8, row["cum_strategy"], F["num2"])
-            ws.write_number(r, 9, row["cum_bh"], F["num2"])
+            ws.write_number(r, 5, row["score"], F["num2"])
+            ws.write(r, 6, row["label"], F["td_c"])
+            ws.write_number(r, 7, row["fwd"], F["pct1"])
+            ws.write_number(r, 8, row["strat_ret"], F["pct1"])
+            ws.write(r, 9, "✓" if row["hit"] else "✗", F["good"] if row["hit"] else F["bad"])
+            ws.write_number(r, 10, row["cum_strategy"], F["num2"])
+            ws.write_number(r, 11, row["cum_bh"], F["num2"])
             r += 1
         l_end = r - 1
 
         ch = wb.add_chart({"type": "line"})
         ch.add_series({
-            "name": "Score-Scaled Strategy (base=100)",
+            "name": "Calibrated-Signal Strategy (base=100)",
             "categories": ["06_Signal_Efficacy", l_start, 1, l_end, 1],
-            "values":     ["06_Signal_Efficacy", l_start, 8, l_end, 8],
-            "line": {"color": "#3b82f6", "width": 2.5},
+            "values":     ["06_Signal_Efficacy", l_start, 10, l_end, 10],
+            "line": {"color": "#8b5cf6", "width": 2.5},
         })
         ch.add_series({
             "name": "Buy & Hold (base=100)",
             "categories": ["06_Signal_Efficacy", l_start, 1, l_end, 1],
-            "values":     ["06_Signal_Efficacy", l_start, 9, l_end, 9],
+            "values":     ["06_Signal_Efficacy", l_start, 11, l_end, 11],
             "line": {"color": "#94a3b8", "width": 1.5, "dash_type": "dash"},
         })
-        ch.set_title({"name": "Cumulative Growth: Score-Scaled Allocation vs Buy & Hold", "name_font": {"size": 11, "bold": True}})
+        ch.set_title({"name": "Cumulative Growth: Calibrated-Signal Allocation vs Buy & Hold", "name_font": {"size": 11, "bold": True}})
         ch.set_size({"width": 760, "height": 320})
         ws.insert_chart(l_end + 3, 1, ch)
 
         ws.write(l_end + 21, 1,
-                 "Note: strategy holds the mid-point of the recommended equity band (e.g. HOLD = 50%) for the following quarter; "
-                 "residual cash earns 0%. Gross of fees/slippage. Quarterly Sharpe annualised with √4.",
+                 "Note: strategy holds the mid-point of the CALIBRATED recommended equity band (e.g. HOLD = 50%) for the following quarter; "
+                 "residual cash earns 0%. Gross of fees/slippage. Quarterly Sharpe annualised with √4. "
+                 "ICs are reported as-is (no curve-fitting) — low IC means weak directional edge; the calibrated layer primarily restores "
+                 "regime dispersion for allocation sizing, not alpha prediction.",
                  F["note"])
 
     # ══════════════════════════════════════════════════════════════════════
@@ -719,7 +770,9 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
         "MLR: forward VN-Index log-return regressed on macro factors; Newey-West HAC robust standard errors.",
         "VAR + Granger causality: tests whether factors statistically lead VN-Index returns.",
         "ML (XGBoost/RandomForest): trend classification with expanding-window Walk-Forward Validation (no look-ahead).",
-        "Composite score: 6 pillar raw scores (0-100) × fixed weights; labels/allocations from config.py SCORE_LABELS.",
+        "Composite score (TIER 1 - raw): 6 pillar raw scores (0-100) × fixed weights; labels/allocations from config.py SCORE_LABELS. Kept unchanged as the reference layer.",
+        "Calibrated Action Signal (TIER 2): calibrated = clip(center + z_scale × (raw − μ_hist)/σ_hist, 0, 100) where μ/σ come from PRIOR quarters only (expanding window, point-in-time, no look-ahead); parameters in config.py SCORE_CALIBRATION. First 4 quarters (or σ≈0) keep the raw score. Raw composite is never overwritten.",
+        "Anti-compression at source: MLR signal gain 20000 (±0.10%/day → 70/30), VAR gain 5000; missing MLR/VAR/ADTV/ETF signals are excluded from pillar averages (renormalized over live signals) instead of defaulting to neutral 50.",
         "Data: vnstock (HOSE OHLCV, foreign flows, valuation), yfinance/FRED (DXY, US10Y, USD/JPY), SBV (rates, USD/VND), KBNN (VN yield curve).",
         f"Workbook generated at {generated} from output/exports/score_*.json, data/scores/quarterly_scores_history.parquet and data/scores/vnindex_quarterly_close.json.",
         "Disclaimer: for research purposes only. Not financial advice.",

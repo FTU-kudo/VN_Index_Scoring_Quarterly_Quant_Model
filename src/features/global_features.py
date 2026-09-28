@@ -20,7 +20,7 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 
-from src.utils.config import FEATURES_DIR
+from src.utils.config import FEATURES_DIR, DATA_DIR
 from src.features.valuation_features import load_market_pepb_history
 
 # ── Pandas version compat ────────────────────────────────────────────────────
@@ -211,6 +211,80 @@ def build_oil_features(df_oil: pd.DataFrame) -> pd.DataFrame:
 # 3. Net Foreign Flow Features
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# Ngưỡng sanity market cap (tỷ VND): HOSE 2018+ thực tế luôn >= 2,8 triệu tỷ.
+# total_mc từ ticker_history dưới ngưỡng này = dataset chưa đủ số cổ phiếu.
+MC_SANITY_MIN_B_VND = 1_000_000.0
+
+# Vốn hóa HOSE công bố (data/external/hose_market_cap_published.csv) — dùng
+# splice cho giai đoạn ticker_history chưa có MC đầy đủ (trước 2021-04-15).
+HOSE_MC_PUBLISHED_CSV = DATA_DIR / "external" / "hose_market_cap_published.csv"
+
+
+def _splice_published_market_cap(df_mc: pd.DataFrame) -> pd.Series:
+    """
+    Trả về cột total_mc_b (tỷ VND) đã splice:
+      - Ngày có MC ticker HỢP LỆ (>= MC_SANITY_MIN_B_VND): giữ nguyên MC ticker.
+      - Ngày MC ticker NaN/quá nhỏ: thay bằng MC HOSE công bố (nội suy tuyến
+        tính giữa các mốc trong hose_market_cap_published.csv; mốc cuối của
+        chuỗi nội suy = ngày MC ticker đầu tiên hợp lệ — điểm splice).
+
+    Nguyên tắc: KHÔNG bịa số — mọi mốc thay thế đều là số HOSE đã công bố
+    (xem data/external/README.md); MC ticker từ 2021-04-15 là số thật.
+    """
+    mc = df_mc["total_mc_b"].copy()
+    if df_mc.empty:
+        return mc
+
+    if not HOSE_MC_PUBLISHED_CSV.exists():
+        logger.warning(
+            f"[NFF] Không tìm thấy {HOSE_MC_PUBLISHED_CSV} — không splice được "
+            "MC công bố; các ngày MC ticker thiếu sẽ bị drop khỏi chuỗi quý."
+        )
+        return mc
+
+    pub = pd.read_csv(HOSE_MC_PUBLISHED_CSV)
+    pub["date"] = pd.to_datetime(pub["date"])
+    pub = pub.sort_values("date").drop_duplicates(subset="date", keep="last")
+
+    valid = mc.notna() & (mc >= MC_SANITY_MIN_B_VND)
+    n_bad = int((~valid).sum())
+    if n_bad == 0:
+        return mc
+
+    # Mốc splice: ngày MC ticker hợp lệ ĐẦU TIÊN (giá trị thật) làm điểm cuối
+    # của chuỗi nội suy → đảm bảo liên tục khi chuyển nguồn.
+    if valid.any():
+        # (date, value) của ngày MC ticker hợp lệ ĐẦU TIÊN theo thứ tự thời gian
+        fv = df_mc.loc[valid].sort_values("date").iloc[0]
+        first_valid_date, first_valid_val = fv["date"], float(fv["total_mc_b"])
+        if first_valid_date not in set(pub["date"]):
+            pub = pd.concat([pub, pd.DataFrame(
+                {"date": [first_valid_date], "mc_b_vnd": [first_valid_val]})]
+            ).sort_values("date")
+
+    # Nội suy daily theo thời gian (index phải chứa TẤT CẢ các mốc công bố —
+    # nếu không, reindex làm mất mốc cuối và nội suy sai)
+    last_day = max(df_mc["date"].max(), pub["date"].max())
+    idx_all = pd.date_range(pub["date"].min(), last_day, freq="D")
+    pub_s = (pd.Series(pub["mc_b_vnd"].values, index=pub["date"])
+             .reindex(idx_all)
+             .interpolate(method="time"))
+    # clip về khoảng [min, max] của các mốc công bố + splice (không ngoại suy)
+    lo, hi = float(pub["mc_b_vnd"].min()), float(pub["mc_b_vnd"].max())
+    pub_s = pub_s.clip(lower=lo, upper=hi)
+
+    bad_dates = df_mc.loc[~valid, "date"]
+    # as-of backward: mỗi ngày lấy giá trị nội suy của chính ngày đó
+    # (idx_all là daily liên tục nên reindex trực tiếp được)
+    replacement = pub_s.reindex(pd.DatetimeIndex(bad_dates)).values
+    mc[~valid] = replacement
+    logger.info(
+        f"[NFF] MC splice: {n_bad}/{len(mc)} ngày dùng MC HOSE công bố "
+        f"(nội suy giữa các mốc {pub['date'].min().date()}→{pub['date'].max().date()})"
+    )
+    return mc
+
+
 def build_foreign_flow_features(df_ff: pd.DataFrame, df_pepb: pd.DataFrame = None) -> pd.DataFrame:
     """
     Tạo features từ dòng tiền khối ngoại (NFF ex ETF) và ETF Flows.
@@ -240,6 +314,13 @@ def build_foreign_flow_features(df_ff: pd.DataFrame, df_pepb: pd.DataFrame = Non
         # Dùng giá trị xấp xỉ để tránh kết quả ~0 khi không có dữ liệu
         df["total_mc_b"] = 6_000_000.0  # tỷ VND
 
+    # ── Fix 09/2026: splice vốn hóa HOSE công bố cho giai đoạn MC ticker rác ──
+    # ticker_history.parquet chỉ có số cổ phiếu ĐẦY ĐỦ từ ~2021-04-15 (376 mã);
+    # trước đó chỉ 26–142 mã → total_mc ~10 nghìn tỷ (sai lệch ~300 lần so với
+    # thực tế ~3–4 triệu tỷ). Nếu không sửa, nff_pct 2019–2020-Q2/2021 bị phóng
+    # đại ~300 lần và làm bùng nổ expanding mean/std của z-score.
+    df["total_mc_b"] = _splice_published_market_cap(df[["date", "total_mc_b"]])
+
     # Tính theo % market cap (VD: % vốn hóa HOSE)
     df["nff_ex_etf_pct"] = df["nff_ex_etf_vnd"] / df["total_mc_b"]
     df["etf_flow_pct"] = df["etf_flow_vnd"] / df["total_mc_b"]
@@ -267,6 +348,17 @@ def build_foreign_flow_features(df_ff: pd.DataFrame, df_pepb: pd.DataFrame = Non
             df[f"{prefix}_lag{lag}"] = df[col].shift(lag)
 
     # ── Quarterly Resampling & Expanding Z-score ──
+    # Fix 09/2026: bỏ các dòng không có MC hợp lệ (không thể tính pct) và
+    # QUÝ ĐẦU TIÊN nếu chuỗi flows bắt đầu giữa quý (vd 2018-Q3 chỉ có 2 phiên
+    # 30–31/08) — quý thiếu dữ liệu sẽ sai lệch tổng, làm hỏng expanding stats.
+    df = df.dropna(subset=["nff_ex_etf_pct", "etf_flow_pct"]).copy()
+    if not df.empty:
+        first_q = df["date"].dt.to_period("Q").min()
+        q_start = first_q.to_timestamp()
+        if df["date"].min() > q_start + pd.Timedelta(days=7):
+            df = df[df["date"].dt.to_period("Q") > first_q].copy()
+            logger.info(f"[NFF] Bỏ quý đầu không đủ dữ liệu ({first_q}) — chuỗi quý bắt đầu từ quý kế tiếp")
+
     df_q = df.set_index("date").resample(QUARTER_END_FREQ)[["nff_ex_etf_pct", "etf_flow_pct"]].sum().reset_index()
     df_q = df_q.rename(columns={
         "nff_ex_etf_pct": "nff_ex_etf_q_sum",

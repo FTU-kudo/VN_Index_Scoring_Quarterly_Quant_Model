@@ -3,35 +3,51 @@
     "quarter": "2025-Q2",
     "generated_at": "2026-09-27T21:50:24.419150",
     "model_version": "1.0.0",
-    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
+    "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
+    "adtv_backfill": {
+      "applied_at": "2026-09-28 11:17",
+      "source": "vnindex_ohlcv.volume (vnstock VCI)",
+      "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    },
+    "market_data_backfill": {
+      "applied_at": "2026-09-28 12:11",
+      "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
+      "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
+      "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
+    },
+    "flows_backfill": {
+      "applied_at": "2026-09-28 15:48",
+      "source": "VNDirect api-finfo /v4/foreigns — STOCK_HOSE, ETF_HOSE (2018-08-30→nay)",
+      "fix": "bỏ giới hạn fetch 2021 tự đặt; splice MC HOSE công bố trước 2021-04-15"
+    }
   },
   "quarterly_score": {
     "quarter": "2025-Q2",
-    "date_computed": "2026-09-27 21:50",
-    "total_score": 50.97,
+    "date_computed": "2026-09-28 15:48",
+    "total_score": 51.17,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "valuation_leverage",
-    "percentile_label": "REDUCE/SELL",
-    "percentile_p15": 52.104,
-    "percentile_p85": 58.141999999999996,
-    "pillar_std": 6.41,
-    "pillar_range": 18.46,
-    "dispersion_level": "LOW",
+    "percentile_label": "HOLD",
+    "percentile_p15": 50.842,
+    "percentile_p85": 60.199999999999996,
+    "pillar_std": 10.5,
+    "pillar_range": 30.99,
+    "dispersion_level": "MEDIUM",
     "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
-        "raw_score": 58.31,
-        "weighted_score": 14.58
+        "raw_score": 64.28,
+        "weighted_score": 16.07
       },
       "global_intermarket": {
-        "raw_score": 53.47,
-        "weighted_score": 10.69
+        "raw_score": 50.33,
+        "weighted_score": 10.07
       },
       "valuation_leverage": {
-        "raw_score": 39.85,
-        "weighted_score": 7.97
+        "raw_score": 33.29,
+        "weighted_score": 6.66
       },
       "quant_model": {
         "raw_score": 53.27,
@@ -42,8 +58,8 @@
         "weighted_score": 4.67
       },
       "market_structure": {
-        "raw_score": 50.75,
-        "weighted_score": 5.07
+        "raw_score": 57.12,
+        "weighted_score": 5.71
       }
     },
     "group_details": {
@@ -51,13 +67,13 @@
         "vn1y_yield": "2.09% → score 85",
         "ir_trend": "Δ VN1Y = -0.0019 (→ Hold) → score 50",
         "usd_vnd": "Z-score = 0.92 → score 36",
-        "m2_yoy_growth": "<MISSING> N/A → default 50",
+        "m2_yoy_growth": "12.0% YoY → score 80",
         "vn_bonds": "VN10Y 2.88% | Spread 0.69% → score 70"
       },
       "global_intermarket": {
         "dxy": "Z = -1.19 → score 74",
         "us10y": "4.25% → score 15",
-        "nff_ex_etf": "Z = 0.24 (Neutral) → score 54",
+        "nff_ex_etf": "Z = -0.80 (NET SELL) → score 38",
         "nff_ex_etf_q_ytd": "-0.33% of Market Cap (YTD in Q)",
         "jpy_carry": "Z = -0.80 (Neutral) → score 38",
         "oil_shock": "Oil Shock Score = 13.1 (Max Δ5d = 7.7%) → score 87"
@@ -65,7 +81,8 @@
       "valuation_leverage": {
         "pe_zscore": "P/E Headline: 8.93 | Median: 10.69 | Ex-VG: 8.93<br>Z = 1.45 (FAIR VALUE) → score 14",
         "pb_zscore": "Z = 1.62 (OVERVALUED) → score 9",
-        "margin_risk": "Risk = 10/100 (SAFE) → score 90"
+        "margin_risk": "Risk = 10/100 (SAFE) → score 90",
+        "eyg_zscore": "EYG Z-score = -0.85 → score 29"
       },
       "quant_model": {
         "mlr_forecast": "Forward log-return/day (next ~1M) = -0.0004 → score 49",
@@ -80,21 +97,33 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
-        "etf_flow": "Z = -0.25 (Neutral) → score 46",
-        "etf_flow_q_ytd": "-0.00% of Market Cap (YTD in Q)"
+        "adtv": "ADTV change +19.5% QoQ → score 70",
+        "etf_flow": "Z = -0.28 (Neutral) → score 46",
+        "etf_flow_q_ytd": "-0.00% of Market Cap (YTD in Q)",
+        "pillar_components_used": "3/3 components with data → average over 3"
       }
     },
     "group_rationale": {
-      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.09% (low/favorable) | USD/VND z=0.9 (stable) | VN10Y 2.88% (Spread 0.69%)",
-      "global_intermarket": "Global: DXY=-1.2σ | US10Y=4.25% | NFF-Z=0.2σ | JPY-Z=-0.8σ | OIL-SHOCK=13.1",
-      "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
+      "macro_monetary": "Macro: NEUTRAL — VN1Y rate 2.09% (low/favorable) | USD/VND z=0.9 (stable) | M2 growth 12.0% YoY (normal) | VN10Y 2.88% (Spread 0.69%)",
+      "global_intermarket": "Global: DXY=-1.2σ | US10Y=4.25% | NFF-Z=-0.8σ | JPY-Z=-0.8σ | OIL-SHOCK=13.1",
+      "valuation_leverage": "PE Z=1.45 | EYG Z=-0.85 | Margin risk=10",
       "quant_model": "MLR=49 | VAR=49 | R²=0.125 | Granger=1",
       "ml_forecast": "ML: Forecast: NEUTRAL | Quality=37",
-      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
+      "market_structure": "FTSE: UNKNOWN | ADTV: +20% | ETF-Z: -0.3σ"
     },
     "data_as_of": "2025-03-31",
-    "point_in_time": true
+    "point_in_time": true,
+    "calibrated_score": 34.88,
+    "calibrated_label": "SELL",
+    "calibrated_emoji": "🔴",
+    "calibrated_description": "Defensive — Unfavorable environment",
+    "calibrated_allocation": "0–20% Equities",
+    "calibration_applied": true,
+    "calibration_z": -1.0081,
+    "calibration_hist_mean": 56.4476,
+    "calibration_hist_std": 5.2352,
+    "calibration_n_history": 17,
+    "adtv_change_pct": 0.19508
   },
   "mlr_regression": [
     {

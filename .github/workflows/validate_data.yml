@@ -2,7 +2,7 @@ name: "🔍 Daily Data Validation"
 
 on:
   schedule:
-    # Hàng ngày T2-T6 lúc 11:05 UTC = 18:05 ICT (sau giờ đóng cửa VN)
+    # Hàng ngày T2-T6 lúc 11:05 UTC = 18:05 UTC+7 (giờ Việt Nam) (sau giờ đóng cửa VN)
     - cron: "5 11 * * 1-5"
 
   workflow_dispatch: {}
