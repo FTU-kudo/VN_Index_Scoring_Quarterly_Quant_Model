@@ -313,6 +313,23 @@ python scripts/generate_excel_report.py
 #    06_Signal_Efficacy: backtest theo tín hiệu calibrated (raw để đối chiếu)
 ```
 
+#### Cách 4b: Xuất Excel SIÊU CHI TIẾT toàn bộ dữ liệu (`scripts/export_excel_detailed.py`)
+```bash
+python scripts/export_excel_detailed.py
+# -> output/exports/VN_Index_Detailed_Data_Export.xlsx (20 sheet, ~2.200 dòng)
+#    01_Summary / 02-03_Pillars: điểm 24 quý (RAW + calibrated + weighted)
+#    04_Factor_Details: MỖI factor MỖI quý — text gốc + score parse được
+#    05_Market_Inputs / 06_Flows_Audit / 07_ADTV: input thật từng quý
+#      (trái phiếu NS, M2 ADB/GSO, P/E-P/B-EYG z; flows z mới vs cũ)
+#    08_MLR / 09_Granger / 10-12_ML: regression + causality + walk-forward
+#      từng fold + feature importance từng quý
+#    13_Rationale / 14_Index_Prices / 15-16_Nguồn ngoài
+#    17_NA_Register: sổ đăng ký N/A — mục nào fill bằng nguồn nào,
+#      mục nào còn N/A cố ý (pe_zscore 2021 — giới hạn dữ liệu thật)
+# Test: tests/test_excel_detailed_export.py (13 test — đủ 24 quý, khớp
+# parquet lịch sử, flows z 24/24, N/A register trung thực)
+```
+
 #### Cách 5: Chạy Cập nhật Tín hiệu Hàng ngày (`run_daily_update.py`)
 Dùng sau 16:05 ICT mỗi ngày giao dịch để kiểm tra diễn biến giá, dòng tiền khối ngoại và cảnh báo biến động bất thường:
 ```bash
