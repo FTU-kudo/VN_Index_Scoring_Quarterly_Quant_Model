@@ -213,6 +213,15 @@ _HTML_STYLE = """
   /* ── Calibrated Action chip (hero) ─────────────────────────────────── */
   .action-chip { display: inline-block; padding: 10px 22px; border-radius: 999px; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 0.3px; box-shadow: 0 6px 18px -4px rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.35); }
 
+  /* ── Chart series toggle chips (Historical Score Trend) ────────────── */
+  .chart-toggle { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--text-muted); padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--bg-primary); user-select: none; transition: border-color .15s ease, color .15s ease, background .15s ease; }
+  .chart-toggle:hover { border-color: var(--color-blue); }
+  .chart-toggle input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--color-blue); margin: 0; }
+  .chart-toggle input:checked ~ .chart-name { color: var(--text-main); }
+  .chart-toggle input:not(:checked) ~ .chart-swatch { opacity: .35; }
+  .chart-swatch { display: inline-block; width: 18px; height: 4px; border-radius: 2px; flex: none; transition: opacity .15s ease; }
+  .chart-swatch.dashed { background-image: repeating-linear-gradient(90deg, currentColor 0 5px, transparent 5px 9px); background-color: transparent !important; height: 3px; }
+
   /* ── Data Coverage Panel ───────────────────────────────────────────── */
   .coverage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
   .coverage-item { padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); }
@@ -509,6 +518,7 @@ window.MathJax = {
               display: true, 
               position: 'top', 
               align: 'end',
+              onClick: function() { return; },
               labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor, filter: function(item, data) { return !data.datasets[item.datasetIndex].hidden; } }
             },
             tooltip: {
@@ -575,32 +585,38 @@ window.MathJax = {
     }
   }
 
-  // ── Dataset toggles (Raw Composite / VN-Index overlay) ───────────────
-  // Tích hợp thẳng từ scripts/inject_vnindex_chart.py (post-processing
-  // string-replacement đã loại bỏ — dễ gãy âm thầm khi template đổi).
-  // Listener gắn MỘT LẦN ngoài renderCharts để không bị chồng khi re-render.
+  // ── Dataset toggles (checkbox-controlled, read-only chart legend) ─────
+  function syncScoreAxis() {
+      if (!lineChartInstance) return;
+      const raw = lineChartInstance.data.datasets[0];
+      const cal = lineChartInstance.data.datasets.find(d => d.label === 'Calibrated Action');
+      const anyVisible = (raw && !raw.hidden) || (cal && !cal.hidden);
+      lineChartInstance.options.scales.y.display = anyVisible;
+  }
+  const toggleCal = document.getElementById('toggleCalibrated');
+  if (toggleCal) {
+      toggleCal.addEventListener('change', function(e) {
+          if (lineChartInstance) {
+              const calDs = lineChartInstance.data.datasets.find(d => d.label === 'Calibrated Action');
+              if (calDs) { calDs.hidden = !e.target.checked; syncScoreAxis(); lineChartInstance.update(); }
+          }
+      });
+  }
   const toggleVN = document.getElementById('toggleVNIndex');
   if (toggleVN) {
       toggleVN.addEventListener('change', function(e) {
           if (lineChartInstance) {
               const vniDs = lineChartInstance.data.datasets.find(d => d.label === 'VN-Index');
-              if (vniDs) {
-                  vniDs.hidden = !e.target.checked;
-                  lineChartInstance.options.scales.y1.display = e.target.checked;
-                  lineChartInstance.update();
-              }
+              if (vniDs) { vniDs.hidden = !e.target.checked; lineChartInstance.options.scales.y1.display = e.target.checked; lineChartInstance.update(); }
           }
       });
   }
-
   const toggleCS = document.getElementById('toggleCompositeScore');
   if (toggleCS) {
       toggleCS.addEventListener('change', function(e) {
           if (lineChartInstance) {
               if (lineChartInstance.data.datasets.length > 0) {
-                  lineChartInstance.data.datasets[0].hidden = !e.target.checked;
-                  lineChartInstance.options.scales.y.display = e.target.checked;
-                  lineChartInstance.update();
+                  lineChartInstance.data.datasets[0].hidden = !e.target.checked; syncScoreAxis(); lineChartInstance.update();
               }
           }
       });
@@ -973,10 +989,9 @@ def build_html_report(
     score_history: Optional[pd.DataFrame] = None,
 ) -> Path:
     
-    total = score_record.get("total_score", 50)
-    label = score_record.get("label", "HOLD")
-    emoji = score_record.get("emoji", "🟡")
-    desc  = score_record.get("label_description", "")
+    raw_total = float(score_record.get("total_score", 50))
+    raw_label = score_record.get("label", "HOLD")
+    raw_emoji = score_record.get("emoji", "🟡")
     leading = score_record.get("most_divergent_pillar", score_record.get("leading_indicator", ""))
     date_computed = score_record.get("date_computed", "")
 
@@ -988,11 +1003,17 @@ def build_html_report(
     cal_emoji = score_record.get("calibrated_emoji", "🟡")
     cal_alloc = score_record.get("calibrated_allocation", "")
     if cal_total is None:
-        cal_total, cal_label = total, label
-        _, _, _, cal_alloc = get_score_label(float(total))
+        cal_total, cal_label = raw_total, raw_label
+        _, _, _, cal_alloc = get_score_label(float(raw_total))
+    cal_total = float(cal_total)
     cal_color = _LABEL_COLORS.get(cal_label, "#94a3b8")
-
-    score_color = _color_for_score(total)
+    cal_emoji = score_record.get("calibrated_emoji", get_score_label(cal_total)[1])
+    _, _, cal_desc, _ = get_score_label(cal_total)
+    total = cal_total
+    label = cal_label
+    emoji = cal_emoji
+    desc = cal_desc
+    score_color = cal_color
     group_scores = score_record.get("group_scores", {})
     group_details = score_record.get("group_details", {})
     group_rationale = score_record.get("group_rationale", {})
@@ -1027,7 +1048,10 @@ def build_html_report(
       </div>
       <div class="score-big" style="color: {score_color};">{total:.1f}</div>
       <div class="score-label" style="color: {score_color};">{emoji} {label}
-        <span style="font-size:13px; font-weight:500; opacity:.65;">({t('raw composite', 'điểm thô tổng hợp')})</span>
+        <span style="font-size:13px; font-weight:500; opacity:.65;">({t('calibrated action signal', 'tín hiệu hành động hiệu chỉnh')})</span>
+      </div>
+      <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+        {t(f'Raw Composite: {raw_total:.1f} — {raw_label}', f'Điểm thô tổng hợp: {raw_total:.1f} — {raw_label}')}
       </div>
       <div class="score-desc">{t(desc)}</div>
       <div style="margin-top: 16px;">
@@ -1036,8 +1060,8 @@ def build_html_report(
           ⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}
         </span>
         <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
-          {t(f'Calibrated action signal (allocation: {cal_alloc}) — raw composite kept above for reference.',
-             f'Tín hiệu hành động hiệu chỉnh (phân bổ: {cal_alloc}) — điểm thô giữ ở trên để tham chiếu.')}
+          {t(f'Calibrated action signal (allocation: {cal_alloc}) — raw composite shown below for reference.',
+             f'Tín hiệu hành động hiệu chỉnh (phân bổ: {cal_alloc}) — điểm thô hiển thị bên dưới để tham chiếu.')}
         </div>
       </div>
       <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
@@ -1363,23 +1387,33 @@ def build_html_report(
         </script>
         """
         
-        # Toggle cho VN-Index overlay (nếu có dữ liệu giá)
+        calibrated_toggle_html = ""
+        if has_cal:
+            calibrated_toggle_html = f"""
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggleCalibrated" checked>
+                <span class="chart-swatch" style="background:#8b5cf6;"></span>
+                <span class="chart-name lang-en">Calibrated Action</span><span class="chart-name lang-vi">Hành động (calibrated)</span>
+              </label>"""
         vnindex_toggle_html = ""
         if vnindex_prices is not None:
             vnindex_toggle_html = f"""
-              <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
-                <input type="checkbox" id="toggleVNIndex" style="width:16px; height:16px; accent-color: var(--color-blue);">
-                <span class="lang-en">VN-Index</span><span class="lang-vi">VN-Index</span>
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggleVNIndex">
+                <span class="chart-swatch" style="background:#94a3b8;"></span>
+                <span class="chart-name lang-en">VN-Index</span><span class="chart-name lang-vi">VN-Index</span>
               </label>"""
 
         history_html = f"""
         <div class="section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h2 style="margin-bottom: 0;">📈 {t('Historical Score Trend', 'Lịch sử Điểm số Theo Quý')}</h2>
-            <div style="display:flex; gap:16px; justify-content: flex-end; flex-wrap: wrap;">
-              <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
-                <input type="checkbox" id="toggleCompositeScore" checked style="width:16px; height:16px; accent-color: var(--color-amber);">
-                <span class="lang-en">Raw Composite</span><span class="lang-vi">Điểm thô</span>
+            <div style="display:flex; gap:10px; justify-content: flex-end; flex-wrap: wrap;">
+              {calibrated_toggle_html}
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggleCompositeScore" checked>
+                <span class="chart-swatch dashed" style="color:#3b82f6;"></span>
+                <span class="chart-name lang-en">Raw Composite</span><span class="chart-name lang-vi">Điểm thô</span>
               </label>
               {vnindex_toggle_html}
             </div>
