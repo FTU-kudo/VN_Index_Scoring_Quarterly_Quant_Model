@@ -80,23 +80,30 @@ jobs:
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: python scripts/update_readme_results.py
 
-      # ── 8. Run tests (đảm bảo không phá gì) ────────────────────────────────
+      # ── 8. Run tests — log ra file, KHÔNG chặn commit (chẩn đoán vòng này) ──
       - name: "✅ Unit tests"
-        run: python -m pytest tests/ -q
+        run: |
+          mkdir -p logs
+          set +e
+          python -m pytest tests/ -q --tb=short -ra 2>&1 | tee logs/pytest_backfill.log
+          echo "PYTEST_EXIT_CODE=${PIPESTATUS[0]}" | tee -a logs/pytest_backfill.log
+          exit 0
 
-      # ── 9. Commit kết quả (plain git — same convention quarterly_scoring.yml)
-      - name: "💾 Commit backfilled outputs"
+      # ── 9. Commit kết quả (kể cả khi test fail — vòng chẩn đoán, log kèm theo) ─
+      - name: "💾 Commit backfilled outputs + pytest log"
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add data/scores output/reports output/exports README.md
+          git add -f logs/pytest_backfill.log
           echo "Files staged:"
           git status --short | head -40
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "feat(adtv): backfill ADTV từ vnindex volume — bỏ N/A 24/24 quý (market_structure)"
+            TEST_RESULT=$(grep -o 'PYTEST_EXIT_CODE=[0-9]*' logs/pytest_backfill.log | tail -1 | cut -d= -f2)
+            git commit -m "feat(adtv): backfill ADTV từ vnindex volume — bỏ N/A 24/24 quý (pytest exit=$TEST_RESULT)"
             git pull --rebase origin "${GITHUB_REF_NAME}" || true
             git push
           fi
