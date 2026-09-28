@@ -126,8 +126,11 @@ def fetch_foreign_flows(
         df_cache = pd.read_parquet(cache_path)
         
     start_date = pd.to_datetime(start)
-    if start_date < pd.to_datetime("2021-01-01"):
-        start_date = pd.to_datetime("2021-01-01") # API giới hạn từ 2021
+    # Fix 09/2026: API VNDirect thực ra có dữ liệu foreigns từ 2018-08-30
+    # (đã kiểm chứng: STOCK_HOSE/ETF_HOSE đủ 588 phiên trước 2021-01-01).
+    # Giới hạn "2021" cũ là tự đặt → bỏ, chỉ chặn dưới tại mốc dữ liệu sớm nhất.
+    if start_date < pd.to_datetime("2018-08-01"):
+        start_date = pd.to_datetime("2018-08-01")  # API không có dữ liệu trước 2018-08-30
         
     end_date = pd.to_datetime(end)
     
@@ -135,11 +138,26 @@ def fetch_foreign_flows(
     fetch_start = start_date
     if use_cache and df_cache is not None and not df_cache.empty:
         latest = pd.to_datetime(df_cache["date"]).max()
+        earliest = pd.to_datetime(df_cache["date"]).min()
+        # Fix 09/2026: cache "đủ" phải phủ cả CUỐI lẫn ĐẦU chuỗi. Cache cũ chỉ
+        # có 2021+ (thời điểm tưởng API giới hạn 2021) → phải fetch bổ sung
+        # đoạn 2018-08→2020-12 rồi ghép, nếu không expanding z-score mất gốc.
+        start_covered = earliest <= start_date + timedelta(days=15)
         if latest >= end_date - timedelta(days=5):
-            logger.info(f"[FF] Dùng toàn bộ cache foreign flows (đến {latest.date()})")
-            return df_cache
+            if start_covered:
+                logger.info(f"[FF] Dùng toàn bộ cache foreign flows ({earliest.date()} → {latest.date()})")
+                return df_cache
+            logger.info(
+                f"[FF] Cache phủ đến {latest.date()} nhưng thiếu đoạn đầu "
+                f"({start_date.date()} → {earliest.date()}) — fetch bổ sung đoạn 2018-2020"
+            )
+            end_date = earliest - timedelta(days=1)  # fetch chỉ đoạn thiếu, ghép vào cache
         else:
             fetch_start = latest + timedelta(days=1)
+            if not start_covered:
+                logger.info(f"[FF] Cache thiếu cả hai đầu — fetch toàn bộ từ {start_date.date()}")
+                fetch_start = start_date
+                df_cache = None
             logger.info(f"[FF] Fetch thêm dữ liệu foreign flows từ {fetch_start.date()}...")
     else:
         logger.info("[FF] Đang tải Net Foreign Flows từ VNDirect API (toàn bộ)...")
@@ -159,7 +177,8 @@ def fetch_foreign_flows(
         params = {
             'q': q,
             'sort': 'tradingDate',
-            'size': '10000'
+            'size': '10000',
+            'fields': 'code,netVal,tradingDate'
         }
         try:
             r = requests.get(url, params=params, headers=headers, timeout=10)

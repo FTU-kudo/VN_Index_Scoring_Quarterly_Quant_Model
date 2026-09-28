@@ -1,36 +1,41 @@
 # data/external — Dữ liệu nguồn committed (không phải dữ liệu sinh ra bởi pipeline)
 
-## m2_credit_adb_gso.csv
+## hose_market_cap_published.csv
 
-Cung tiền M2 (YoY, %) và tăng trưởng tín dụng (YoY, %) của Việt Nam — quan sát
-**cuối năm**, dùng làm fallback offline cho `fetch_m2_credit_auto()`
-(`src/data/fetcher.py`).
+Vốn hóa niêm yết HOSE (tỷ VND) tại các mốc **đã công bố** — dùng làm mẫu số
+thật cho `nff_pct = net foreign flow / market cap` trong giai đoạn mà
+`ticker_history.parquet` (dataset PE/PB) **chưa có số cổ phiếu đầy đủ**
+(trước ~2021-04-15 dataset chỉ có 26–142 mã → total_mc ~10 nghìn tỷ, sai lệch
+~300 lần so với thực tế ~3–4 triệu tỷ).
 
-### Nguồn từng cột
+### Cách dùng (tự động trong `build_foreign_flow_features`)
 
-- **`m2_yoy_pct` 2015–2024**: ADB Key Indicators Database, SDMX dataflow
-  `DF_MF_MON`, indicator `FM2_PTX_PS` *"Money supply (% annual change)"*,
-  economy `VIE`. Nguồn gốc số liệu theo ADB: **State Bank of Viet Nam**.
-  API: `https://kidb.adb.org/api/v5/sdmx/data/ADB,DF_MF_MON/A.FM2_PTX_PS.VIE?format=sdmx-json`
-  (fetch & đối chiếu ngày 2026-09-28; giá trị làm tròn 2 chữ số thập phân).
-- **`m2_yoy_pct` 2025 = 14.98**: GSO — Báo cáo tình hình kinh tế - xã hội quý IV/2025:
-  *"Tổng phương tiện thanh toán đến ngày 22/12/2025 tăng 14,98% so với cuối năm 2024"*.
-  (`tapchinganhang.gov.vn` đăng lại bản cáohtinh GSO, 2026).
-- **`credit_growth_yoy_pct` 2024 = 15.08**: GSO — tín dụng toàn nền kinh tế năm 2024.
-- **`credit_growth_yoy_pct` 2025 = 17.65**: GSO — tín dụng đến 22/12/2025
-  (cùng báo cáo quý IV/2025 như trên).
-- **`m2_b_vnd`**: để trống — chưa có chuỗi mức (tỷ VND) kiểm chứng được;
-  KHÔNG điền suy đoán.
+- Daily MC = **nội suy tuyến tính theo thời gian** giữa các mốc công bố.
+- Từ **2021-04-15** (ngày đầu tiên ticker_history có MC đầy đủ ≥ 1 triệu tỷ,
+  376 mã): dùng total_mc thật của ticker_history — điểm splice 2021-04-15
+  (4.784.377 tỷ) được thêm làm mốc cuối của chuỗi nội suy.
+- Với mọi ngày có flows mà MC ticker **NaN hoặc < 1.000.000 tỷ** (ngưỡng sanity
+  — HOSE thực tế 2018+ luôn ≥ 2,8 triệu tỷ): thay bằng MC công bố nội suy.
 
-### Nguyên tắc point-in-time
+### Nguồn từng mốc
 
-Mỗi dòng là giá trị YoY **đo tại** ngày `date`. Khi chấm điểm quý Q (as-of cuối
-quý Q−1), `build_macro_features` dùng `merge_asof(direction="backward")` —
-quyết định Q/2021 nhận M2 năm 2020, Q/2022 nhận năm 2021, …
+| Ngày | MC (tỷ VND) | Nguồn |
+|---|---|---|
+| 2018-08-31 | 3.157.672 | Suy từ số HOSE công bố: 31/08/2019 = 3,32 triệu tỷ, +5,13% YoY (Nhân Dân 18/09/2019) → 3.320.000/1,0513 |
+| 2018-12-31 | 2.875.721 | Suy từ số HOSE công bố: 31/12/2019 = 3,28 triệu tỷ, +14,05% YoY (VNEconomy 07/01/2020, báo cáo tổng kết 2019 của HOSE) → 3.280.000/1,1405 |
+| 2019-08-31 | 3.320.000 | HOSE qua Nhân Dân 18/09/2019 |
+| 2019-09-30 | 3.370.000 | HOSE qua Thị trường Tài chính Tiền tệ 20/12/2019 |
+| 2019-11-30 | 3.300.000 | HOSE qua Thị trường Tài chính Tiền tệ 20/12/2019 |
+| 2019-12-31 | 3.280.000 | Báo cáo tổng kết 2019 của HOSE (VNEconomy 07/01/2020) |
+| 2020-12-31 | 4.080.000 | HOSE (VietnamPlus 06/01/2021) |
 
-### 2026 — KHÔNG có số liệu & giữ N/A
+**Chéo-kiểm chứng 2018:** hai nguồn độc lập (YoY của báo cáo tổng kết 2019:
+2.875.721 tỷ; YoY tại 30/11/2019 của Thị trường Tài chính Tiền tệ:
+3.300.000/1,151 = 2.867.072 tỷ) lệch nhau 0,3% — nhất quán.
 
-Đến 28/09/2026, GSO/SBV **chưa công bố** M2 YoY cho bất kỳ tháng nào của 2026
-(đầu 2026 chỉ có mức ~19,6 triệu tỷ, +0,69% so với đầu năm — là mức tăng tuyệt
-đối, không phải YoY, không dùng được). Không bịa số → các quý 2026 dùng giá trị
-2025 theo as-of backward, đúng logic "số đã công bố gần nhất".
+### Giới hạn đã ghi rõ (không che giấu)
+
+- MC 2018–2020 là **nội suy giữa các mốc công bố** (độ lệch thực tế có thể
+  ±5% trong năm) — dùng làm **mẫu số** của tỉ lệ nff/etf, không phải số liệu
+  giao dịch. Tử số (flows) 100% là dữ liệu giao dịch thật từ VNDirect.
+- Từ 2021-04-15 mẫu số là MC thật tính từ ticker_history — không nội suy.

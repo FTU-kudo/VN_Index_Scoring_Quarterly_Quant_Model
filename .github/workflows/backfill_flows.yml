@@ -1,0 +1,129 @@
+name: "🔄 Backfill Foreign Flows (2018→nay)"
+
+# Backfill dòng tiền khối ngoại full-history cho 24 quý:
+#   1. Fetch flows VNDirect từ 2018-08-30 (bỏ giới hạn "2021" tự đặt)
+#   2. Splice vốn hóa HOSE công bố cho giai đoạn MC ticker rác (trước 2021-04-15)
+#   3. Re-score global_intermarket (nff z) + market_structure (etf z)
+# Sandbox không gọi được VNDirect (TLS bị chặn) → chạy trên Actions.
+# Pipeline: backfill_flows → backfill_calibrated → rebuild HTML/Excel → README → commit.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run (chỉ in so sánh, KHÔNG ghi/commit)"
+        required: false
+        default: false
+        type: boolean
+
+  # Kích hoạt trên branch feature: push commit chạm tới chính file này.
+  # Commit kết quả của workflow không chạm file này → không loop.
+  push:
+    branches:
+      - arena/01a0e760-vn-index-scoring-quarterly-qua
+    paths:
+      - ".github/workflows/backfill_flows.yml"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  backfill-flows:
+    name: "Backfill flows full-history"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────
+      - name: "📁 Checkout repository"
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ───────────────────────────────────────────────────
+      - name: "🐍 Setup Python ${{ env.PYTHON_VERSION }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      # ── 3. Install dependencies ────────────────────────────────────────────
+      - name: "📦 Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── 4. Backfill flows (fetch VNDirect 2018→nay + re-score 2 trụ cột) ──
+      # Pre-check bên trong script: q_ytd tính lại PHẢI khớp chuỗi đã lưu,
+      # mọi quý PHẢI có z thật — không khớp → SystemExit (không ghi đè sai).
+      - name: "📊 Backfill flows"
+        run: |
+          set -euo pipefail
+          python scripts/backfill_flows.py ${{ (github.event.inputs.dry_run == 'true') && '--dry-run' || '' }} 2>&1 | tee /tmp/backfill_ff.log
+          {
+            echo "## 🔄 Foreign-Flows Backfill (2018→nay)"
+            echo '```'
+            cat /tmp/backfill_ff.log
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
+      # ── 5. Tầng calibrated theo total mới ────────────────────────────────
+      - name: "🎯 Recompute calibrated layer"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/backfill_calibrated_scores.py
+
+      # ── 6. Rebuild báo cáo HTML + validators + Excel ───────────────────────
+      - name: "📄 Rebuild HTML reports + Excel"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/rebuild_html.py
+
+      # ── 7. Update README auto-section ──────────────────────────────────────
+      - name: "📝 Update README results"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python scripts/update_readme_results.py
+
+      # ── 8. Run tests ───────────────────────────────────────────────────────
+      - name: "✅ Unit tests"
+        run: |
+          pip install pytest
+          python -m pytest tests/ -q
+
+      # ── 9. Commit kết quả ─────────────────────────────────────────────────
+      - name: "💾 Commit backfilled outputs"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/scores output/reports output/exports README.md data/external
+          echo "Files staged:"
+          git status --short | head -40
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "feat(flows): backfill foreign flows 2018→nay — bỏ N/A 5 quý + sửa expanding stats nhiễm MC rác"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
+
+      # ── 10. Summary ────────────────────────────────────────────────────────
+      - name: "📋 N/A scan sau backfill"
+        if: always()
+        run: |
+          {
+            echo "## 🚧 N/A còn lại sau backfill flows"
+            python - <<'EOF' || true
+          import glob, json
+          from collections import Counter
+          na = Counter()
+          for f in sorted(glob.glob("output/exports/score_*.json")):
+              rec = json.load(open(f))["quarterly_score"]
+              for grp, dets in rec["group_details"].items():
+                  for k, v in dets.items():
+                      if "<MISSING>" in str(v):
+                          na[k] += 1
+          print("Chỉ báo còn N/A (trên 24 quý):")
+          for k, c in sorted(na.items(), key=lambda x: -x[1]):
+              print(f"  {k}: {c}/24")
+          if not na:
+              print("  (không còn)")
+          EOF
+          } >> $GITHUB_STEP_SUMMARY

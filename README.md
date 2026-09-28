@@ -76,8 +76,13 @@ Các quý gấu 2022 và giai đoạn 2026 ra tín hiệu phòng thủ đúng: *
 > - **P/E-P/B-EYG Z-score**: min_periods hạ từ 2,5 năm (630 phiên) xuống **252 phiên** (~1 năm) vì series P/E ex-Vingroup chỉ bắt đầu ~2020-12 (thiếu số cổ phiếu lưu thông trước đó). z đầu tiên hợp lệ 2021-12-20 → fixes pe_zscore 6 quý 2022-Q1→2023-Q2; **giá trị Z các ngày đủ 2,5 năm dữ liệu giữ nguyên** (pre-check 28/28 khớp). EYG = 1/PE − VN10Y giờ được truyền đúng qua `df_macro` — trước đây **âm thầm default 50 ở cả 24/24 quý**.
 > - Audit input thật từng quý: `data/scores/vnindex_quarterly_market_data.json`.
 
+> **🔄 Dòng tiền khối ngoại (fix 09/2026, đợt 2 — hết N/A flows 5 quý 2021-Q1→2022-Q1):**
+> - **Phát hiện khi kiểm tra API VNDirect** (`api-finfo.vndirect.com.vn/v4/foreigns`): dữ liệu `STOCK_HOSE`/`ETF_HOSE` thực ra có từ **2018-08-30** (588 phiên trước 2021-01) — giới hạn "API chỉ từ 2021" trong fetcher là tự đặt, không phải của API. Đã bỏ → chuỗi quý flows bắt đầu 2018-Q4 → **cả 24 quyết định quý đều có z-score thật** (trước đây 5 quý đầu N/A default 50).
+> - **Sửa kèm bug ngầm**: dataset PE/PB chỉ có số cổ phiếu đầy đủ từ 2021-04-15; trước đó total_mc ~11 nghìn tỷ (26–142 mã, sai lệch ~300 lần) → quý 2021-Q1 trong expanding stats của MỌI z flows đã lưu bị phóng đại (q_ytd lên tới ~250% MC). Fix: **splice vốn hóa HOSE công bố** (data/external/hose_market_cap_published.csv — các mốc 2018-2020 do HOSE báo cáo, nội suy tuyến tính; MC thật từ 2021-04-15). z của các quý 2022+ được tính lại với cửa sổ expanding dài và sạch hơn.
+> - Pre-check trong backfill: q_ytd (% of Market Cap) tính lại phải khớp chuỗi đã lưu ở mọi quý có dữ liệu; mọi quý phải có z — sai là DỪNG. Audit input từng quý: `data/scores/vnindex_quarterly_flows.json`.
+> - Smoke-test dữ liệu thật (đã kiểm chứng 09/2026): Q4/2020 khối ngoại HOSE bán ròng −15.070 tỷ (−0.44% MC) → z = **−2.03** cho quyết định 2021-Q1 (trước đây default 50).
+
 > **🚧 N/A còn lại sau backfill 09/2026 — giới hạn dữ liệu THẬT, cố tình không điền:**
-> - `nff_ex_etf` / `etf_flow` z-score: **5 quý 2021-Q1→2022-Q1**. API VNDirect (nguồn giao dịch khối ngoại) chỉ phục vụ dữ liệu từ 2021-01; z-score cần 4 quý đã kết thúc trước đó → quý sớm nhất có z là 2022-Q2. Không có nguồn giao dịch khối ngoại HOSE 2019-2020 tiếp cận được theo chương trình.
 > - `pe_zscore` / `pb_zscore` / `eyg_zscore`: **4 quý 2021-Q1→Q4**. Series P/E-P/B ex-Vingroup (tính từ market cap = giá × số cổ phiếu lưu thông) chỉ bắt đầu ~2020-12 trong bộ dữ liệu PE_PB_HOSE_stocks; cần 252 phiên cho z-score → z đầu tiên 2021-12-20, sau as-of của mọi quyết định 2021 (mới nhất là 2021-09-30) nên 2021-Q1→Q4 vẫn N/A; quyết định 2022-Q1 (as-of 2021-12-31) trở đi đã có z thật.
 > - Nguyên tắc: **thiếu dữ liệu → default trung lập 50 (hoặc renormalize), không nội suy, không suy đoán**. Mọi con số trong exports đều truy vết được về nguồn công bố.
 
