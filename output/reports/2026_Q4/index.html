@@ -140,6 +140,15 @@
   /* ── Calibrated Action chip (hero) ─────────────────────────────────── */
   .action-chip { display: inline-block; padding: 10px 22px; border-radius: 999px; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 0.3px; box-shadow: 0 6px 18px -4px rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.35); }
 
+  /* ── Chart series toggle chips (Historical Score Trend) ────────────── */
+  .chart-toggle { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--text-muted); padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--bg-primary); user-select: none; transition: border-color .15s ease, color .15s ease, background .15s ease; }
+  .chart-toggle:hover { border-color: var(--color-blue); }
+  .chart-toggle input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--color-blue); margin: 0; }
+  .chart-toggle input:checked ~ .chart-name { color: var(--text-main); }
+  .chart-toggle input:not(:checked) ~ .chart-swatch { opacity: .35; }
+  .chart-swatch { display: inline-block; width: 18px; height: 4px; border-radius: 2px; flex: none; transition: opacity .15s ease; }
+  .chart-swatch.dashed { background-image: repeating-linear-gradient(90deg, currentColor 0 5px, transparent 5px 9px); background-color: transparent !important; height: 3px; }
+
   /* ── Data Coverage Panel ───────────────────────────────────────────── */
   .coverage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
   .coverage-item { padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); }
@@ -315,23 +324,26 @@
         <span class="lang-en">VN-INDEX QUARTERLY QUANTITATIVE SCORE</span><span class="lang-vi">ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ</span> — 2026-Q4
         &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-28 15:48
       </div>
-      <div class="score-big" style="color: var(--color-amber);">47.2</div>
-      <div class="score-label" style="color: var(--color-amber);">🟠 REDUCE
-        <span style="font-size:13px; font-weight:500; opacity:.65;">(<span class="lang-en">raw composite</span><span class="lang-vi">điểm thô tổng hợp</span>)</span>
+      <div class="score-big" style="color: #ef4444;">29.4</div>
+      <div class="score-label" style="color: #ef4444;">🔴 SELL
+        <span style="font-size:13px; font-weight:500; opacity:.65;">(<span class="lang-en">calibrated action signal</span><span class="lang-vi">tín hiệu hành động hiệu chỉnh</span>)</span>
       </div>
-      <div class="score-desc"><span class="lang-en">Reduce exposure — Increasing pressure</span><span class="lang-vi">Giảm tỷ trọng — Áp lực tăng</span></div>
+      <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+        <span class="lang-en">Raw Composite: 47.2 — REDUCE</span><span class="lang-vi">Điểm thô tổng hợp: 47.2 — REDUCE</span>
+      </div>
+      <div class="score-desc"><span class="lang-en">Defensive — Unfavorable environment</span><span class="lang-vi">Phòng thủ — Môi trường bất lợi</span></div>
       <div style="margin-top: 16px;">
         <span class="action-chip" style="background:#ef4444;"
               title="Calibrated Action Signal — z-score vs prior quarters (expanding, point-in-time) · Tín hiệu hành động hiệu chỉnh — z-score so với các quý trước (point-in-time)">
           ⚡ HÀNH ĐỘNG: 🔴 SELL — 29.4
         </span>
         <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
-          <span class="lang-en">Calibrated action signal (allocation: 0–20% Equities) — raw composite kept above for reference.</span><span class="lang-vi">Tín hiệu hành động hiệu chỉnh (phân bổ: 0–20% Equities) — điểm thô giữ ở trên để tham chiếu.</span>
+          <span class="lang-en">Calibrated action signal (allocation: 0–20% Equities) — raw composite shown below for reference.</span><span class="lang-vi">Tín hiệu hành động hiệu chỉnh (phân bổ: 0–20% Equities) — điểm thô hiển thị bên dưới để tham chiếu.</span>
         </div>
       </div>
       <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
         <div class="progress-bar">
-          <div class="progress-fill" style="width:47.2%; background:var(--color-amber);"></div>
+          <div class="progress-fill" style="width:29.37%; background:#ef4444;"></div>
         </div>
       </div>
       <div style="margin-top: 14px; color: var(--text-muted); font-size: 14px;">
@@ -489,9 +501,9 @@
         </div></div>
     </div>
         
-    <div class="section" style="border-color:var(--color-amber);">
-      <h2>🟠 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2026-Q4</h2>
-      <h3 style="color:var(--color-amber);">REDUCE: Reduce exposure — Increasing pressure</h3>
+    <div class="section" style="border-color:#ef4444;">
+      <h2>🔴 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2026-Q4</h2>
+      <h3 style="color:#ef4444;">SELL: Defensive — Unfavorable environment</h3>
       <div class="rationale">
         <span class="lang-en">This is a quantitative analysis report. Please combine with fundamental analysis and your risk tolerance before making investment decisions.</span><span class="lang-vi">Đây là báo cáo phân tích định lượng. Vui lòng kết hợp với phân tích cơ bản và mức độ chịu đựng rủi ro cá nhân trước khi ra quyết định đầu tư.</span>
       </div>
@@ -708,15 +720,23 @@
         <div class="section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h2 style="margin-bottom: 0;">📈 <span class="lang-en">Historical Score Trend</span><span class="lang-vi">Lịch sử Điểm số Theo Quý</span></h2>
-            <div style="display:flex; gap:16px; justify-content: flex-end; flex-wrap: wrap;">
-              <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
-                <input type="checkbox" id="toggleCompositeScore" checked style="width:16px; height:16px; accent-color: var(--color-amber);">
-                <span class="lang-en">Raw Composite</span><span class="lang-vi">Điểm thô</span>
+            <div style="display:flex; gap:10px; justify-content: flex-end; flex-wrap: wrap;">
+              
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggleCalibrated" checked>
+                <span class="chart-swatch" style="background:#8b5cf6;"></span>
+                <span class="chart-name lang-en">Calibrated Action</span><span class="chart-name lang-vi">Hành động (calibrated)</span>
+              </label>
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggleCompositeScore" checked>
+                <span class="chart-swatch dashed" style="color:#3b82f6;"></span>
+                <span class="chart-name lang-en">Raw Composite</span><span class="chart-name lang-vi">Điểm thô</span>
               </label>
               
-              <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:500; color:var(--text-muted);">
-                <input type="checkbox" id="toggleVNIndex" style="width:16px; height:16px; accent-color: var(--color-blue);">
-                <span class="lang-en">VN-Index</span><span class="lang-vi">VN-Index</span>
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggleVNIndex">
+                <span class="chart-swatch" style="background:#94a3b8;"></span>
+                <span class="chart-name lang-en">VN-Index</span><span class="chart-name lang-vi">VN-Index</span>
               </label>
             </div>
           </div>
@@ -891,8 +911,8 @@
             <h3 style="margin-top: 0; color: var(--color-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <span class="lang-en">Quarterly Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư theo Quý</span>
             </h3>
-            <p><strong><span class="lang-en">Current Score</span><span class="lang-vi">Điểm số hiện tại</span>:</strong> <span style="color: var(--color-amber); font-weight: bold;">47.2 / 100 (REDUCE)</span></p>
-            <p style="line-height: 1.6;"><strong><span class="lang-en">Recommendation</span><span class="lang-vi">Khuyến nghị</span>:</strong> <span class="lang-en">Based on the aggregate quantitative score, the current market environment is classified as REDUCE. Investors are advised to align their equity exposure with this regime, utilizing the 'Pillars Analysis' to identify the specific macro or valuation drivers behind this score.</span><span class="lang-vi">Dựa trên tổng điểm định lượng, môi trường thị trường hiện tại được phân loại là REDUCE. Nhà đầu tư được khuyến nghị điều chỉnh tỷ trọng cổ phiếu theo trạng thái này, đồng thời sử dụng 'Phân rã Điểm số' để nhận diện các động lực vĩ mô hoặc định giá cụ thể đứng sau mức điểm này.</span></p>
+            <p><strong><span class="lang-en">Current Score</span><span class="lang-vi">Điểm số hiện tại</span>:</strong> <span style="color: #ef4444; font-weight: bold;">29.4 / 100 (SELL)</span></p>
+            <p style="line-height: 1.6;"><strong><span class="lang-en">Recommendation</span><span class="lang-vi">Khuyến nghị</span>:</strong> <span class="lang-en">Based on the aggregate quantitative score, the current market environment is classified as SELL. Investors are advised to align their equity exposure with this regime, utilizing the 'Pillars Analysis' to identify the specific macro or valuation drivers behind this score.</span><span class="lang-vi">Dựa trên tổng điểm định lượng, môi trường thị trường hiện tại được phân loại là SELL. Nhà đầu tư được khuyến nghị điều chỉnh tỷ trọng cổ phiếu theo trạng thái này, đồng thời sử dụng 'Phân rã Điểm số' để nhận diện các động lực vĩ mô hoặc định giá cụ thể đứng sau mức điểm này.</span></p>
         </div>
 
         <div class="card">
@@ -1172,6 +1192,7 @@ window.MathJax = {
               display: true, 
               position: 'top', 
               align: 'end',
+              onClick: function() { return; },
               labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: '600' }, color: textColor, filter: function(item, data) { return !data.datasets[item.datasetIndex].hidden; } }
             },
             tooltip: {
@@ -1238,32 +1259,38 @@ window.MathJax = {
     }
   }
 
-  // ── Dataset toggles (Raw Composite / VN-Index overlay) ───────────────
-  // Tích hợp thẳng từ scripts/inject_vnindex_chart.py (post-processing
-  // string-replacement đã loại bỏ — dễ gãy âm thầm khi template đổi).
-  // Listener gắn MỘT LẦN ngoài renderCharts để không bị chồng khi re-render.
+  // ── Dataset toggles (checkbox-controlled, read-only chart legend) ─────
+  function syncScoreAxis() {
+      if (!lineChartInstance) return;
+      const raw = lineChartInstance.data.datasets[0];
+      const cal = lineChartInstance.data.datasets.find(d => d.label === 'Calibrated Action');
+      const anyVisible = (raw && !raw.hidden) || (cal && !cal.hidden);
+      lineChartInstance.options.scales.y.display = anyVisible;
+  }
+  const toggleCal = document.getElementById('toggleCalibrated');
+  if (toggleCal) {
+      toggleCal.addEventListener('change', function(e) {
+          if (lineChartInstance) {
+              const calDs = lineChartInstance.data.datasets.find(d => d.label === 'Calibrated Action');
+              if (calDs) { calDs.hidden = !e.target.checked; syncScoreAxis(); lineChartInstance.update(); }
+          }
+      });
+  }
   const toggleVN = document.getElementById('toggleVNIndex');
   if (toggleVN) {
       toggleVN.addEventListener('change', function(e) {
           if (lineChartInstance) {
               const vniDs = lineChartInstance.data.datasets.find(d => d.label === 'VN-Index');
-              if (vniDs) {
-                  vniDs.hidden = !e.target.checked;
-                  lineChartInstance.options.scales.y1.display = e.target.checked;
-                  lineChartInstance.update();
-              }
+              if (vniDs) { vniDs.hidden = !e.target.checked; lineChartInstance.options.scales.y1.display = e.target.checked; lineChartInstance.update(); }
           }
       });
   }
-
   const toggleCS = document.getElementById('toggleCompositeScore');
   if (toggleCS) {
       toggleCS.addEventListener('change', function(e) {
           if (lineChartInstance) {
               if (lineChartInstance.data.datasets.length > 0) {
-                  lineChartInstance.data.datasets[0].hidden = !e.target.checked;
-                  lineChartInstance.options.scales.y.display = e.target.checked;
-                  lineChartInstance.update();
+                  lineChartInstance.data.datasets[0].hidden = !e.target.checked; syncScoreAxis(); lineChartInstance.update();
               }
           }
       });
