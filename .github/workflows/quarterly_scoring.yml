@@ -109,15 +109,26 @@ jobs:
           retention-days: 90
 
       # ── 7. Commit scores to repo ───────────────────────────────────────────
-      - name: "💾 Commit quarterly scores history"
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: quarterly score ${{ steps.set-quarter.outputs.quarter }}"
-          file_pattern: |
-            data/scores/*.parquet
-            output/reports/**/*.html
-            output/exports/*.json
-          commit_author: "GitHub Actions <actions@github.com>"
+      # Dùng git thuần thay cho git-auto-commit-action: action này với
+      # file_pattern nhiều dòng đã âm thầm bỏ sót HTML/JSON (chỉ commit
+      # được parquet) — phát hiện & xác minh bằng diagnostic run 09/2026.
+      # git add theo THƯ MỤC còn bao phủ cả các file pattern cũ bỏ quên
+      # (quarters.json, README.md do pipeline tự cập nhật).
+      - name: "💾 Commit quarterly outputs (plain git)"
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/scores output/reports output/exports README.md
+          echo "Files staged:"
+          git status --short | head -40
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: quarterly score ${{ steps.set-quarter.outputs.quarter }}"
+            # Rebase phòng trường hợp có commit khác chen vào giữa lúc chạy
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
 
       # ── 8. Summary ────────────────────────────────────────────────────────
       - name: "📋 Job summary"
