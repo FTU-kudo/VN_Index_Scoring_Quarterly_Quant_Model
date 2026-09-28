@@ -5,14 +5,14 @@
     "model_version": "1.0.0",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
     "adtv_backfill": {
-      "applied_at": "2026-09-28 11:15",
+      "applied_at": "2026-09-28 11:17",
       "source": "vnindex_ohlcv.volume (vnstock VCI)",
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
     }
   },
   "quarterly_score": {
     "quarter": "2025-Q2",
-    "date_computed": "2026-09-28 11:15",
+    "date_computed": "2026-09-28 11:17",
     "total_score": 51.63,
     "label": "HOLD",
     "emoji": "🟡",
