@@ -37,6 +37,7 @@ from src.features.macro_features import build_macro_features
 from src.features.global_features import build_global_features
 from src.features.valuation_features import build_valuation_leverage_features
 from src.features.technical_features import add_technical_indicators
+from src.features.market_structure_features import compute_adtv_change_pct
 from src.models.regression.mlr_model import MLRModel
 from src.models.var.var_model import VARModel
 from src.models.ml.ml_model import (
@@ -365,6 +366,20 @@ def run_pipeline(args: argparse.Namespace) -> None:
         f"| etf_flow_q_ytd={latest.get('etf_flow_q_ytd', 'N/A')}"
     )
 
+    # ── ADTV: khối lượng giao dịch bình quân mỗi phiên (point-in-time) ──────
+    # ADTV(Q−1)/ADTV(Q−2) − 1 — chỉ dùng 2 quý ĐÃ KẾT THÚC trước quý đang chấm.
+    # Trước đây chưa bao giờ truyền → chỉ báo ADTV luôn N/A trong trụ cột
+    # Market Structure. Dữ liệu volume lấy từ chính OHLCV vnstock đã fetch.
+    adtv_change_pct = (
+        compute_adtv_change_pct(df_latest_full, quarter)
+        if len(df_latest_full) > 0 else None
+    )
+    if adtv_change_pct is None:
+        logger.warning(
+            f"[ADTV] Không tính được ADTV change cho {quarter} — "
+            "chỉ báo ADTV sẽ bị loại khỏi trung bình trụ cột Market Structure (không dùng 50 giả)."
+        )
+
     # ── Xác định tình trạng FTSE theo lịch sử (nếu auto) ─────────────────────
     if args.ftse_status == "auto":
         y_str, q_str = quarter.split("-Q")
@@ -392,6 +407,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
         ml_pred_class=ml_pred_class,
         ml_confidence=ml_confidence,
         ftse_upgrade_status=actual_ftse_status,
+        adtv_change_pct=adtv_change_pct,
     )
 
     # ── Minh bạch point-in-time ───────────────────────────────────────────────
