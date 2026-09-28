@@ -133,6 +133,11 @@ VN30_TICKERS = get_vn30_tickers()
 # ── Tham số mô hình MLR ───────────────────────────────────────────────────────
 MLR_LAG_PERIODS = [1, 2, 3, 4]   # Lag 1-4 tuần cho biến độc lập
 MLR_TRAIN_RATIO = 0.75            # 75% train / 25% test
+# Horizon dự báo forward của MLR (phiên giao dịch, ~1 tháng).
+# Target = TRUNG BÌNH log-return/ngày của {h} phiên KẾ TIẾP (t+1..t+h) —
+# không phải return cùng ngày (nowcast). Giữ scale per-day để tương thích
+# với hệ số quy đổi điểm trong quarterly_scorer (50 + pred*3000).
+MLR_FORECAST_HORIZON_DAYS = 21
 
 # ── Tham số mô hình VAR ───────────────────────────────────────────────────────
 VAR_MAX_LAGS    = 8               # AIC/BIC lựa chọn lag tối ưu trong [1, 8]

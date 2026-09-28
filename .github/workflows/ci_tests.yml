@@ -1,0 +1,66 @@
+name: "✅ CI — Unit Tests"
+
+on:
+  # Chạy trên mọi push có thay đổi code / test / dependencies
+  push:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "scripts/**"
+      - "run_quarterly.py"
+      - "run_daily_update.py"
+      - "requirements.txt"
+      - "pytest.ini"
+      - ".github/workflows/ci_tests.yml"
+
+  # Chạy trên mọi pull request vào main
+  pull_request:
+    branches: [main]
+
+  # Cho phép chạy thủ công
+  workflow_dispatch: {}
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  tests:
+    name: "Pytest (Python ${{ matrix.python-version }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: "📁 Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: "📦 Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: "🔎 Syntax check (compileall)"
+        run: python -m compileall -q src/ tests/ run_quarterly.py run_daily_update.py
+
+      - name: "🧪 Run pytest"
+        env:
+          PYTHONUTF8: 1
+        run: python -m pytest tests/ -v --tb=short
+
+      - name: "📋 Job summary"
+        if: always()
+        run: |
+          echo "## ✅ CI — Unit Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Python: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Kết quả: xem chi tiết ở step **Run pytest** phía trên." >> $GITHUB_STEP_SUMMARY

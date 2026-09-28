@@ -28,13 +28,14 @@ output/charts/
 # Handoff notes (private session handover)
 HANDOFF.md
 
-# Temp / scratch files at repo root (recurring cleanup issue)
-# Commit vào tests/ nếu cần giữ lại, hoặc bỏ vào .gitignore này
-/temp.txt
-/actions_log.txt
-/check_actions.py
-/test_oil.py
-/HANDOFF_backup.md
-# Generic: không commit file .txt và .log tạm ở root
-/*.tmp
-/scratch_*.py
+# Temp / scratch files — chặn ở MỌI thư mục (recurring cleanup issue)
+temp.txt
+actions_log.txt
+check_actions.py
+HANDOFF*.md
+*.tmp
+scratch_*.py
+debug_*.parquet
+
+# Archive / scratch scripts (đã dọn 2026-09: không commit lại)
+scripts/archive/

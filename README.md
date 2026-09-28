@@ -38,6 +38,7 @@ Hệ thống đánh giá thị trường dựa trên thang điểm chuẩn hóa 
 | 6 | **Market Structure & FTSE** | **10%** | FTSE upgrade status, rebalancing proximity, ADTV change | Cấu trúc vi mô & nâng hạng |
 
 > **⚠️ Lưu ý về phương pháp luận (Methodology Notes):**
+> - **Point-in-time đầu quý (nguyên tắc buy-side)**: Quyết định phân bổ được ra vào ngày giao dịch đầu tiên của quý, do đó điểm số quý Q chỉ được tính từ dữ liệu có đến hết phiên cuối cùng của quý Q-1 — áp dụng **đồng nhất cho cả chạy live lẫn backfill lịch sử** (xem `src/utils/dates.py`). Các cột `*_q_ytd` tại cut-off này chính là giá trị cộng dồn trọn quý vừa kết thúc. Trường `data_as_of` trong mỗi JSON export cho phép audit chính xác điểm được tính từ thông tin đến ngày nào. Lần chạy giám sát giữa quý dùng `--as-of YYYY-MM-DD` và bị đánh dấu `point_in_time=false` để không lẫn vào backtest.
 > - **Hệ số quy đổi**: Các hàm chuyển đổi raw → score 0-100 (ví dụ: `vn1y_score = 100 - (vn1y-1.0)*14.0`, `mlr_score = 50 + pred*3000`) là heuristics được calibrate theo expert judgment. Hướng cải tiến: chuyển sang percentile rank thực tế trên cửa sổ expanding/rolling.
 > - **Chỉ báo kỹ thuật ngắn hạn**: Một số indicators (RSI-14, MACD daily) có chu kỳ ngắn hơn đáng kể so với tần suất ra quyết định hàng quý (3 tháng). Hệ thống sử dụng giá trị snapshot tại thời điểm chấm điểm — đây là trade-off có chủ đích giữa tính kịp thời (timeliness) và tính ổn định (stability).
 > - **Most Divergent Pillar**: Trường `most_divergent_pillar` trong output là nhóm có raw score lệch xa 50 nhất — đây là heuristic đơn giản, KHÔNG phải kết quả từ Granger Causality test. Granger tests được dùng riêng trong mô hình VAR để xếp hạng biến giải thích.
@@ -54,7 +55,9 @@ Thiết lập phương trình dự báo lợi suất VN-Index chu kỳ tiếp th
 $$
 R_{t+h} = \alpha + \beta_1 \Delta \text{VN1Y}_t + \beta_2 \Delta \text{US10Y}_t + \beta_3 \Delta \text{DXY}_t + \beta_4 \text{NFF}_t + \beta_5 \text{PE-Zscore}_t + \beta_6 \Delta \text{Margin}_t + \beta_7 \Delta \text{USD/JPY}_t + \epsilon_t
 $$
-- **Newey-West HAC Standard Errors**: Tự động hiệu chỉnh sai số nhằm giải quyết hiện tượng phương sai thay đổi (Heteroskedasticity) và tự tương quan (Autocorrelation).
+- **Dự báo thuần túy (Predictive, không nowcast)**: Biến phụ thuộc là **trung bình log-return/ngày của $h = 21$ phiên kế tiếp** ($t+1 \dots t+h$, ~1 tháng giao dịch); biến giải thích chỉ dùng thông tin đã biết tại cuối phiên $t$ — không chứa return cùng ngày.
+- **Newey-West HAC Standard Errors**: Tự động hiệu chỉnh sai số nhằm giải quyết hiện tượng phương sai thay đổi (Heteroskedasticity) và tự tương quan (Autocorrelation); `maxlags ≥ h` để xử lý autocorrelation phát sinh từ overlapping forward windows.
+- **Đánh giá Out-of-Sample**: Model được đánh giá trên 25% dữ liệu cuối (holdout, không shuffle) với hit-rate (đúng dấu) và OOS R² — thước đo trung thực về khả năng dự báo, tách biệt với R² in-sample.
 - **Phân tích độ nhạy**: Đánh giá chính xác $p$-value và hệ số $\beta$ chuẩn hóa để xếp hạng mức độ ảnh hưởng của từng biến số.
 
 ### 2. Mô hình Tự Hồi quy Vectơ (Vector Autoregression - VAR)
@@ -94,7 +97,7 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q4
-     Generated: 2026-09-25T22:26:57.453962
+     Generated: 2026-09-27T21:52:19.513880
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
@@ -107,20 +110,20 @@ Dựa trên điểm số tổng hợp (0 - 100), hệ thống tự động đưa
   • R-squared              : N/A (R-adj = N/A)
 
 [MACHINE LEARNING: WALK-FORWARD VALIDATION]
-  • XGBoost Accuracy       : 0.4659
+  • XGBoost Accuracy       : 0.4250
   • N Folds (WFV)          : 8
   • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score            : 51.04 / 100
+  • Total Score            : 49.74 / 100
   • Classification         : 🟡 HOLD — Neutral — Await confirming signals
 
 [GROUP BREAKDOWN]
-  • macro_monetary                : raw=  56.9  weight=14.23
-  • global_intermarket            : raw=  37.8  weight=7.56
-  • valuation_leverage            : raw=  57.2  weight=11.43
-  • quant_model                   : raw=  58.0  weight=8.7
-  • ml_forecast                   : raw=  27.3  weight=2.73
+  • macro_monetary                : raw=  54.3  weight=13.58
+  • global_intermarket            : raw=  37.2  weight=7.44
+  • valuation_leverage            : raw=  57.5  weight=11.5
+  • quant_model                   : raw=  54.9  weight=8.24
+  • ml_forecast                   : raw=  25.9  weight=2.59
   • market_structure              : raw=  63.9  weight=6.39
 ======================================================================
 ```
@@ -172,7 +175,6 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 ├── .gitignore                     # Đã cấu hình loại trừ file nhạy cảm và handoff notes
 ├── LICENSE                        # Giấy phép mã nguồn mở GNU AGPL v3.0
 ├── requirements.txt               # Danh sách gói phụ thuộc tương thích Python 3.11 - 3.14
-├── live_scoring_Q3_2026.py        # Script chạy độc lập toàn diện nhanh (20 - 30 giây)
 ├── run_quarterly.py               # Entrypoint chính thức chạy pipeline theo quý
 └── run_daily_update.py            # Entrypoint cập nhật tín hiệu hàng ngày sau giờ đóng cửa
 ```
@@ -218,14 +220,7 @@ VNSTOCK_API_KEY=your_vnstock_api_key
 
 ### 4. Vận hành Mô hình
 
-#### Cách 1: Chạy Siêu Tốc với Script Độc Lập (`live_scoring_Q3_2026.py`)
-Script độc lập nạp dữ liệu trực tiếp từ API, tính toán toàn bộ 4 trụ cột, chạy hồi quy OLS và XGBoost Walk-Forward Validation chỉ trong **20 - 30 giây**:
-```bash
-python -X utf8 live_scoring_Q3_2026.py
-```
-*Kết quả điểm số sẽ được in ra console và tự động lưu tại `output/exports/live_score_2026_Q3.json`.*
-
-#### Cách 2: Chạy Full Pipeline Theo Quý (`run_quarterly.py`)
+#### Cách 1: Chạy Full Pipeline Theo Quý (`run_quarterly.py`)
 ```bash
 # Chạy chấm điểm cho quý hiện tại:
 python run_quarterly.py --quarter 2026-Q3
@@ -235,7 +230,7 @@ python run_quarterly.py --quarter 2026-Q3 --no-cache      # Buộc tải lại t
 python run_quarterly.py --quarter 2026-Q3 --skip-ml       # Bỏ qua bước huấn luyện ML để kiểm tra nhanh
 ```
 
-#### Cách 3: Chạy Cập nhật Tín hiệu Hàng ngày (`run_daily_update.py`)
+#### Cách 2: Chạy Cập nhật Tín hiệu Hàng ngày (`run_daily_update.py`)
 Dùng sau 16:05 ICT mỗi ngày giao dịch để kiểm tra diễn biến giá, dòng tiền khối ngoại và cảnh báo biến động bất thường:
 ```bash
 python run_daily_update.py

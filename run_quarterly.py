@@ -25,6 +25,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.utils.config import LOG_FILE, LOG_LEVEL, VAR_VARIABLES, SCORES_DIR
+from src.utils.dates import resolve_quarter_dates
 from src.data.fetcher import (
     fetch_vnindex_ohlcv, compute_vni_returns,
     fetch_foreign_flows, fetch_macro_sbv_manual,
@@ -89,6 +90,15 @@ def parse_args() -> argparse.Namespace:
         choices=["auto", "pending", "confirmed", "completed", "unknown"],
         help="Tình trạng nâng hạng FTSE hiện tại (auto = tự động dựa trên mốc lịch sử)"
     )
+    parser.add_argument(
+        "--as-of", type=str, default=None, metavar="YYYY-MM-DD",
+        help=(
+            "Ngày 'hiện tại' giả định cho lần chạy giám sát GIỮA quý. "
+            "Mặc định (khuyến nghị): point-in-time tại ĐẦU quý — chỉ dùng "
+            "dữ liệu đến hết quý trước, đúng thông tin quỹ có khi ra quyết định. "
+            "KHÔNG dùng flag này khi backfill/backtest lịch sử."
+        )
+    )
     return parser.parse_args()
 
 
@@ -136,33 +146,32 @@ def run_pipeline(args: argparse.Namespace) -> None:
     if "date" in df_all.columns:
         df_all = df_all[df_all["date"] >= "2012-01-01"].reset_index(drop=True)
 
-    # ── Xử lý Data Leakage đúng cách ─────────────────────────────────────────
-    # df_train  : Dữ liệu đến cuối quý TRƯỚC — dùng để train ML (không leakage)
-    # df_latest_full : Dữ liệu đến hiện tại — dùng để lấy latest indicators
-    #   bao gồm cả dữ liệu YTD trong quý đang chạy (NFF, ETF, Oil...)
-    # NOTE: Trước commit b549352, end_date là cuối quý đang chạy → df_all.iloc[-1]
-    # là ngày trong quý hiện tại → NFF q_ytd và scoring đều đúng.
-    # Sau b549352: end_date = ngày trước khi quý bắt đầu → df_all.iloc[-1] là
-    # ngày cuối quý TRƯỚC → NFF q_ytd ≈ 0 (sai quý), ML không đủ data (2021).
+    # ── Point-in-time cut-off (nguyên tắc buy-side) ──────────────────────────
+    # Quyết định phân bổ được ra vào NGÀY ĐẦU QUÝ → mọi dữ liệu chấm điểm
+    # chỉ được dùng thông tin đến hết quý TRƯỚC. Áp dụng cho CẢ live lẫn
+    # backfill (nếu backfill dùng dữ liệu trong quý → look-ahead bias,
+    # backtest lịch sử vô giá trị đối với quỹ).
+    #
+    # df_train       : dữ liệu đến cuối quý trước — train MLR/VAR/ML
+    # df_latest_full : dữ liệu đến latest_cutoff — lấy chỉ báo "latest"
+    #   Mặc định latest_cutoff = cuối quý trước (point-in-time đầu quý).
+    #   Chỉ khác khi chạy giám sát giữa quý với --as-of (không dùng backtest).
+    # Lưu ý: các feature *_q_ytd tại cut-off này = giá trị cộng dồn TRỌN
+    #   quý vừa kết thúc (thông tin hợp lệ, đã biết tại đầu quý mới).
     try:
-        y_str, q_str = quarter.split("-Q")
-        q_int = int(q_str)
-        m_start = (q_int - 1) * 3 + 1
-        # Ngày đầu tiên của quý dự báo
-        q_start_date = pd.to_datetime(f"{y_str}-{m_start:02d}-01")
-        # Ngày cuối quý trước (cut-off không leakage cho training)
-        train_end_date = q_start_date - pd.Timedelta(days=1)
-        # Ngày cuối quý hiện tại (để lấy latest indicators)
-        m_end = q_int * 3
-        q_end_date = pd.to_datetime(f"{y_str}-{m_end:02d}-01") + pd.offsets.MonthEnd(1)
+        qd = resolve_quarter_dates(quarter, as_of=args.as_of)
+        train_end_date = qd["train_end_date"]
+        latest_cutoff  = qd["latest_cutoff"]
         logger.info(
-            f"[DATA] Training cut-off: đến {train_end_date.date()} (Không leakage)\n"
-            f"[DATA] Latest indicators: đến {q_end_date.date()} (YTD trong {quarter})"
+            f"[DATA] Training cut-off : đến {train_end_date.date()} (không leakage)\n"
+            f"[DATA] Latest indicators: đến {latest_cutoff.date()} "
+            f"({'point-in-time ĐẦU QUÝ — không look-ahead' if qd['point_in_time'] else 'as-of GIỮA quý (--as-of) — KHÔNG dùng cho backtest'})"
         )
-    except Exception as e:
+    except ValueError as e:
         logger.warning(f"[DATA] Không thể parse quarter {quarter}: {e}")
+        qd = None
         train_end_date = None
-        q_end_date = None
+        latest_cutoff = None
 
     # df_train: không chứa dữ liệu của quý đang dự báo → no leakage
     if train_end_date is not None:
@@ -170,9 +179,9 @@ def run_pipeline(args: argparse.Namespace) -> None:
     else:
         df_train = df_all.copy()
 
-    # df_latest_full: giữ đến cuối quý hiện tại để lấy latest indicators
-    if q_end_date is not None:
-        df_latest_full = df_all[df_all["date"] <= q_end_date].reset_index(drop=True)
+    # df_latest_full: cắt tại latest_cutoff (mặc định = point-in-time đầu quý)
+    if latest_cutoff is not None:
+        df_latest_full = df_all[df_all["date"] <= latest_cutoff].reset_index(drop=True)
     else:
         df_latest_full = df_all.copy()
 
@@ -204,7 +213,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     df_all = df_train
     logger.info(
         f"[FE] df_train: {len(df_train)} rows × {len(df_train.columns)} cols (no leakage)\n"
-        f"[FE] df_latest_full: {len(df_latest_full)} rows (incl. current Q YTD)"
+        f"[FE] df_latest_full: {len(df_latest_full)} rows (point-in-time cutoff)"
     )
 
     # ── Step 3: MLR Model ─────────────────────────────────────────────────────
@@ -222,11 +231,15 @@ def run_pipeline(args: argparse.Namespace) -> None:
         diag = mlr.diagnostics()
         mlr_adj_r2 = mlr.adj_r2_
 
-        # Dự báo trên 30 ngày cuối
-        mlr_preds = mlr.predict(df_all.tail(30))
+        # DỰ BÁO FORWARD thật: features tại các phiên cuối cùng TRƯỚC quý mới
+        # (point-in-time) → dự báo mean log-return/ngày của ~1 tháng giao dịch
+        # kế tiếp. Lấy trung bình 5 phiên cuối để giảm nhiễu 1 phiên đơn lẻ.
+        mlr_preds = mlr.predict(df_all.tail(5))
         mlr_pred  = float(mlr_preds.mean()) if len(mlr_preds) > 0 else None
 
-        logger.info(f"[MLR] Adj-R² = {mlr_adj_r2:.4f}")
+        logger.info(f"[MLR] Adj-R² (train) = {mlr_adj_r2:.4f} | horizon = {mlr.horizon} phiên")
+        logger.info(f"[MLR] OOS (25% holdout) = {diag.get('oos', 'N/A')}")
+        logger.info(f"[MLR] Forward forecast (log-return/ngày) = {mlr_pred}")
         logger.info(f"[MLR] Durbin-Watson = {diag.get('durbin_watson', 'N/A')}")
         logger.info(f"[MLR] ADF residuals p-value = {diag.get('adf_residuals_pvalue', 'N/A')}")
 
@@ -341,9 +354,10 @@ def run_pipeline(args: argparse.Namespace) -> None:
     # ── Step 6: Quarterly Scoring ─────────────────────────────────────────────
     logger.info("[6/7] Computing quarterly score...")
 
-    # Lấy giá trị indicators mới nhất từ df_latest_full
-    # (bao gồm dữ liệu YTD trong quý hiện tại — NFF q_ytd, ETF q_ytd, Oil shock...)
-    # KHÔNG dùng df_train.iloc[-1] vì df_train chỉ có dữ liệu đến cuối quý TRƯỚC.
+    # Lấy giá trị indicators mới nhất từ df_latest_full (point-in-time).
+    # Mặc định, hàng cuối = phiên giao dịch cuối của quý TRƯỚC — đúng thông
+    # tin quỹ có tại ngày đầu quý. Các cột *_q_ytd khi đó = cộng dồn trọn
+    # quý vừa kết thúc (NFF/ETF/Oil của quý gần nhất đã hoàn tất).
     latest = df_latest_full.iloc[-1].copy() if len(df_latest_full) > 0 else pd.Series(dtype=float)
     logger.info(
         f"[SCORE] Lấy latest từ df_latest_full: ngày {latest.get('date', 'N/A')} "
@@ -379,6 +393,20 @@ def run_pipeline(args: argparse.Namespace) -> None:
         ml_confidence=ml_confidence,
         ftse_upgrade_status=actual_ftse_status,
     )
+
+    # ── Minh bạch point-in-time ───────────────────────────────────────────────
+    # Ghi rõ ngày dữ liệu thực tế dùng để chấm điểm vào record (JSON + parquet)
+    # để mọi báo cáo đều audit được: điểm quý Q dựa trên thông tin đến ngày nào.
+    _latest_date = latest.get("date", None)
+    score_record["data_as_of"] = (
+        str(pd.to_datetime(_latest_date).date()) if _latest_date is not None else None
+    )
+    score_record["point_in_time"] = bool(qd["point_in_time"]) if qd else None
+    if qd and not qd["point_in_time"]:
+        logger.warning(
+            f"[SCORE] Điểm {quarter} tính với --as-of GIỮA quý "
+            f"(data_as_of={score_record['data_as_of']}) — KHÔNG dùng làm backtest."
+        )
 
     # ── ASSERT chặn tái diễn lỗi ML "not run" ────────────────────────────────
     # Đây là lần thứ 2 lỗi ML không chạy bị publish report mà không ai biết.

@@ -11,6 +11,9 @@ vnai
 
 # ── Econometrics & Statistics ────────────────────────────────────────────────
 statsmodels==0.14.0       # OLS, VAR, ADF, KPSS, Granger causality, IRF
+scipy==1.11.4             # PIN BẮT BUỘC: scipy>=1.15 xóa scipy._lib._util._lazywhere
+                          # → statsmodels 0.14.x vỡ ngay khi import (ImportError).
+                          # Không được thả nổi scipy chừng nào còn dùng statsmodels 0.14.x.
 
 # ── Machine Learning ─────────────────────────────────────────────────────────
 scikit-learn==1.3.0       # Preprocessing, metrics, cross-validation
