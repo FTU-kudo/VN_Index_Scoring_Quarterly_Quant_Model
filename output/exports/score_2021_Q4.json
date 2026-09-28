@@ -10,7 +10,7 @@
       "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
     },
     "market_data_backfill": {
-      "applied_at": "2026-09-28 12:05",
+      "applied_at": "2026-09-28 12:11",
       "bonds_source": "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json (2012→nay, Nelson-Siegel)",
       "m2_source": "ADB KIDB FM2_PTX_PS.VIE (nguồn SBV) 2000-2024 + GSO Q4/2025 (22/12/2025)",
       "pepb_eyg": "min_periods Z-score 252 phiên (từ 2.5 năm); EYG wired qua df_macro"
@@ -18,7 +18,7 @@
   },
   "quarterly_score": {
     "quarter": "2021-Q4",
-    "date_computed": "2026-09-28 12:05",
+    "date_computed": "2026-09-28 12:11",
     "total_score": 58.17,
     "label": "HOLD",
     "emoji": "🟡",
