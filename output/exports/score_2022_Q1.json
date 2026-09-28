@@ -3,22 +3,27 @@
     "quarter": "2022-Q1",
     "generated_at": "2026-09-27T21:47:02.424542",
     "model_version": "1.0.0",
-    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
+    "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
+    "adtv_backfill": {
+      "applied_at": "2026-09-28 11:09",
+      "source": "vnindex_ohlcv.volume (vnstock VCI)",
+      "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    }
   },
   "quarterly_score": {
     "quarter": "2022-Q1",
-    "date_computed": "2026-09-27 21:47",
-    "total_score": 59.0,
+    "date_computed": "2026-09-28 11:09",
+    "total_score": 60.76,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
-    "most_divergent_pillar": "global_intermarket",
+    "most_divergent_pillar": "market_structure",
     "percentile_label": "BUY/ACCUMULATE",
-    "percentile_p15": 52.8975,
-    "percentile_p85": 58.201499999999996,
-    "pillar_std": 10.87,
+    "percentile_p15": 53.6585,
+    "percentile_p85": 60.041,
+    "pillar_std": 10.58,
     "pillar_range": 28.96,
-    "dispersion_level": "MEDIUM",
+    "dispersion_level": "LOW",
     "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
@@ -42,8 +47,8 @@
         "weighted_score": 7.91
       },
       "market_structure": {
-        "raw_score": 52.0,
-        "weighted_score": 5.2
+        "raw_score": 69.64,
+        "weighted_score": 6.96
       }
     },
     "group_details": {
@@ -78,8 +83,9 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
-        "etf_flow": "<MISSING> Not enough data for Z-score (2021) → default 50"
+        "adtv": "ADTV change +33.3% QoQ → score 83",
+        "etf_flow": "<MISSING> Not enough data for Z-score (2021) → excluded from pillar average",
+        "pillar_components_used": "2/3 components with data → average over 2"
       }
     },
     "group_rationale": {
@@ -88,20 +94,21 @@
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=50 | VAR=53 | R²=0.195 | Granger=0",
       "ml_forecast": "ML: Forecast: UP (conf=82%) | Quality=51",
-      "market_structure": "FTSE: UNKNOWN"
+      "market_structure": "FTSE: UNKNOWN | ADTV: +33%"
     },
     "data_as_of": "2021-12-31",
     "point_in_time": true,
-    "calibrated_score": 63.34,
+    "calibrated_score": 62.17,
     "calibrated_label": "HOLD",
     "calibrated_emoji": "🟡",
     "calibrated_description": "Neutral — Await confirming signals",
     "calibrated_allocation": "40–60% Equities",
     "calibration_applied": true,
-    "calibration_z": 0.8894,
-    "calibration_hist_mean": 55.375,
-    "calibration_hist_std": 4.0757,
-    "calibration_n_history": 4
+    "calibration_z": 0.8116,
+    "calibration_hist_mean": 56.6875,
+    "calibration_hist_std": 5.018,
+    "calibration_n_history": 4,
+    "adtv_change_pct": 0.33276
   },
   "mlr_regression": [
     {

@@ -3,22 +3,27 @@
     "quarter": "2023-Q3",
     "generated_at": "2026-09-27T21:48:27.619582",
     "model_version": "1.0.0",
-    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
+    "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
+    "adtv_backfill": {
+      "applied_at": "2026-09-28 11:09",
+      "source": "vnindex_ohlcv.volume (vnstock VCI)",
+      "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    }
   },
   "quarterly_score": {
     "quarter": "2023-Q3",
-    "date_computed": "2026-09-27 21:48",
-    "total_score": 58.89,
+    "date_computed": "2026-09-28 11:09",
+    "total_score": 60.22,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "valuation_leverage",
     "percentile_label": "BUY/ACCUMULATE",
-    "percentile_p15": 50.89,
-    "percentile_p85": 58.306999999999995,
-    "pillar_std": 9.05,
-    "pillar_range": 22.19,
-    "dispersion_level": "MEDIUM",
+    "percentile_p15": 50.3745,
+    "percentile_p85": 59.2305,
+    "pillar_std": 8.04,
+    "pillar_range": 21.43,
+    "dispersion_level": "LOW",
     "label_allocation": "40–60% Equities",
     "group_scores": {
       "macro_monetary": {
@@ -42,8 +47,8 @@
         "weighted_score": 6.77
       },
       "market_structure": {
-        "raw_score": 50.32,
-        "weighted_score": 5.03
+        "raw_score": 63.62,
+        "weighted_score": 6.36
       }
     },
     "group_details": {
@@ -80,9 +85,10 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
+        "adtv": "ADTV change +40.0% QoQ → score 90",
         "etf_flow": "Z = -0.34 (Neutral) → score 45",
-        "etf_flow_q_ytd": "-0.01% of Market Cap (YTD in Q)"
+        "etf_flow_q_ytd": "-0.01% of Market Cap (YTD in Q)",
+        "pillar_components_used": "3/3 components with data → average over 3"
       }
     },
     "group_rationale": {
@@ -91,20 +97,21 @@
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=52 | VAR=51 | R²=0.157 | Granger=1",
       "ml_forecast": "ML: Forecast: UP (conf=51%) | Quality=39",
-      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
+      "market_structure": "FTSE: UNKNOWN | ADTV: +40% | ETF-Z: -0.3σ"
     },
     "data_as_of": "2023-06-30",
     "point_in_time": true,
-    "calibrated_score": 66.93,
+    "calibrated_score": 66.42,
     "calibrated_label": "ACCUMULATE",
     "calibrated_emoji": "🔵",
     "calibrated_description": "Gradually accumulate — Controllable risks",
     "calibrated_allocation": "70–85% Equities",
     "calibration_applied": true,
-    "calibration_z": 1.1284,
-    "calibration_hist_mean": 53.958,
-    "calibration_hist_std": 4.3709,
-    "calibration_n_history": 10
+    "calibration_z": 1.0947,
+    "calibration_hist_mean": 54.506,
+    "calibration_hist_std": 5.2195,
+    "calibration_n_history": 10,
+    "adtv_change_pct": 0.399685
   },
   "mlr_regression": [
     {

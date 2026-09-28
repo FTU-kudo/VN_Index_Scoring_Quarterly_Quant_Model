@@ -3,12 +3,17 @@
     "quarter": "2021-Q3",
     "generated_at": "2026-09-27T21:46:36.403713",
     "model_version": "1.0.0",
-    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
+    "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
+    "adtv_backfill": {
+      "applied_at": "2026-09-28 11:09",
+      "source": "vnindex_ohlcv.volume (vnstock VCI)",
+      "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    }
   },
   "quarterly_score": {
     "quarter": "2021-Q3",
-    "date_computed": "2026-09-27 21:46",
-    "total_score": 54.28,
+    "date_computed": "2026-09-28 11:09",
+    "total_score": 54.94,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
@@ -16,7 +21,7 @@
     "percentile_label": "HOLD",
     "percentile_p15": null,
     "percentile_p85": null,
-    "pillar_std": 11.23,
+    "pillar_std": 11.46,
     "pillar_range": 29.87,
     "dispersion_level": "MEDIUM",
     "label_allocation": "40–60% Equities",
@@ -42,8 +47,8 @@
         "weighted_score": 3.25
       },
       "market_structure": {
-        "raw_score": 52.0,
-        "weighted_score": 5.2
+        "raw_score": 58.6,
+        "weighted_score": 5.86
       }
     },
     "group_details": {
@@ -78,8 +83,9 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
-        "etf_flow": "<MISSING> Not enough data for Z-score (2021) → default 50"
+        "adtv": "ADTV change +11.2% QoQ → score 61",
+        "etf_flow": "<MISSING> Not enough data for Z-score (2021) → excluded from pillar average",
+        "pillar_components_used": "2/3 components with data → average over 2"
       }
     },
     "group_rationale": {
@@ -88,11 +94,11 @@
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=68 | VAR=52 | R²=0.207 | Granger=0",
       "ml_forecast": "ML: Forecast: DOWN (conf=68%) | Quality=52",
-      "market_structure": "FTSE: UNKNOWN"
+      "market_structure": "FTSE: UNKNOWN | ADTV: +11%"
     },
     "data_as_of": "2021-06-30",
     "point_in_time": true,
-    "calibrated_score": 54.28,
+    "calibrated_score": 54.94,
     "calibrated_label": "HOLD",
     "calibrated_emoji": "🟡",
     "calibrated_description": "Neutral — Await confirming signals",
@@ -101,7 +107,8 @@
     "calibration_z": null,
     "calibration_hist_mean": null,
     "calibration_hist_std": null,
-    "calibration_n_history": 2
+    "calibration_n_history": 2,
+    "adtv_change_pct": 0.111991
   },
   "mlr_regression": [
     {

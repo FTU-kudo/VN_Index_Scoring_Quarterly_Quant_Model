@@ -3,20 +3,25 @@
     "quarter": "2022-Q4",
     "generated_at": "2026-09-27T21:47:43.857694",
     "model_version": "1.0.0",
-    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
+    "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
+    "adtv_backfill": {
+      "applied_at": "2026-09-28 11:09",
+      "source": "vnindex_ohlcv.volume (vnstock VCI)",
+      "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    }
   },
   "quarterly_score": {
     "quarter": "2022-Q4",
-    "date_computed": "2026-09-27 21:47",
-    "total_score": 46.09,
+    "date_computed": "2026-09-28 11:09",
+    "total_score": 45.8,
     "label": "REDUCE",
     "emoji": "🟠",
     "label_description": "Reduce exposure — Increasing pressure",
     "most_divergent_pillar": "macro_monetary",
     "percentile_label": "REDUCE/SELL",
-    "percentile_p15": 51.88,
-    "percentile_p85": 59.241,
-    "pillar_std": 7.51,
+    "percentile_p15": 50.963,
+    "percentile_p85": 61.085,
+    "pillar_std": 7.32,
     "pillar_range": 18.13,
     "dispersion_level": "LOW",
     "label_allocation": "20–40% Equities",
@@ -42,8 +47,8 @@
         "weighted_score": 3.67
       },
       "market_structure": {
-        "raw_score": 49.94,
-        "weighted_score": 4.99
+        "raw_score": 47.04,
+        "weighted_score": 4.7
       }
     },
     "group_details": {
@@ -79,9 +84,10 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
+        "adtv": "ADTV change -8.7% QoQ → score 41",
         "etf_flow": "Z = -0.41 (Neutral) → score 44",
-        "etf_flow_q_ytd": "-0.03% of Market Cap (YTD in Q)"
+        "etf_flow_q_ytd": "-0.03% of Market Cap (YTD in Q)",
+        "pillar_components_used": "3/3 components with data → average over 3"
       }
     },
     "group_rationale": {
@@ -90,20 +96,21 @@
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=49 | VAR=51 | R²=0.158 | Granger=1",
       "ml_forecast": "ML: Forecast: DOWN (conf=91%) | Quality=40",
-      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.4σ"
+      "market_structure": "FTSE: UNKNOWN | ADTV: -9% | ETF-Z: -0.4σ"
     },
     "data_as_of": "2022-09-30",
     "point_in_time": true,
-    "calibrated_score": 17.89,
+    "calibrated_score": 21.68,
     "calibrated_label": "SELL",
     "calibrated_emoji": "🔴",
     "calibrated_description": "Defensive — Unfavorable environment",
     "calibrated_allocation": "0–20% Equities",
     "calibration_applied": true,
-    "calibration_z": -2.1404,
-    "calibration_hist_mean": 54.6886,
-    "calibration_hist_std": 4.0172,
-    "calibration_n_history": 7
+    "calibration_z": -1.8882,
+    "calibration_hist_mean": 55.5114,
+    "calibration_hist_std": 5.1433,
+    "calibration_n_history": 7,
+    "adtv_change_pct": -0.087319
   },
   "mlr_regression": [
     {

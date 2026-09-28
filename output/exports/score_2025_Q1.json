@@ -3,20 +3,25 @@
     "quarter": "2025-Q1",
     "generated_at": "2026-09-27T21:50:06.866845",
     "model_version": "1.0.0",
-    "analysis_type": "VN-Index Comprehensive Quantitative Scoring"
+    "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
+    "adtv_backfill": {
+      "applied_at": "2026-09-28 11:09",
+      "source": "vnindex_ohlcv.volume (vnstock VCI)",
+      "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time"
+    }
   },
   "quarterly_score": {
     "quarter": "2025-Q1",
-    "date_computed": "2026-09-27 21:50",
-    "total_score": 52.17,
+    "date_computed": "2026-09-28 11:09",
+    "total_score": 51.77,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
     "most_divergent_pillar": "valuation_leverage",
-    "percentile_label": "REDUCE/SELL",
-    "percentile_p15": 52.1975,
-    "percentile_p85": 58.4225,
-    "pillar_std": 10.02,
+    "percentile_label": "HOLD",
+    "percentile_p15": 51.34,
+    "percentile_p85": 59.2625,
+    "pillar_std": 10.35,
     "pillar_range": 28.57,
     "dispersion_level": "MEDIUM",
     "label_allocation": "40–60% Equities",
@@ -42,8 +47,8 @@
         "weighted_score": 7.01
       },
       "market_structure": {
-        "raw_score": 50.71,
-        "weighted_score": 5.07
+        "raw_score": 46.69,
+        "weighted_score": 4.67
       }
     },
     "group_details": {
@@ -80,9 +85,10 @@
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
         "rebalancing": "3 months to rebalancing → bonus +6",
-        "adtv": "<MISSING> ADTV data unavailable → neutral score 50",
+        "adtv": "ADTV change -12.0% QoQ → score 38",
         "etf_flow": "Z = -0.26 (Neutral) → score 46",
-        "etf_flow_q_ytd": "0.00% of Market Cap (YTD in Q)"
+        "etf_flow_q_ytd": "0.00% of Market Cap (YTD in Q)",
+        "pillar_components_used": "3/3 components with data → average over 3"
       }
     },
     "group_rationale": {
@@ -91,20 +97,21 @@
       "valuation_leverage": "Valuation: Incomplete P/E, P/B, EYG, or margin data",
       "quant_model": "MLR=48 | VAR=49 | R²=0.130 | Granger=1",
       "ml_forecast": "ML: Forecast: UP (conf=58%) | Quality=47",
-      "market_structure": "FTSE: UNKNOWN | ETF-Z: -0.3σ"
+      "market_structure": "FTSE: UNKNOWN | ADTV: -12% | ETF-Z: -0.3σ"
     },
     "data_as_of": "2024-12-31",
     "point_in_time": true,
-    "calibrated_score": 41.2,
+    "calibrated_score": 39.85,
     "calibrated_label": "REDUCE",
     "calibrated_emoji": "🟠",
     "calibrated_description": "Reduce exposure — Increasing pressure",
     "calibrated_allocation": "20–40% Equities",
     "calibration_applied": true,
-    "calibration_z": -0.5864,
-    "calibration_hist_mean": 54.3119,
-    "calibration_hist_std": 3.6527,
-    "calibration_n_history": 16
+    "calibration_z": -0.6767,
+    "calibration_hist_mean": 54.7288,
+    "calibration_hist_std": 4.3722,
+    "calibration_n_history": 16,
+    "adtv_change_pct": -0.12025
   },
   "mlr_regression": [
     {
