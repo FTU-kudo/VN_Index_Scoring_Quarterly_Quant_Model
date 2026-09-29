@@ -92,3 +92,43 @@ def resolve_quarter_dates(quarter: str, as_of: Optional[str] = None) -> Dict:
         "latest_cutoff":  latest_cutoff,
         "point_in_time":  point_in_time,
     }
+
+
+def resolve_publication_status(quarter: str, data_as_of: Optional[str],
+                               tolerance_days: Optional[int] = None) -> str:
+    """
+    Trạng thái publish của một score record: "FINAL" hoặc "PROVISIONAL".
+
+    Quy tắc TỔNG QUÁT (không hardcode quý): điểm quý Q là FINAL khi nguồn dữ
+    liệu đã phủ đến hết quý Q−1 — ngày data_as_of cách ngày cuối quý trước
+    (calendar) không quá `tolerance_days` (mặc định lấy từ
+    config.SCORE_STATUS_PROVISIONAL_TOLERANCE_DAYS = 4: vừa đủ hấp thụ ca
+    ngày cuối quý rơi vào cuối tuần/nghễ lễ của HOSE tối đa ~3 ngày).
+    Khi nguồn chưa đến cuối quý (ví dụ chạy sớm trong những ngày cuối quý
+    TRƯỚC khi quý mới bắt đầu) → PROVISIONAL; workflow đầu quý chạy lại với
+    dữ liệu trọn vẹn sẽ tự động lật sang FINAL (tạo final snapshot).
+
+    Parameters
+    ----------
+    quarter        : "YYYY-QN"
+    data_as_of     : ngày dữ liệu thực dùng chấm điểm (có thể None)
+    tolerance_days : số ngày dung sai; None → đọc từ config.
+
+    Returns
+    -------
+    "FINAL" | "PROVISIONAL"
+    """
+    if tolerance_days is None:
+        from src.utils.config import SCORE_STATUS_PROVISIONAL_TOLERANCE_DAYS
+        tolerance_days = int(SCORE_STATUS_PROVISIONAL_TOLERANCE_DAYS)
+    qd = resolve_quarter_dates(quarter)
+    expected_cutoff = qd["train_end_date"]          # ngày cuối quý TRƯỚC (calendar)
+    if data_as_of is None or str(data_as_of).strip() in ("", "None", "nan"):
+        return "PROVISIONAL"
+    try:
+        asof = pd.to_datetime(data_as_of)
+    except Exception:
+        return "PROVISIONAL"
+    if asof >= expected_cutoff - pd.Timedelta(days=tolerance_days):
+        return "FINAL"
+    return "PROVISIONAL"

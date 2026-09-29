@@ -12,7 +12,10 @@ import numpy as np
 import pandas as pd
 
 from src.utils.config import REPORTS_DIR, EXPORTS_DIR
-from src.utils.config import SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label, MODEL_VERSION
+from src.utils.config import (
+    SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label, MODEL_VERSION, SCORE_CALIBRATION,
+)
+from src.utils.dates import resolve_publication_status
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +52,15 @@ def export_score_json(
             "generated_at":   datetime.now().isoformat(),
             "model_version":  MODEL_VERSION,
             "git_commit":      __import__("subprocess").check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-            "status":           "PROVISIONAL" if (score_record.get("quarter") == "2026-Q4" and str(score_record.get("data_as_of", "")) < "2026-09-30") else "FINAL",
+            # Trạng thái FINAL/PROVISIONAL theo quy tắc tổng quát (src/utils/dates.py)
+            # — KHÔNG hardcode từng quý: FINAL khi nguồn đã phủ cuối quý trước.
+            "status":           resolve_publication_status(quarter, score_record.get("data_as_of")),
             "config_hash":      config_hash,
             "model_hash":       model_hash,
             "data_as_of":       score_record.get("data_as_of"),
             "point_in_time":    score_record.get("point_in_time"),
+            # Provenance: phương pháp + phiên bản calibration (single source: config)
+            "calibration_method": score_record.get("calibration_method"),
             "analysis_type":  "VN-Index Comprehensive Quantitative Scoring",
         },
         "quarterly_score": score_record,
@@ -803,9 +810,11 @@ _GROUP_LABELS = {
 def _build_action_panel_html(score_record: dict, t) -> str:
     """
     Action Panel trong hero: khuyến nghị phân bổ cổ phiếu (equity allocation)
-    theo tầng CALIBRATED ACTION SIGNAL (z-score expanding, point-in-time).
+    theo tầng CALIBRATED ACTION SIGNAL (winsorized z expanding, point-in-time, v2).
     Dải regime 0-100 + marker tại vị trí điểm calibrated; dòng z-diagnostic
-    (z, μ_hist, σ_hist, n) minh bạch cách hiệu chỉnh; điểm raw giữ làm tham chiếu.
+    (z/z_raw, μ_hist, σ quan sát vs σ_eff sau sàn, n) minh bạch cách hiệu chỉnh;
+    điểm raw giữ làm tham chiếu. Tín hiệu là REGIME TƯƠNG ĐỐI — không phải
+    dự báo lợi suất toàn quý (forecast horizon riêng: ML XGBoost/VAR T+5, MLR ~21 phiên).
     """
     # ── Tầng hành động: calibrated (fallback về raw nếu chưa đủ lịch sử) ──────
     cal_total = score_record.get("calibrated_score")
@@ -841,20 +850,35 @@ def _build_action_panel_html(score_record: dict, t) -> str:
     marker_pos = max(0.0, min(100.0, float(total)))
     active_color = _LABEL_COLORS.get(cal_label, "#94a3b8")
 
-    # ── Z-diagnostic: minh bạch phép hiệu chỉnh expanding window ─────────────
+    # ── Z-diagnostic: minh bạch phép hiệu chỉnh expanding window (v2) ────────
     applied = bool(score_record.get("calibration_applied"))
     if applied:
         z = score_record.get("calibration_z")
+        z_raw = score_record.get("calibration_z_raw")
         mu = score_record.get("calibration_hist_mean")
         sd = score_record.get("calibration_hist_std")
+        sd_eff = score_record.get("calibration_std_effective", sd)
         n_hist = score_record.get("calibration_n_history")
-        diag_en = (f"z = {z:+.2f} vs {n_hist} prior quarters "
-                   f"(μ = {mu:.1f}, σ = {sd:.1f}) — expanding window, point-in-time")
-        diag_vi = (f"z = {z:+.2f} so với {n_hist} quý trước "
-                   f"(μ = {mu:.1f}, σ = {sd:.1f}) — cửa sổ expanding, point-in-time")
+        floored = bool(score_record.get("calibration_std_floored"))
+        floor_note_en = f" (σ floored: observed {sd:.2f} → effective {sd_eff:.2f})" if floored else f" (σ = {sd_eff:.2f})"
+        floor_note_vi = f" (σ đặt sàn: quan sát {sd:.2f} → hiệu dụng {sd_eff:.2f})" if floored else f" (σ = {sd_eff:.2f})"
+        cap_note_en = "" if (z_raw is None or abs(z_raw - z) < 1e-9) else f" | z winsorised from {z_raw:+.2f}"
+        cap_note_vi = "" if (z_raw is None or abs(z_raw - z) < 1e-9) else f" | z nén từ {z_raw:+.2f}"
+        _maxdist = SCORE_CALIBRATION.get("max_dist_from_raw", 25.0)
+        diag_en = (f"z = {z:+.2f} vs {n_hist} prior quarters (μ = {mu:.1f}){floor_note_en}{cap_note_en}"
+                   f" — expanding window, point-in-time; bounded within ±{_maxdist:.0f} of raw composite")
+        diag_vi = (f"z = {z:+.2f} so với {n_hist} quý trước (μ = {mu:.1f}){floor_note_vi}{cap_note_vi}"
+                   f" — cửa sổ expanding, point-in-time; chặn trong ±{_maxdist:.0f} quanh điểm thô")
     else:
         diag_en = "Insufficient history (< 4 prior quarters) — calibrated = raw composite"
         diag_vi = "Chưa đủ lịch sử (< 4 quý trước) — calibrated = điểm thô"
+    _zc = SCORE_CALIBRATION.get("z_cap", 3.0)
+    _lo = SCORE_CALIBRATION.get("center", 50.0) - SCORE_CALIBRATION.get("z_scale", 15.0) * _zc
+    _hi = SCORE_CALIBRATION.get("center", 50.0) + SCORE_CALIBRATION.get("z_scale", 15.0) * _zc
+    semantics_en = ("Relative regime signal vs history — NOT a quarterly return/crash forecast. "
+                    f"Saturation by design: near {_lo:.0f}/{_hi:.0f} at |z| ≥ {_zc:.0f}σ.")
+    semantics_vi = ("Tín hiệu regime TƯƠNG ĐỐI so với lịch sử — KHÔNG phải dự báo lợi suất/sập toàn quý. "
+                    f"Bão hoà theo thiết kế: tiệm cận {_lo:.0f}/{_hi:.0f} khi |z| ≥ {_zc:.0f}σ.")
 
     return f"""
       <div class="action-panel">
@@ -870,6 +894,7 @@ def _build_action_panel_html(score_record: dict, t) -> str:
           <div class="alloc-legend">{legend_html}</div>
         </div>
         <div class="alloc-sub" style="margin-top:10px; font-size:11.5px; opacity:.85;">📐 {t(diag_en, diag_vi)}</div>
+        <div class="alloc-sub" style="margin-top:4px; font-size:11px; opacity:.75;">⚠️ {t(semantics_en, semantics_vi)}</div>
       </div>"""
 
 
@@ -970,7 +995,9 @@ def build_html_report(
     leading = score_record.get("most_divergent_pillar", score_record.get("leading_indicator", ""))
     date_computed = score_record.get("date_computed", "")
     data_as_of = score_record.get("data_as_of", "")
-    publication_status = "PROVISIONAL" if (quarter == "2026-Q4" and str(data_as_of) < "2026-09-30") else "FINAL"
+    # FINAL/PROVISIONAL theo quy tắc tổng quát (không hardcode quý) — sources:
+    # FINAL khi nguồn đã phủ đến cuối quý trước (trừ hao ngày lễ/cuối tuần).
+    publication_status = resolve_publication_status(quarter, data_as_of)
 
     # ── Tầng 2: Calibrated Action Signal ────────────────────────────────────
     # Điểm thô giữ nguyên làm tầng tham chiếu (hero ghi chú "raw composite");
@@ -1034,12 +1061,12 @@ def build_html_report(
       <div class="score-desc">{t(desc)}</div>
       <div style="margin-top: 16px;">
         <span class="action-chip" style="background:{cal_color};"
-              title="Calibrated Action Signal — z-score vs prior quarters (expanding, point-in-time) · Tín hiệu hành động hiệu chỉnh — z-score so với các quý trước (point-in-time)">
+              title="Calibrated Action Signal v2 — winsorized z-score vs prior quarters (expanding, point-in-time, σ-floor 5.0, z-cap ±3, bounded ±25 vs raw) · Relative regime signal, not a return forecast · Tín hiệu hành động hiệu chỉnh v2 — z-score winsorize so với các quý trước (point-in-time) · Tín hiệu regime tương đối, không phải dự báo lợi suất">
           <span class="lang-en">⚡ ACTION: {cal_emoji} {cal_label} — {cal_total:.1f}</span><span class="lang-vi">⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}</span><span class="action-chip" style="display:none">⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}</span>
         </span>
         <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
-          {t(f'Calibrated action signal (allocation: {cal_alloc}) — raw composite shown below for reference.',
-             f'Tín hiệu hành động hiệu chỉnh (phân bổ: {cal_alloc}) — điểm thô hiển thị bên dưới để tham chiếu.')}
+          {t(f'Calibrated action signal (allocation: {cal_alloc}) — relative regime vs prior quarters, not a return forecast; raw composite shown below for reference.',
+             f'Tín hiệu hành động hiệu chỉnh (phân bổ: {cal_alloc}) — regime tương đối so với các quý trước, không phải dự báo lợi suất; điểm thô hiển thị bên dưới để tham chiếu.')}
         </div>
       </div>
       <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
@@ -2001,8 +2028,8 @@ def build_root_index_html():
       <div class="hero-label" style="color:{latest_color};">{latest['emoji']} {latest['label']} — {latest['quarter']}</div>
       <div class="hero-alloc">⚡ {t('Calibrated action — recommended allocation', 'HÀNH ĐỘNG (calibrated) — khuyến nghị phân bổ')}: <strong>{latest['allocation']}</strong></div>
       <div class="hero-alloc" style="font-size: 12.5px; opacity: .85;">
-        📐 {t(f"Raw composite reference: {(latest.get('raw_score') or 0):.1f} → {latest.get('raw_label', 'N/A')} — action signal is z-calibrated vs prior quarters (point-in-time).",
-              f"Tham chiếu điểm thô: {(latest.get('raw_score') or 0):.1f} → {latest.get('raw_label', 'N/A')} — tín hiệu hành động được hiệu chỉnh z-score so với các quý trước (point-in-time).")}
+        📐 {t(f"Raw composite reference: {(latest.get('raw_score') or 0):.1f} → {latest.get('raw_label', 'N/A')} — action signal is a winsorized z-score vs prior quarters (point-in-time), bounded near the raw score; relative regime signal, not a return forecast.",
+              f"Tham chiếu điểm thô: {(latest.get('raw_score') or 0):.1f} → {latest.get('raw_label', 'N/A')} — tín hiệu hành động là z-score winsorize so với các quý trước (point-in-time), chặn gần điểm thô; tín hiệu regime tương đối, không phải dự báo lợi suất.")}
       </div>
       <div style="margin-top: 18px;">
         <a class="btn btn-primary" href="{latest_quarter}/index.html" style="font-size: 15px;">
@@ -2022,6 +2049,8 @@ def build_root_index_html():
         <span class="legend-dot" style="background:#f97316;"></span>REDUCE
         <span class="legend-dot" style="background:#ef4444;"></span>SELL
         &nbsp;|&nbsp; <strong>{t('raw composite', 'điểm thô')}</strong> {t('— dashed reference', '— nét đứt tham chiếu')}
+        <br>{t('Calibrated = winsorized z-score of raw vs PRIOR quarters only (σ-floor 5.0, z-cap ±3, bounded ±25 vs raw) — a relative regime/allocation signal, NOT a forecast of quarterly returns or crash risk. Extreme saturation near 5/95 by design.',
+              'Calibrated = z-score winsorize của điểm thô so với CHỈ các quý TRƯỚC (sàn σ 5.0, nén z ±3, chặn ±25 quanh điểm thô) — tín hiệu regime/phân bổ tương đối, KHÔNG phải dự báo lợi suất hay rủi ro sập của quý. Cực trị bão hoà quanh 5/95 theo thiết kế.')}
       </div>
       <div class="chart-box"><canvas id="timelineChart" aria-label="Calibrated Action Timeline" role="img"></canvas></div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">

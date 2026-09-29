@@ -152,7 +152,9 @@ SCORE_MODEL_PARAMS = {
     "ml_signal": {"neutral_score": 50.0, "max_directional_distance": 30.0,
                    "neutral_confidence": 1.0 / 3.0},
 }
-MODEL_VERSION = "2.0.0-pit-transparent"
+# 2.1.0: calibration v2 — σ-floor + z-winsorize + distance-from-raw guardrail
+# (method tag: winsorized_expanding_zscore_v2, xem SCORE_CALIBRATION bên dưới).
+MODEL_VERSION = "2.1.0-calibration-v2"
 
 # Required fields only. Informational rows (bonuses, counts and contextual ratios)
 # are deliberately excluded from coverage denominators.
@@ -234,23 +236,44 @@ SCORE_LABELS = {
 SCORE_LABEL_RANGES = tuple(sorted(SCORE_LABELS.items(), key=lambda x: x[0][0], reverse=True))
 
 # ── Calibrated Action Signal (Tầng 2 — tín hiệu hành động) ─────────────────────
-# VẤN ĐỀ: điểm thô (raw composite) bị nén quanh 45-61 do (i) nhiều chỉ báo
-# thiếu dữ liệu fallback về 50, (ii) gain chuyển đổi tín hiệu MLR/VAR quá nhỏ,
-# (iii) trung bình hoá 6 trụ cột kéo mọi thứ về mean → 22/24 quý dính nhãn HOLD.
-# GIẢI PHÁP: chuẩn hoá z-score điểm thô so với lịch sử EXPANDING (chỉ các quý
-# TRƯỚC quý hiện tại — point-in-time, không look-ahead):
-#   calibrated = clip(center + z_scale × (total − μ_hist) / σ_hist, 0, 100)
-# Nhãn hành động lấy từ get_score_label() (single source of truth).
-# Điểm thô được GIỮ NGUYÊN làm tầng tham chiếu — calibrated chỉ là tầng nhãn
-# hành động, không thay thế điểm gốc.
+# VẤN ĐỀ GỐC: điểm thô (raw composite) bị nén quanh 45-61 → 22/24 quý dính nhãn
+# HOLD → z-score expanding được thêm (PR trước) để tạo phân tán regime.
+# VẤN ĐỀ PHÁT SINH (postmortem 2026-09, quý 2022-Q2 thành 0.00):
+#   Cửa sổ đầu lịch sử (n=4..7 quý) có σ ước lượng rất nhỏ (2.7–2.9 điểm) vì các
+#   điểm thô 2021 nén chặt → z bị thổi phồng (51.25 vs μ=62.6, σ=2.87 → z=−3.95)
+#   → calibrated = clip(50 + 15z, 0, 100) ghim thẳng về 0. Một raw ~trung lập
+#   không thể thành tín hiệu cực đoan chỉ vì σ mẫu nhỏ.
+# GIẢI PHÁP V2 (winsorized + guardrail hybrid — method="winsorized_expanding_zscore_v2"):
+#   σ_eff  = max(σ_hist_sample(ddof=1), min_std)      ← sàn phương sai
+#   z_eff  = clip((raw − μ_hist) / σ_eff, ±z_cap)     ← winsorize z
+#   pre    = center + z_scale × z_eff                 ∈ [5, 95] với tham số mặc định
+#   cal    = clip( min(max(pre, raw − max_dist), raw + max_dist), clip_low, clip_high )
+# Tính chất bảo đảm: (1) raw ~50 không bao giờ tự động thành 0; (2) 0/100 không
+# thể xảy ra với tham số mặc định (bão hoà 5/95 ở |z|=3σ); (3) đơn điệu theo raw
+# với cùng lịch sử; (4) expanding CHỈ các quý TRƯỚC — không look-ahead; (5) tín
+# hiệu low-confidence (σ yếu/mẫu nhỏ) không thể cực đoan; (6) mọi tham số nằm ở
+# đây — single source of truth, workbook Excel 01_Model_Config phản chiếu cùng giá trị.
 SCORE_CALIBRATION = {
-    "enabled":      True,    # tắt để quay về hành vi cũ (chỉ raw composite)
-    "center":       50.0,    # điểm calibrated trung bình
-    "z_scale":      15.0,    # 1σ lịch sử ≈ ±15 điểm calibrated
+    "enabled":      True,    # tắt để quay về hành vi chỉ dùng raw composite
+    "method":       "winsorized_expanding_zscore_v2",  # version tag (provenance)
+    "center":       50.0,    # điểm calibrated trung tâm
+    "z_scale":      15.0,    # 1σ lịch sử (sau sàn) ≈ ±15 điểm calibrated
     "min_history":  4,       # cần ≥ 4 quý TRƯỚC đó mới hiệu chỉnh
+    "min_std":      5.0,     # SÀN σ_hist: tin cậy tối thiểu ~5đ (dispersion dài hạn
+                             #   của composite toàn mẫu ≈ 6đ; σ ước lượng < 5đ là
+                             #   artefact cửa sổ nhỏ, không phải regime ổn định)
+    "z_cap":        3.0,     # winsorize z tại ±3σ → bán kính đáp ứng ±45đ (5–95)
+    "max_dist_from_raw": 25.0,  # guardrail hybrid: tín hiệu hành động không lệch
+                             #   raw composite quá ±25đ (nửa thang nhãn)
     "clip_low":     0.0,
     "clip_high":    100.0,
 }
+
+# Trạng thái publication: quý được coi FINAL khi data_as_of cách ngày cuối quý
+# TRƯỚC đó (lý tưởng) không quá N ngày — vừa đủ hấp thụ lệch cuối tuần/ngày lễ
+# (tối đa ~3 ngày với lịch HOSE), PROVISIONAL khi nguồn chưa phủ hết cuối quý.
+# Dùng chung cho run_quarterly + backfill + JSON metadata + HTML hero.
+SCORE_STATUS_PROVISIONAL_TOLERANCE_DAYS = 4
 
 
 def get_score_label(score: float):
