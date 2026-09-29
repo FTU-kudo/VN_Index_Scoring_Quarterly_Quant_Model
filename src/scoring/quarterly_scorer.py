@@ -35,7 +35,7 @@ from src.utils.config import (
     SCORING_WEIGHTS, SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label,
     PE_ZSCORE_OVERBOUGHT, PE_ZSCORE_OVERSOLD,
     PB_ZSCORE_OVERBOUGHT, PB_ZSCORE_OVERSOLD,
-    SCORE_CALIBRATION, SCORES_DIR, FTSE_PASSIVE_INFLOW_BASE_USD
+    SCORE_CALIBRATION, SCORES_DIR, FTSE_PASSIVE_INFLOW_BASE_USD, SCORE_MODEL_PARAMS
 )
 
 logger = logging.getLogger(__name__)
@@ -409,6 +409,7 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
         details["pb_zscore"] = f"Z = {pb_z:.2f} ({zone}) → score {pb_score:.0f}"
     else:
         pb_score = 50.0
+        details["pb_zscore"] = "<MISSING> N/A → default 50"
 
     # ── Margin Risk ───────────────────────────────────────────────────────────
     mrisk = df_latest.get("margin_risk_score", np.nan)
@@ -421,6 +422,7 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
         details["margin_risk"] = f"Risk = {mrisk:.0f}/100 ({risk_label}) → score {margin_score:.0f}"
     else:
         margin_score = 50.0
+        details["margin_risk"] = "<MISSING> N/A → default 50"
 
     # ── Earnings Yield Gap (EYG) ──────────────────────────────────────────────
     eyg_z = df_latest.get("eyg_zscore", np.nan)
@@ -431,15 +433,13 @@ def score_valuation_leverage(df_latest: pd.Series) -> Dict[str, Any]:
         details["eyg_zscore"] = f"EYG Z-score = {eyg_z:.2f} → score {eyg_score:.0f}"
     else:
         eyg_score = 50.0
+        details["eyg_zscore"] = "<MISSING> N/A → default 50"
 
     raw = np.mean([pe_score, pb_score, margin_score, eyg_score])
     raw = _clamp_score(raw)
 
-    # Valuation composite từ valuation_features.py (nếu có)
-    val_comp = df_latest.get("valuation_composite_score", np.nan)
-    if pd.notna(val_comp):
-        # Blend 70% calculated + 30% composite
-        raw = raw * 0.7 + val_comp * 0.3
+    # PE/PB/EYG are already the calculated valuation factors above.  Do not
+    # blend valuation_composite_score again: that would double-count them.
 
     return {
         "group":          "valuation_leverage",
@@ -491,8 +491,8 @@ def score_quant_model(
     details = {}
 
     # Gain chuyển đổi (tách hằng để dễ audit — chống nén tín hiệu tại nguồn)
-    MLR_GAIN = 20000.0   # ±0.10%/ngày → 70/30
-    VAR_GAIN = 5000.0    # VAR T+5 return
+    MLR_GAIN = SCORE_MODEL_PARAMS["quant_model"]["mlr_gain"]
+    VAR_GAIN = SCORE_MODEL_PARAMS["quant_model"]["var_gain"]
 
     # ── MLR Prediction (forward: mean log-return/ngày của ~1 tháng kế tiếp) ──
     mlr_present = mlr_pred is not None and pd.notna(mlr_pred)
@@ -575,63 +575,43 @@ def score_quant_model(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def score_ml_forecast(
-    ml_accuracy:    Optional[float] = None,
-    ml_f1:          Optional[float] = None,
-    ml_pred_class:  Optional[int]   = None,    # 1=UP, 0=NEUTRAL, -1=DOWN
-    ml_confidence:  Optional[float] = None,    # predict_proba max
+    ml_accuracy: Optional[float] = None, ml_f1: Optional[float] = None,
+    ml_pred_class: Optional[int] = None, ml_confidence: Optional[float] = None,
 ) -> Dict[str, Any]:
-    """
-    Chấm điểm nhóm Dự báo ML (XGBoost/LightGBM) (trọng số 10%).
-    """
-    scores = {}
-    details = {}
+    """Score ML quality and direction without a confidence-direction paradox.
 
-    # ── Prediction Quality ────────────────────────────────────────────────────
+    Confidence only scales the directional distance from neutral.  Therefore a
+    high-confidence DOWN signal can never increase the score, while UP can
+    never decrease it; weak predictions remain close to 50.
+    """
+    scores, details = {}, {}
     qual_score = 50.0
     if ml_accuracy is not None and ml_f1 is not None:
         qual_score = _clamp_score((ml_accuracy + ml_f1) / 2 * 100)
-        details["model_quality"] = (f"Accuracy={ml_accuracy:.1%} "
-                                    f"F1={ml_f1:.3f} → quality {qual_score:.0f}")
+        details["model_quality"] = f"Accuracy={ml_accuracy:.1%} F1={ml_f1:.3f} → score {qual_score:.2f}"
     else:
         details["model_quality"] = "<MISSING> N/A"
     scores["ml_quality_score"] = qual_score
 
-    # ── Directional Signal ────────────────────────────────────────────────────
-    signal_score = 50.0
-    if ml_pred_class is not None:
-        if ml_pred_class == 1:    # UP
-            signal_score = 80.0
-            conf_str = f" (conf={ml_confidence:.0%})" if ml_confidence else ""
-            details["ml_signal"] = f"Forecast: UP{conf_str}"
-        elif ml_pred_class == -1: # DOWN
-            signal_score = 20.0
-            conf_str = f" (conf={ml_confidence:.0%})" if ml_confidence else ""
-            details["ml_signal"] = f"Forecast: DOWN{conf_str}"
-        else:                     # NEUTRAL
-            signal_score = 50.0
-            details["ml_signal"] = "Forecast: NEUTRAL"
-    else:
+    cfg = SCORE_MODEL_PARAMS["ml_signal"]
+    signal_score = cfg["neutral_score"]
+    if ml_pred_class is None:
         details["ml_signal"] = "<MISSING> ML prediction not run"
-
+    else:
+        conf = float(ml_confidence) if ml_confidence is not None and pd.notna(ml_confidence) else cfg["neutral_confidence"]
+        conf = float(np.clip(conf, 0.0, 1.0))
+        strength = max(0.0, (conf - cfg["neutral_confidence"]) / (1.0 - cfg["neutral_confidence"]))
+        direction = 1.0 if ml_pred_class == 1 else (-1.0 if ml_pred_class == -1 else 0.0)
+        signal_score = _clamp_score(cfg["neutral_score"] + direction * cfg["max_directional_distance"] * strength)
+        name = {1: "UP", -1: "DOWN", 0: "NEUTRAL"}.get(ml_pred_class, "UNKNOWN")
+        details["ml_signal"] = f"Forecast: {name} (conf={conf:.1%}) → score {signal_score:.2f}"
     scores["ml_signal_score"] = signal_score
-
-    # Confidence adjustment
-    if ml_confidence and ml_confidence > 0.6:
-        conf_bonus = (ml_confidence - 0.6) * 50  # max +20 nếu confidence 100%
-        signal_score = _clamp_score(signal_score + conf_bonus)
-
-    raw = (qual_score * 0.3 + signal_score * 0.7)
-    raw = _clamp_score(raw)
-
-    return {
-        "group":          "ml_forecast",
-        "raw_score":      round(raw, 2),
-        "weight":         SCORING_WEIGHTS["ml_forecast"],
-        "weighted_score": round(raw * SCORING_WEIGHTS["ml_forecast"], 2),
-        "sub_scores":     scores,
-        "details":        details,
-        "rationale":      f"ML: {details.get('ml_signal', 'N/A').replace('<MISSING> ', '')} | Quality={qual_score:.0f}"
-    }
+    raw = _clamp_score(qual_score * 0.3 + signal_score * 0.7)
+    return {"group": "ml_forecast", "raw_score": round(raw, 2),
+            "weight": SCORING_WEIGHTS["ml_forecast"],
+            "weighted_score": round(raw * SCORING_WEIGHTS["ml_forecast"], 2),
+            "sub_scores": scores, "details": details,
+            "rationale": f"ML: {details.get('ml_signal', 'N/A').replace('<MISSING> ', '')} | Quality={qual_score:.2f}"}
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -747,6 +727,19 @@ def score_market_structure(
         "details":        details,
         "rationale":      " | ".join(rat_parts)
     }
+
+
+def compute_data_coverage(group_details: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
+    """Count only the 24 required scoring fields, never supplemental rows."""
+    from src.utils.config import REQUIRED_SCORING_FIELDS
+    by_group = {}
+    for group, fields in REQUIRED_SCORING_FIELDS.items():
+        details = group_details.get(group, {})
+        missing = [field for field in fields if str(details.get(field, "<MISSING> N/A")).startswith("<MISSING>")]
+        by_group[group] = {"available": len(fields) - len(missing), "required": len(fields), "missing": missing}
+    available = sum(v["available"] for v in by_group.values())
+    required = sum(v["required"] for v in by_group.values())
+    return {"available": available, "required": required, "percentage": round(available / required * 100, 1), "by_group": by_group}
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -943,6 +936,16 @@ def compute_quarterly_score(
             g["group"]: g["rationale"] for g in groups
         }
     }
+    score_record["data_coverage"] = compute_data_coverage(score_record["group_details"])
+    # Preserve exact post-adjustment model components for independent workbook audit.
+    score_record["raw_scorer_inputs"] = {
+        "mlr_pred": mlr_pred, "var_forecast": var_forecast, "mlr_adj_r2": mlr_adj_r2,
+        "granger_leaders": granger_leaders, "ml_accuracy": ml_accuracy, "ml_f1": ml_f1,
+        "ml_pred_class": ml_pred_class, "ml_confidence": ml_confidence,
+        "adtv_change_pct": adtv_change_pct,
+    }
+    score_record["model_config"] = {"score_model_params": SCORE_MODEL_PARAMS, "scoring_weights": SCORING_WEIGHTS}
+
 
     # Append vào lịch sử parquet (gồm cả cột percentile + dispersion + calibrated mới)
     new_row = pd.DataFrame([{

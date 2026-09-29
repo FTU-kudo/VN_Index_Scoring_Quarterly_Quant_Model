@@ -54,8 +54,9 @@ def load_sources() -> tuple[list[str], dict[str, dict[str, Any]], dict, dict, di
         q = payload["quarterly_score"]["quarter"]
         scores[q] = payload
     quarters = sorted(scores)
-    if quarters != [f"{year}-Q{quarter}" for year in range(2021, 2027) for quarter in range(1, 5)]:
-        raise ValueError("Expected the complete 24-quarter history from 2021-Q1 to 2026-Q4")
+    expected_start = "2021-Q1"
+    if len(quarters) < 24 or quarters[0] != expected_start:
+        raise ValueError("Expected at least the 2021-Q1 baseline history")
     return quarters, scores, closes, market, adtv, flows
 
 
@@ -70,18 +71,8 @@ def clamp(value: float) -> float:
 
 def valuation_margin_input(target: float, pe_z: float | None, pb_z: float | None,
                            eyg_z: float | None, composite: float | None) -> float:
-    """Recover the unrounded margin-risk observation used by the scoring ledger.
-
-    The JSON report prints margin risk as an integer, while the scorer consumed an
-    unrounded continuous feature.  This inverse keeps the workbook at source
-    precision and makes the published, rounded pillar exactly reproducible.
-    """
-    pe_score = 50.0 if pe_z is None else clamp(50 - pe_z * 25)
-    pb_score = 50.0 if pb_z is None else clamp(50 - pb_z * 25)
-    eyg_score = 50.0 if eyg_z is None else clamp(50 + eyg_z * 25)
-    required_average = target if composite is None else (target - 0.30 * composite) / 0.70
-    margin_score = 4 * required_average - pe_score - pb_score - eyg_score
-    return 100.0 - margin_score
+    """Deprecated compatibility helper; workbook inputs must never be inferred from targets."""
+    raise RuntimeError("Inverse reconstruction is prohibited; use exported raw inputs")
 
 
 def extract_inputs(q: str, payload: dict[str, Any], market: dict, adtv: dict, flows: dict) -> dict[str, Any]:
@@ -111,24 +102,11 @@ def extract_inputs(q: str, payload: dict[str, Any], market: dict, adtv: dict, fl
     granger_ps = [float(x["p_value"]) for x in payload.get("granger_causality", []) if isinstance(x, dict)]
     granger_count = sum(p < 0.05 for p in granger_ps)
 
-    # Published model text rounds MLR/VAR forecasts to 4 decimals.  Reconstruct the
-    # full-precision MLR forecast that exactly produces the published quant pillar,
-    # while retaining the published VAR forecast and bonuses as independent inputs.
-    target_quant = score["group_scores"]["quant_model"]["raw_score"]
-    var_score = clamp(50 + float(var_pred) * 5000)
-    quality_bonus = min(float(adj_r2) * 10, 10)
-    granger_bonus = min(granger_count * 3, 15)
-    required_mlr_score = 2 * (target_quant - quality_bonus - granger_bonus) - var_score
-    if not 0 <= required_mlr_score <= 100:
-        # Defensive fallback; no current quarter requires it.
-        mlr_pred = float(mlr_pred_printed)
-    else:
-        mlr_pred = (required_mlr_score - 50) / 20000
-
-    target_valuation = score["group_scores"]["valuation_leverage"]["raw_score"]
-    margin_risk = valuation_margin_input(
-        target_valuation, zdata.get("pe"), zdata.get("pb"), zdata.get("eyg"), zdata.get("composite")
-    )
+    # Use independently exported model observations. Never solve backward from
+    # a published pillar score. Rounded report text is the declared source
+    # observation until the scorer exports higher precision inputs.
+    mlr_pred = float(mlr_pred_printed)
+    margin_risk = match_float(valuation_details.get("margin_risk", ""), r"Risk\s*=\s*([-\d.]+)", 50.0)
 
     wfv = payload["ml_walk_forward_validation"]
     return {
@@ -149,7 +127,7 @@ def extract_inputs(q: str, payload: dict[str, Any], market: dict, adtv: dict, fl
         "pb_z": zdata.get("pb"),
         "margin_risk": margin_risk,
         "eyg_z": zdata.get("eyg"),
-        "valuation_composite": zdata.get("composite"),
+        "valuation_composite": None,
         "adtv": adtv[q].get("adtv_change_pct"),
         "ftse": ftse_status,
         "months": months,
@@ -231,6 +209,9 @@ def nested_band_formula(score_ref: str, result_col: str) -> str:
 def build_workbook() -> Workbook:
     quarters, scores, closes, market, adtv, flows = load_sources()
     inputs = {q: extract_inputs(q, scores[q], market, adtv, flows) for q in quarters}
+    last_row = 4 + len(quarters)
+    prior_last_row = last_row - 1
+    n_periods = len(quarters) - 1
 
     wb = Workbook()
     wb.remove(wb.active)
@@ -242,13 +223,13 @@ def build_workbook() -> Workbook:
     ws = wb.create_sheet("00_Executive_Dashboard")
     ws.sheet_properties.tabColor = NAVY
     title(ws, "VN-INDEX QUANTITATIVE SCORING SYSTEM — EXECUTIVE DASHBOARD",
-          "Institutional quarterly macro-quant model | formula-driven | point-in-time inputs | 2021-Q1 to 2026-Q4")
+          "Institutional quarterly macro-quant model | formula-driven | point-in-time inputs | 2021-Q1 to latest available quarter")
     cards = [
-        ("A5", "LATEST QUARTER", "A6", "=INDEX('05_Composite_Calibration'!A5:A28,COUNTA('05_Composite_Calibration'!A5:A28))"),
-        ("B5", "CALIBRATED ACTION", "B6", "=INDEX('05_Composite_Calibration'!K5:K28,COUNTA('05_Composite_Calibration'!A5:A28))"),
-        ("C5", "CALIBRATED SCORE", "C6", "=INDEX('05_Composite_Calibration'!J5:J28,COUNTA('05_Composite_Calibration'!A5:A28))"),
-        ("D5", "EQUITY ALLOCATION", "D6", "=INDEX('05_Composite_Calibration'!L5:L28,COUNTA('05_Composite_Calibration'!A5:A28))"),
-        ("E5", "RAW COMPOSITE", "E6", "=INDEX('05_Composite_Calibration'!D5:D28,COUNTA('05_Composite_Calibration'!A5:A28))"),
+        ("A5", "LATEST QUARTER", "A6", f"=INDEX('05_Composite_Calibration'!A5:A{last_row},COUNTA('05_Composite_Calibration'!A5:A{last_row}))"),
+        ("B5", "CALIBRATED ACTION", "B6", f"=INDEX('05_Composite_Calibration'!K5:K{last_row},COUNTA('05_Composite_Calibration'!A5:A{last_row}))"),
+        ("C5", "CALIBRATED SCORE", "C6", f"=INDEX('05_Composite_Calibration'!J5:J{last_row},COUNTA('05_Composite_Calibration'!A5:A{last_row}))"),
+        ("D5", "EQUITY ALLOCATION", "D6", f"=INDEX('05_Composite_Calibration'!L5:L{last_row},COUNTA('05_Composite_Calibration'!A5:A{last_row}))"),
+        ("E5", "RAW COMPOSITE", "E6", f"=INDEX('05_Composite_Calibration'!D5:D{last_row},COUNTA('05_Composite_Calibration'!A5:A{last_row}))"),
     ]
     for label_cell, label, value_cell, formula in cards:
         ws[label_cell] = label
@@ -273,8 +254,8 @@ def build_workbook() -> Workbook:
         cfg_row = idx - 5
         ws.cell(idx, 1, name)
         ws.cell(idx, 2, f"='01_Model_Config'!C{cfg_row}")
-        ws.cell(idx, 3, f"=INDEX('04_Pillar_Calculation'!{pcol}5:{pcol}28,COUNTA('04_Pillar_Calculation'!A5:A28))")
-        ws.cell(idx, 4, f"=INDEX('04_Pillar_Calculation'!{wcol}5:{wcol}28,COUNTA('04_Pillar_Calculation'!A5:A28))")
+        ws.cell(idx, 3, f"=INDEX('04_Pillar_Calculation'!{pcol}5:{pcol}{last_row},COUNTA('04_Pillar_Calculation'!A5:A{last_row}))")
+        ws.cell(idx, 4, f"=INDEX('04_Pillar_Calculation'!{wcol}5:{wcol}{last_row},COUNTA('04_Pillar_Calculation'!A5:A{last_row}))")
         ws.cell(idx, 5, f"=D{idx}/$D$17")
         ws.cell(idx, 6, f'=IF(C{idx}>=65,"Favorable",IF(C{idx}>=50,"Neutral","Unfavorable"))')
         ws.cell(idx, 2).number_format = "0.0%"
@@ -286,7 +267,7 @@ def build_workbook() -> Workbook:
     ws["C17"] = "=SUMPRODUCT(B11:B16,C11:C16)"
     ws["D17"] = "=SUM(D11:D16)"
     ws["E17"] = "=SUM(E11:E16)"
-    ws["F17"] = "=INDEX('05_Composite_Calibration'!E5:E28,COUNTA('05_Composite_Calibration'!A5:A28))"
+    ws["F17"] = f"=INDEX('05_Composite_Calibration'!E5:E{last_row},COUNTA('05_Composite_Calibration'!A5:A{last_row}))"
     ws["B17"].number_format = "0.0%"
     ws["E17"].number_format = "0.0%"
     style_table(ws, 11, 17, 1, 6)
@@ -405,8 +386,8 @@ def build_workbook() -> Workbook:
         for col in (14, 22, 26): ws.cell(row, col).number_format = "0.0000%"
         for col in range(5, 22): ws.cell(row, col).number_format = "0.0000"
         ws.cell(row, 25).number_format = "0.0000"
-    style_table(ws, 5, 28, 1, len(market_headers))
-    ws.auto_filter.ref = "A4:Z28"
+    style_table(ws, 5, last_row, 1, len(market_headers))
+    ws.auto_filter.ref = f"A4:Z{last_row}"
     ws.freeze_panes = "C5"
 
     # 06/07/08 are created before factor sheets conceptually, but sheet order is
@@ -425,7 +406,7 @@ def build_workbook() -> Workbook:
         for c in (4, 5): ws6.cell(r, c).number_format = "0.0000"
         ws6.cell(r, 6).number_format = "0.000000"
         for c in (7, 8): ws6.cell(r, c).number_format = "0.00"
-    style_table(ws6, 5, 28, 1, 8); ws6.freeze_panes = "C5"
+    style_table(ws6, 5, last_row, 1, 8); ws6.freeze_panes = "C5"
 
     ws7 = wb.create_sheet("07_VAR_Granger")
     ws7.sheet_properties.tabColor = SLATE
@@ -441,7 +422,7 @@ def build_workbook() -> Workbook:
         for c, value in enumerate(values, 1): ws7.cell(r, c, value)
         for c in range(4, 9): ws7.cell(r, c).number_format = "0.0000"
         ws7.cell(r, 10).number_format = "0.000000"; ws7.cell(r, 11).number_format = "0.00"
-    style_table(ws7, 5, 28, 1, 11); ws7.freeze_panes = "C5"
+    style_table(ws7, 5, last_row, 1, 11); ws7.freeze_panes = "C5"
 
     ws8 = wb.create_sheet("08_ML_Validation")
     ws8.sheet_properties.tabColor = SLATE
@@ -454,11 +435,11 @@ def build_workbook() -> Workbook:
                   wfv["n_folds"], wfv["n_features"], wfv["mean_accuracy"], wfv["mean_f1"],
                   wfv["latest_pred_class"], wfv["latest_prediction"], wfv["latest_confidence"],
                   f"=MIN(100,MAX(0,(F{r}+G{r})/2*100))",
-                  f"=MIN(100,MAX(0,IF(H{r}=1,80,IF(H{r}=-1,20,50))+IF(J{r}>0.6,(J{r}-0.6)*50,0)))"]
+                  f"=MIN(100,MAX(0,50+IF(H{r}=1,1,IF(H{r}=-1,-1,0))*30*MAX(0,(J{r}-1/3)/(1-1/3))))"]
         for c, value in enumerate(values, 1): ws8.cell(r, c, value)
         for c in (6, 7, 10): ws8.cell(r, c).number_format = "0.0000%" if c != 7 else "0.0000"
         for c in (11, 12): ws8.cell(r, c).number_format = "0.00"
-    style_table(ws8, 5, 28, 1, 12); ws8.freeze_panes = "C5"
+    style_table(ws8, 5, last_row, 1, 12); ws8.freeze_panes = "C5"
 
     # 03 Factor Sub-Scores
     ws3 = wb.create_sheet("03_Factor_SubScores")
@@ -497,7 +478,7 @@ def build_workbook() -> Workbook:
         for col, formula in enumerate(formulas, 1):
             ws3.cell(r, col, formula)
             if col > 2: ws3.cell(r, col).number_format = "0.00"
-    style_table(ws3, 5, 28, 1, 23); ws3.freeze_panes = "C5"
+    style_table(ws3, 5, last_row, 1, 23); ws3.freeze_panes = "C5"
 
     # 04 Pillars
     ws4 = wb.create_sheet("04_Pillar_Calculation")
@@ -529,7 +510,7 @@ def build_workbook() -> Workbook:
         for col, formula in enumerate(formulas, 1):
             ws4.cell(r, col, formula)
             if col > 2: ws4.cell(r, col).number_format = "0.000000" if col >= 16 else "0.00"
-    style_table(ws4, 5, 28, 1, 21); ws4.freeze_panes = "C5"
+    style_table(ws4, 5, last_row, 1, 21); ws4.freeze_panes = "C5"
 
     # 05 Composite & Calibration
     ws5 = wb.create_sheet("05_Composite_Calibration")
@@ -567,7 +548,7 @@ def build_workbook() -> Workbook:
         ws5.cell(r, 3).number_format = "#,##0.00"
         for c in (4, 7, 8, 10, 13, 14, 17, 18): ws5.cell(r, c).number_format = "0.00"
         ws5.cell(r, 9).number_format = "0.0000"
-    style_table(ws5, 5, 28, 1, 19); ws5.freeze_panes = "D5"
+    style_table(ws5, 5, last_row, 1, 19); ws5.freeze_panes = "D5"
 
     # 09 Feature Importance
     ws9 = wb.create_sheet("09_Feature_Importance")
@@ -597,7 +578,7 @@ def build_workbook() -> Workbook:
     header_row(ws10, 4, backtest_headers, NAVY)
     for idx, q in enumerate(quarters):
         r = 5 + idx
-        if r < 28:
+        if r < last_row:
             forward = f"=IF(OR(C{r}=0,C{r+1}=0),0,C{r+1}/C{r}-1)"
         else:
             forward = "=0"
@@ -611,26 +592,27 @@ def build_workbook() -> Workbook:
             f"=1-G{r}", f"=(1+'02_Market_Inputs'!E{r}/100)^0.25-1", f"=G{r}*E{r}+H{r}*I{r}", nav, benchmark,
             f"=MAX($K$5:K{r})", f"=(K{r}-M{r})/M{r}",
             f'=IF(OR(AND(F{r}="BUY",E{r}>0),AND(F{r}="ACCUMULATE",E{r}>0),AND(F{r}="HOLD",ABS(E{r})<0.05),AND(F{r}="REDUCE",E{r}<0),AND(F{r}="SELL",E{r}<0)),1,0)',
-            f"=IF(ROW()>27,\"\",RANK.EQ('05_Composite_Calibration'!S{r},'05_Composite_Calibration'!$S$5:$S$27,1)+(COUNTIF('05_Composite_Calibration'!$S$5:$S$27,'05_Composite_Calibration'!S{r})-1)/2)",
-            f"=IF(ROW()>27,\"\",RANK.EQ(D{r},$D$5:$D$27,1)+(COUNTIF($D$5:$D$27,D{r})-1)/2)",
+            f"=IF(ROW()>={last_row},\"\",RANK.EQ('05_Composite_Calibration'!S{r},'05_Composite_Calibration'!$S$5:$S${prior_last_row},1)+(COUNTIF('05_Composite_Calibration'!$S$5:$S${prior_last_row},'05_Composite_Calibration'!S{r})-1)/2)",
+            f"=IF(ROW()>={last_row},\"\",RANK.EQ(D{r},$D$5:$D${prior_last_row},1)+(COUNTIF($D$5:$D${prior_last_row},D{r})-1)/2)",
             f"=MAX($L$5:L{r})", f"=(L{r}-R{r})/R{r}",
         ]
         for col, formula in enumerate(formulas, 1): ws10.cell(r, col, formula)
         for c in (2, 3, 11, 12, 13, 18): ws10.cell(r, c).number_format = "#,##0.00"
         for c in (4, 5, 7, 8, 9, 10, 14, 19): ws10.cell(r, c).number_format = "0.00%"
-    style_table(ws10, 5, 28, 1, 19)
+    style_table(ws10, 5, last_row, 1, 19)
     ws10["A30"] = "FORMULA PERFORMANCE SUMMARY"
     ws10["A30"].font = SECTION_FONT
     header_row(ws10, 31, ["Metric", "Strategy / Signal", "Benchmark", "Spread", "Formula Definition"], SLATE)
     metrics = [
         ("Cumulative Total Return", "=(K28-'01_Model_Config'!$B$35)/'01_Model_Config'!$B$35", "=(L28-'01_Model_Config'!$B$35)/'01_Model_Config'!$B$35", "=B32-C32", "Ending NAV / Initial NAV − 1"),
         ("Compound Annual Growth Rate", "=(K28/'01_Model_Config'!$B$35)^('01_Model_Config'!$B$34/23)-1", "=(L28/'01_Model_Config'!$B$35)^('01_Model_Config'!$B$34/23)-1", "=B33-C33", "(Ending NAV / Initial NAV)^(4/23) − 1"),
-        ("Maximum Drawdown", "=MIN(N5:N28)", "=MIN(S5:S28)", "=B34-C34", "Minimum running-peak drawdown"),
-        ("Annualized Volatility", "=STDEV.S(J5:J27)*SQRT('01_Model_Config'!$B$34)", "=STDEV.S(E5:E27)*SQRT('01_Model_Config'!$B$34)", "=B35-C35", "Sample σ quarterly × √4"),
+        ("Maximum Drawdown", "=MIN(N5:N{last_row})", "=MIN(S5:S{last_row})", "=B34-C34", "Minimum running-peak drawdown"),
+        ("Annualized Volatility", "=STDEV.S(J5:J{prior_last_row})*SQRT('01_Model_Config'!$B$34)", "=STDEV.S(E5:E{prior_last_row})*SQRT('01_Model_Config'!$B$34)", "=B35-C35", "Sample σ quarterly × √4"),
         ("Sharpe Ratio", "=(B33-'01_Model_Config'!$B$36)/B35", "=(C33-'01_Model_Config'!$B$36)/C35", "=B36-C36", "(CAGR − Rf) / annualized volatility"),
-        ("Spearman Rank IC", "=CORREL(P5:P27,Q5:Q27)", "=CORREL('05_Composite_Calibration'!D5:D27,D5:D27)", "=B37-C37", "Pearson correlation of average ranks = Spearman ρ"),
-        ("Directional Hit Rate", "=AVERAGE(O5:O27)", "=\"N/A\"", "=\"N/A\"", "Mean of formula hit flags"),
+        ("Spearman Rank IC", "=CORREL(P5:P{prior_last_row},Q5:Q{prior_last_row})", "=CORREL('05_Composite_Calibration'!D5:D{prior_last_row},D5:D{prior_last_row})", "=B37-C37", "Pearson correlation of average ranks = Spearman ρ"),
+        ("Directional Hit Rate", "=AVERAGE(O5:O{prior_last_row})", "=\"N/A\"", "=\"N/A\"", "Mean of formula hit flags"),
     ]
+    metrics = [tuple(v.replace("{last_row}", str(last_row)).replace("{prior_last_row}", str(prior_last_row)).replace("28", str(last_row)).replace("27", str(prior_last_row)).replace("23", str(n_periods)) if isinstance(v, str) else v for v in row) for row in metrics]
     for row, values in enumerate(metrics, 32):
         for col, value in enumerate(values, 1): ws10.cell(row, col, value)
         if row in (32, 33, 34, 35, 38):
@@ -691,7 +673,7 @@ def main() -> None:
     shutil.copyfile(PRIMARY_PATH, MASTER_PATH)
     print(f"Generated: {PRIMARY_PATH}")
     print(f"Generated: {MASTER_PATH}")
-    print("Architecture: 12 interconnected sheets | 24 point-in-time quarters | formulas recalculate on open")
+    print("Architecture: 12 interconnected sheets | point-in-time quarterly history | formulas recalculate on open")
 
 
 if __name__ == "__main__":

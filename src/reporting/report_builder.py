@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from src.utils.config import REPORTS_DIR, EXPORTS_DIR
-from src.utils.config import SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label
+from src.utils.config import SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label, MODEL_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,23 @@ def export_score_json(
     wfv_summary: Optional[Dict] = None,
     fi_df:       Optional[pd.DataFrame] = None,
 ) -> Path:
+    import hashlib
+    import subprocess
+    config_snapshot = score_record.get("model_config", {})
+    config_hash = hashlib.sha256(json.dumps(config_snapshot, sort_keys=True, default=str).encode()).hexdigest()
+    scorer_path = Path(__file__).resolve().parents[1] / "scoring" / "quarterly_scorer.py"
+    model_hash = hashlib.sha256(scorer_path.read_bytes()).hexdigest()
     payload = {
         "metadata": {
             "quarter":        quarter,
             "generated_at":   datetime.now().isoformat(),
-            "model_version":  "1.0.0",
+            "model_version":  MODEL_VERSION,
+            "git_commit":      __import__("subprocess").check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+            "status":           "PROVISIONAL" if (score_record.get("quarter") == "2026-Q4" and str(score_record.get("data_as_of", "")) < "2026-09-30") else "FINAL",
+            "config_hash":      config_hash,
+            "model_hash":       model_hash,
+            "data_as_of":       score_record.get("data_as_of"),
+            "point_in_time":    score_record.get("point_in_time"),
             "analysis_type":  "VN-Index Comprehensive Quantitative Scoring",
         },
         "quarterly_score": score_record,
@@ -268,7 +280,9 @@ _HTML_STYLE = """
     .score-big { -webkit-text-fill-color: initial; }
     a { text-decoration: none; color: inherit; }
   }
-</style>
+.score-legend { font-size: 12px; color: var(--text-muted); margin: 8px 0 16px; }
+  .lang-vi { display:none; } body.vi-mode .lang-en { display:none; } body.vi-mode .lang-vi { display:inline; }
+  </style>
 """
 
 _JS_SCRIPT = """
@@ -924,59 +938,20 @@ def _load_vnindex_quarterly_prices(quarters: List[str]):
 
 
 def _build_data_coverage_html(score_record: dict, t) -> str:
-    """
-    Panel độ phủ dữ liệu: đếm chỉ số có dữ liệu thực so với chỉ số bị
-    <MISSING> (fallback trung lập) trong group_details của từng trụ cột.
-    """
-    group_details = score_record.get("group_details", {})
-    if not group_details:
-        return ""
-
-    total_ind = 0
-    total_missing = 0
-    items_html = ""
-    for grp, (ico, name) in _GROUP_LABELS.items():
-        details = group_details.get(grp, {})
-        n = len(details)
-        missing = sum(1 for v in details.values() if str(v).strip().startswith("<MISSING>"))
-        avail = n - missing
-        total_ind += n
-        total_missing += missing
-        pct = (avail / n * 100) if n else 0
-        bar_color = "var(--color-green)" if pct >= 99 else ("var(--color-amber)" if pct >= 70 else "var(--color-red)")
-        items_html += f"""
-        <div class="coverage-item">
-          <div class="coverage-name"><span>{ico} {t(name)}</span><span class="coverage-count">{avail}/{n}</span></div>
-          <div class="progress-bar" style="margin:0; height:8px;">
-            <div class="progress-fill" style="width:{pct:.0f}%; background:{bar_color};"></div>
-          </div>
-        </div>"""
-
-    total_avail = total_ind - total_missing
-    overall_pct = (total_avail / total_ind * 100) if total_ind else 0
-    overall_color = "var(--color-green)" if overall_pct >= 99 else ("var(--color-amber)" if overall_pct >= 70 else "var(--color-red)")
-
-    if total_missing == 0:
-        note = t("All indicators computed from real data — no neutral fallback used.",
-                 "Tất cả chỉ số được tính từ dữ liệu thực — không dùng giá trị trung lập thay thế.")
-    else:
-        note = t(f"{total_missing} indicator(s) missing — replaced by neutral score 50 (see N/A badges in Pillars Analysis).",
-                 f"{total_missing} chỉ số thiếu dữ liệu — được thay bằng điểm trung lập 50 (xem nhãn N/A trong Phân Rã Điểm Số).")
-
-    return f"""
-    <div class="section" id="data-coverage">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">
-        <h2 style="margin-bottom:4px;">🛰️ {t('Data Coverage', 'Độ Phủ Dữ Liệu')}</h2>
-        <div style="font-family:'JetBrains Mono', monospace; font-weight:700; font-size:18px; color:{overall_color};">
-          {total_avail}/{total_ind} ({overall_pct:.0f}%)
-        </div>
-      </div>
-      <div class="progress-bar" style="height:10px;">
-        <div class="progress-fill" style="width:{overall_pct:.0f}%; background:{overall_color};"></div>
-      </div>
-      <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">{note}</div>
-      <div class="coverage-grid">{items_html}</div>
-    </div>"""
+    """Display the 24 required scoring fields, excluding supplemental rows."""
+    coverage = score_record.get("data_coverage")
+    if not coverage:
+        from src.scoring.quarterly_scorer import compute_data_coverage
+        coverage = compute_data_coverage(score_record.get("group_details", {}))
+    names = {"macro_monetary": ("💰", "Macro & Monetary"), "global_intermarket": ("🌐", "Global & Intermarket"), "valuation_leverage": ("📐", "Valuation & Leverage"), "quant_model": ("📊", "Quant Model"), "ml_forecast": ("🤖", "ML Forecast"), "market_structure": ("🏗️", "Market Structure")}
+    items = ""
+    for group, info in coverage["by_group"].items():
+        ico, name = names[group]
+        pct = info["available"] / info["required"] * 100
+        missing = ", ".join(info["missing"]) if info["missing"] else "none"
+        items += f'<div class="coverage-item"><div class="coverage-name"><span>{ico} {t(name)}</span><span class="coverage-count">{info["available"]}/{info["required"]}</span></div><div class="progress-bar" style="margin:0;height:8px"><div class="progress-fill" style="width:{pct:.0f}%"></div></div><small>{t("Missing", "Thiếu")}: {missing}</small></div>'
+    note = t("Required scoring fields only; supplemental ratios, bonuses, counts and audit metadata are excluded.", "Chỉ tính trường chấm điểm bắt buộc; tỷ lệ tham chiếu, bonus, số đếm và metadata audit không nằm trong mẫu số.")
+    return f'<div class="section" id="data-coverage"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>🛰️ {t("Data Coverage", "Độ phủ dữ liệu")}</h2><strong>{coverage["available"]}/{coverage["required"]} ({coverage["percentage"]:.0f}%)</strong></div><div class="progress-bar"><div class="progress-fill"><div class="progress-fill" style="width:{coverage["percentage"]}%"></div></div></div><p style="font-size:13px;color:var(--text-muted)">{note}</p><div class="coverage-grid">{items}</div></div>'
 
 
 def build_html_report(
@@ -994,6 +969,8 @@ def build_html_report(
     raw_emoji = score_record.get("emoji", "🟡")
     leading = score_record.get("most_divergent_pillar", score_record.get("leading_indicator", ""))
     date_computed = score_record.get("date_computed", "")
+    data_as_of = score_record.get("data_as_of", "")
+    publication_status = "PROVISIONAL" if (quarter == "2026-Q4" and str(data_as_of) < "2026-09-30") else "FINAL"
 
     # ── Tầng 2: Calibrated Action Signal ────────────────────────────────────
     # Điểm thô giữ nguyên làm tầng tham chiếu (hero ghi chú "raw composite");
@@ -1045,6 +1022,7 @@ def build_html_report(
       <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px; font-weight: 500;">
         {t("VN-INDEX QUARTERLY QUANTITATIVE SCORE", "ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ")} — {quarter}
         &nbsp;|&nbsp; {t("Last Updated", "Cập nhật lần cuối")}: {date_computed}
+        &nbsp;|&nbsp; {t("Data as-of", "Dữ liệu đến")}: {data_as_of} &nbsp;|&nbsp; <strong>{publication_status}</strong>
       </div>
       <div class="score-big" style="color: {score_color};">{total:.1f}</div>
       <div class="score-label" style="color: {score_color};">{emoji} {label}
@@ -1057,7 +1035,7 @@ def build_html_report(
       <div style="margin-top: 16px;">
         <span class="action-chip" style="background:{cal_color};"
               title="Calibrated Action Signal — z-score vs prior quarters (expanding, point-in-time) · Tín hiệu hành động hiệu chỉnh — z-score so với các quý trước (point-in-time)">
-          ⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}
+          <span class="lang-en">⚡ ACTION: {cal_emoji} {cal_label} — {cal_total:.1f}</span><span class="lang-vi">⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}</span><span class="action-chip" style="display:none">⚡ HÀNH ĐỘNG: {cal_emoji} {cal_label} — {cal_total:.1f}</span>
         </span>
         <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
           {t(f'Calibrated action signal (allocation: {cal_alloc}) — raw composite shown below for reference.',
@@ -1140,7 +1118,7 @@ def build_html_report(
     layout_html = f"""
     <div>
       <div class="card" style="display:flex; flex-direction:column; margin-bottom: 24px;">
-        <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">{t("Pillars Overview", "Tổng quan 6 trụ cột")}</h3>
+        <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">{t("Pillars Analysis", "Phân rã điểm số")}<p class="score-legend">{t("Legend: colored badge = standalone 0–100 score; — = contextual, bonus, count or audit row; N/A = required source field missing.", "Chú giải: huy hiệu màu = điểm độc lập 0–100; — = dòng tham chiếu, bonus, số đếm hoặc audit; N/A = thiếu trường dữ liệu bắt buộc.")}</p></h3>
         <div class="chart-container" style="flex:1; min-height: 400px;">
           <canvas id="radarChart"></canvas>
         </div>
@@ -1189,8 +1167,10 @@ def build_html_report(
                 val_text = val_text[:score_match.start()].strip()
                 if val_text.endswith("|"): val_text = val_text[:-1].strip()
 
+            if score_match is None and not is_missing:
+                val_text = "—"
             if is_missing and not val_text:
-                val_text = t("Default neutral", "Mặc định trung lập")
+                val_text = t("N/A — required source missing", "N/A — thiếu trường dữ liệu bắt buộc")
             elif is_missing and "50" in val_text:
                 val_text = val_text.replace(" 50", "").strip()
 
