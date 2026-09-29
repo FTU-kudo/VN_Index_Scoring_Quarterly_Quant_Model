@@ -195,7 +195,9 @@
     .score-big { -webkit-text-fill-color: initial; }
     a { text-decoration: none; color: inherit; }
   }
-</style>
+.score-legend { font-size: 12px; color: var(--text-muted); margin: 8px 0 16px; }
+  .lang-vi { display:none; } body.vi-mode .lang-en { display:none; } body.vi-mode .lang-vi { display:inline; }
+  </style>
 
 </head>
 <body>
@@ -258,7 +260,7 @@
         labels: ["Macro & Monetary", "Global & Intermarket", "Valuation & Leverage", "Quant Model", "ML Forecast", "Market Structure"],
         datasets: [{
           label: 'Score',
-          data: [72.45, 45.31, 61.62, 56.39, 38.9, 82.74],
+          data: [72.45, 45.31, 61.5, 75.18, 37.33, 82.74],
           fill: true,
           backgroundColor: 'rgba(59, 130, 246, 0.2)',
           borderColor: 'rgba(59, 130, 246, 1)',
@@ -275,7 +277,7 @@
             labels: ["2021-Q1", "2021-Q2", "2021-Q3", "2021-Q4", "2022-Q1", "2022-Q2", "2022-Q3", "2022-Q4", "2023-Q1", "2023-Q2", "2023-Q3", "2023-Q4", "2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"],
             datasets: [{
               label: 'Total Score',
-              data: [68.64, 60.11, 60.26, 57.42, 60.1, 50.29, 58.2, 48.71, 61.2, 60.1, 58.91, 51.78, 50.45, 55.45, 52.65, 53.91, 51.43, 51.17, 55.14, 51.72, 50.6, 44.66, 47.92, 47.2],
+              data: [66.86, 62.75, 63.44, 60.22, 59.69, 51.25, 57.52, 45.88, 58.49, 57.35, 56.64, 50.28, 47.02, 53.7, 49.74, 53.13, 49.61, 51.03, 55.2, 51.98, 51.47, 44.38, 46.59, 47.67],
               percentile_label: ["HOLD", "HOLD", "HOLD", "HOLD", "HOLD", "REDUCE/SELL", "HOLD", "REDUCE/SELL", "BUY/ACCUMULATE", "HOLD", "HOLD", "REDUCE/SELL", "REDUCE/SELL", "HOLD", "HOLD", "HOLD", "HOLD", "HOLD", "HOLD", "HOLD", "REDUCE/SELL", "REDUCE/SELL", "REDUCE/SELL", "REDUCE/SELL"],
               dispersion_level: ["MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "HIGH", "MEDIUM", "LOW", "LOW", "LOW", "LOW", "LOW", "LOW", "HIGH", "MEDIUM", "HIGH", "MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "HIGH", "HIGH", "HIGH", "HIGH", "MEDIUM"],
               borderColor: '#3b82f6',
@@ -291,11 +293,11 @@
             },
             {
               label: 'Calibrated Action',
-              data: [68.64, 60.11, 60.26, 57.42, 45.35, 11.29, 46.77, 20.65, 57.76, 54.48, 51.08, 31.03, 29.31, 44.81, 37.27, 41.5, 34.74, 34.88, 47.09, 37.08, 34.3, 17.43, 30.18, 29.37],
+              data: [66.86, 62.75, 63.44, 60.22, 30.12, 0.0, 40.99, 6.74, 50.08, 47.42, 45.78, 29.45, 23.54, 42.92, 33.65, 42.96, 34.51, 38.94, 49.86, 41.55, 40.48, 21.85, 30.12, 33.97],
               borderColor: '#8b5cf6',
               backgroundColor: 'transparent',
               borderWidth: 3,
-              pointBackgroundColor: ["#3b82f6", "#eab308", "#eab308", "#eab308", "#f97316", "#ef4444", "#f97316", "#ef4444", "#eab308", "#eab308", "#eab308", "#ef4444", "#ef4444", "#f97316", "#f97316", "#f97316", "#ef4444", "#ef4444", "#f97316", "#f97316", "#ef4444", "#ef4444", "#ef4444", "#ef4444"],
+              pointBackgroundColor: ["#3b82f6", "#eab308", "#eab308", "#eab308", "#ef4444", "#ef4444", "#f97316", "#ef4444", "#eab308", "#f97316", "#f97316", "#ef4444", "#ef4444", "#f97316", "#ef4444", "#f97316", "#ef4444", "#f97316", "#f97316", "#f97316", "#f97316", "#ef4444", "#ef4444", "#ef4444"],
               pointBorderColor: '#fff',
               pointRadius: 5,
               pointHoverRadius: 7,
@@ -323,19 +325,20 @@
       <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px; font-weight: 500;">
         <span class="lang-en">VN-INDEX QUARTERLY QUANTITATIVE SCORE</span><span class="lang-vi">ĐIỂM ĐỊNH LƯỢNG VN-INDEX HÀNG QUÝ</span> — 2021-Q2
         &nbsp;|&nbsp; <span class="lang-en">Last Updated</span><span class="lang-vi">Cập nhật lần cuối</span>: 2026-09-28 15:48
+        &nbsp;|&nbsp; <span class="lang-en">Data as-of</span><span class="lang-vi">Dữ liệu đến</span>: 2021-03-31 &nbsp;|&nbsp; <strong>FINAL</strong>
       </div>
-      <div class="score-big" style="color: #eab308;">60.1</div>
+      <div class="score-big" style="color: #eab308;">62.8</div>
       <div class="score-label" style="color: #eab308;">🟡 HOLD
         <span style="font-size:13px; font-weight:500; opacity:.65;">(<span class="lang-en">calibrated action signal</span><span class="lang-vi">tín hiệu hành động hiệu chỉnh</span>)</span>
       </div>
       <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
-        <span class="lang-en">Raw Composite: 60.1 — HOLD</span><span class="lang-vi">Điểm thô tổng hợp: 60.1 — HOLD</span>
+        <span class="lang-en">Raw Composite: 62.8 — HOLD</span><span class="lang-vi">Điểm thô tổng hợp: 62.8 — HOLD</span>
       </div>
       <div class="score-desc"><span class="lang-en">Neutral — Await confirming signals</span><span class="lang-vi">Trung lập — Chờ tín hiệu xác nhận</span></div>
       <div style="margin-top: 16px;">
         <span class="action-chip" style="background:#eab308;"
               title="Calibrated Action Signal — z-score vs prior quarters (expanding, point-in-time) · Tín hiệu hành động hiệu chỉnh — z-score so với các quý trước (point-in-time)">
-          ⚡ HÀNH ĐỘNG: 🟡 HOLD — 60.1
+          <span class="lang-en">⚡ ACTION: 🟡 HOLD — 62.8</span><span class="lang-vi">⚡ HÀNH ĐỘNG: 🟡 HOLD — 62.8</span><span class="action-chip" style="display:none">⚡ HÀNH ĐỘNG: 🟡 HOLD — 62.8</span>
         </span>
         <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
           <span class="lang-en">Calibrated action signal (allocation: 40–60% Equities) — raw composite shown below for reference.</span><span class="lang-vi">Tín hiệu hành động hiệu chỉnh (phân bổ: 40–60% Equities) — điểm thô hiển thị bên dưới để tham chiếu.</span>
@@ -343,7 +346,7 @@
       </div>
       <div style="margin-top: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
         <div class="progress-bar">
-          <div class="progress-fill" style="width:60.11%; background:#eab308;"></div>
+          <div class="progress-fill" style="width:62.75%; background:#eab308;"></div>
         </div>
       </div>
       <div style="margin-top: 14px; color: var(--text-muted); font-size: 14px;">
@@ -379,10 +382,10 @@
         <div class="action-panel-title">⚡ <span class="lang-en">Action Panel — Calibrated Allocation</span><span class="lang-vi">Action Panel — Khuyến nghị Phân bổ (Calibrated)</span></div>
         <div class="alloc-value" style="color:#eab308;"><span class="lang-en">40–60% Equities</span><span class="lang-vi">40–60% Cổ phiếu</span></div>
         <div class="alloc-sub">
-          <span class="lang-en">Action regime: HOLD @ calibrated 60.1/100 (raw 60.1 → HOLD) — thresholds from config.py SCORE_LABELS</span><span class="lang-vi">Trạng thái hành động: HOLD @ calibrated 60.1/100 (điểm thô 60.1 → HOLD) — ngưỡng lấy từ config.py SCORE_LABELS</span>
+          <span class="lang-en">Action regime: HOLD @ calibrated 62.8/100 (raw 62.8 → HOLD) — thresholds from config.py SCORE_LABELS</span><span class="lang-vi">Trạng thái hành động: HOLD @ calibrated 62.8/100 (điểm thô 62.8 → HOLD) — ngưỡng lấy từ config.py SCORE_LABELS</span>
         </div>
         <div class="alloc-track">
-          <div class="alloc-marker" style="left:60.11%;" title="60.1"></div>
+          <div class="alloc-marker" style="left:62.75%;" title="62.8"></div>
           <div class="alloc-bands"><div class="alloc-band" title="SELL (0–34): 0–20% Equities" style="width:35%; background:#ef4444; opacity:0.30;"></div><div class="alloc-band" title="REDUCE (35–49): 20–40% Equities" style="width:15%; background:#f97316; opacity:0.30;"></div><div class="alloc-band" title="HOLD (50–64): 40–60% Equities" style="width:15%; background:#eab308; opacity:1;"></div><div class="alloc-band" title="ACCUMULATE (65–79): 70–85% Equities" style="width:15%; background:#3b82f6; opacity:0.30;"></div><div class="alloc-band" title="BUY (80–100): 85–100% Equities" style="width:21%; background:#10b981; opacity:0.30;"></div></div>
           <div class="alloc-legend"><span><span class="lang-en">SELL</span><span class="lang-vi">BÁN</span></span><span><span class="lang-en">REDUCE</span><span class="lang-vi">GIẢM</span></span><span><span class="lang-en">HOLD</span><span class="lang-vi">GIỮ</span></span><span><span class="lang-en">ACCUMULATE</span><span class="lang-vi">TÍCH LŨY</span></span><span><span class="lang-en">BUY</span><span class="lang-vi">MUA</span></span></div>
         </div>
@@ -409,27 +412,27 @@
         </div>
         <div class="card">
           <div class="card-title">📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span></div>
-          <div class="card-value" style="color:var(--color-blue);">61.6</div>
+          <div class="card-value" style="color:var(--color-blue);">61.5</div>
           <div class="progress-bar" style="margin-top:10px;">
-            <div class="progress-fill" style="width:61.62%;background:var(--color-blue);"></div>
+            <div class="progress-fill" style="width:61.5%;background:var(--color-blue);"></div>
           </div>
-          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 12.32 pts</div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 12.30 pts</div>
         </div>
         <div class="card">
           <div class="card-title">📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span></div>
-          <div class="card-value" style="color:var(--color-amber);">56.4</div>
+          <div class="card-value" style="color:var(--color-blue);">75.2</div>
           <div class="progress-bar" style="margin-top:10px;">
-            <div class="progress-fill" style="width:56.39%;background:var(--color-amber);"></div>
+            <div class="progress-fill" style="width:75.18%;background:var(--color-blue);"></div>
           </div>
-          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 8.46 pts</div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 11.28 pts</div>
         </div>
         <div class="card">
           <div class="card-title">🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span></div>
-          <div class="card-value" style="color:var(--color-orange);">38.9</div>
+          <div class="card-value" style="color:var(--color-orange);">37.3</div>
           <div class="progress-bar" style="margin-top:10px;">
-            <div class="progress-fill" style="width:38.9%;background:var(--color-orange);"></div>
+            <div class="progress-fill" style="width:37.33%;background:var(--color-orange);"></div>
           </div>
-          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 3.89 pts</div>
+          <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 3.73 pts</div>
         </div>
         <div class="card">
           <div class="card-title">🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span></div>
@@ -439,56 +442,7 @@
           </div>
           <div class="card-detail"><span class="lang-en">Weighted</span><span class="lang-vi">Tỷ trọng</span>: 8.27 pts</div>
         </div></div>
-        
-    <div class="section" id="data-coverage">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">
-        <h2 style="margin-bottom:4px;">🛰️ <span class="lang-en">Data Coverage</span><span class="lang-vi">Độ Phủ Dữ Liệu</span></h2>
-        <div style="font-family:'JetBrains Mono', monospace; font-weight:700; font-size:18px; color:var(--color-amber);">
-          24/25 (96%)
-        </div>
-      </div>
-      <div class="progress-bar" style="height:10px;">
-        <div class="progress-fill" style="width:96%; background:var(--color-amber);"></div>
-      </div>
-      <div style="font-size:13px; color:var(--text-muted); margin-top:6px;"><span class="lang-en">1 indicator(s) missing — replaced by neutral score 50 (see N/A badges in Pillars Analysis).</span><span class="lang-vi">1 chỉ số thiếu dữ liệu — được thay bằng điểm trung lập 50 (xem nhãn N/A trong Phân Rã Điểm Số).</span></div>
-      <div class="coverage-grid">
-        <div class="coverage-item">
-          <div class="coverage-name"><span>💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span></span><span class="coverage-count">5/5</span></div>
-          <div class="progress-bar" style="margin:0; height:8px;">
-            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
-          </div>
-        </div>
-        <div class="coverage-item">
-          <div class="coverage-name"><span>🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span></span><span class="coverage-count">6/6</span></div>
-          <div class="progress-bar" style="margin:0; height:8px;">
-            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
-          </div>
-        </div>
-        <div class="coverage-item">
-          <div class="coverage-name"><span>📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span></span><span class="coverage-count">1/2</span></div>
-          <div class="progress-bar" style="margin:0; height:8px;">
-            <div class="progress-fill" style="width:50%; background:var(--color-red);"></div>
-          </div>
-        </div>
-        <div class="coverage-item">
-          <div class="coverage-name"><span>📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span></span><span class="coverage-count">4/4</span></div>
-          <div class="progress-bar" style="margin:0; height:8px;">
-            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
-          </div>
-        </div>
-        <div class="coverage-item">
-          <div class="coverage-name"><span>🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span></span><span class="coverage-count">2/2</span></div>
-          <div class="progress-bar" style="margin:0; height:8px;">
-            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
-          </div>
-        </div>
-        <div class="coverage-item">
-          <div class="coverage-name"><span>🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span></span><span class="coverage-count">6/6</span></div>
-          <div class="progress-bar" style="margin:0; height:8px;">
-            <div class="progress-fill" style="width:100%; background:var(--color-green);"></div>
-          </div>
-        </div></div>
-    </div>
+        <div class="section" id="data-coverage"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>🛰️ <span class="lang-en">Data Coverage</span><span class="lang-vi">Độ phủ dữ liệu</span></h2><strong>21/24 (88%)</strong></div><div class="progress-bar"><div class="progress-fill"><div class="progress-fill" style="width:87.5%"></div></div></div><p style="font-size:13px;color:var(--text-muted)"><span class="lang-en">Required scoring fields only; supplemental ratios, bonuses, counts and audit metadata are excluded.</span><span class="lang-vi">Chỉ tính trường chấm điểm bắt buộc; tỷ lệ tham chiếu, bonus, số đếm và metadata audit không nằm trong mẫu số.</span></p><div class="coverage-grid"><div class="coverage-item"><div class="coverage-name"><span>💰 <span class="lang-en">Macro & Monetary</span><span class="lang-vi">Macro & Tiền tệ</span></span><span class="coverage-count">5/5</span></div><div class="progress-bar" style="margin:0;height:8px"><div class="progress-fill" style="width:100%"></div></div><small><span class="lang-en">Missing</span><span class="lang-vi">Thiếu</span>: none</small></div><div class="coverage-item"><div class="coverage-name"><span>🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span></span><span class="coverage-count">5/5</span></div><div class="progress-bar" style="margin:0;height:8px"><div class="progress-fill" style="width:100%"></div></div><small><span class="lang-en">Missing</span><span class="lang-vi">Thiếu</span>: none</small></div><div class="coverage-item"><div class="coverage-name"><span>📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span></span><span class="coverage-count">1/4</span></div><div class="progress-bar" style="margin:0;height:8px"><div class="progress-fill" style="width:25%"></div></div><small><span class="lang-en">Missing</span><span class="lang-vi">Thiếu</span>: pe_zscore, pb_zscore, eyg_zscore</small></div><div class="coverage-item"><div class="coverage-name"><span>📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span></span><span class="coverage-count">4/4</span></div><div class="progress-bar" style="margin:0;height:8px"><div class="progress-fill" style="width:100%"></div></div><small><span class="lang-en">Missing</span><span class="lang-vi">Thiếu</span>: none</small></div><div class="coverage-item"><div class="coverage-name"><span>🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span></span><span class="coverage-count">2/2</span></div><div class="progress-bar" style="margin:0;height:8px"><div class="progress-fill" style="width:100%"></div></div><small><span class="lang-en">Missing</span><span class="lang-vi">Thiếu</span>: none</small></div><div class="coverage-item"><div class="coverage-name"><span>🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span></span><span class="coverage-count">4/4</span></div><div class="progress-bar" style="margin:0;height:8px"><div class="progress-fill" style="width:100%"></div></div><small><span class="lang-en">Missing</span><span class="lang-vi">Thiếu</span>: none</small></div></div></div>
         
     <div class="section" style="border-color:#eab308;">
       <h2>🟡 <span class="lang-en">Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư</span> — 2021-Q2</h2>
@@ -503,7 +457,7 @@
         
     <div>
       <div class="card" style="display:flex; flex-direction:column; margin-bottom: 24px;">
-        <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;"><span class="lang-en">Pillars Overview</span><span class="lang-vi">Tổng quan 6 trụ cột</span></h3>
+        <h3 style="margin-top:0; color: var(--text-muted); font-size:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;"><span class="lang-en">Pillars Analysis</span><span class="lang-vi">Phân rã điểm số</span><p class="score-legend"><span class="lang-en">Legend: colored badge = standalone 0–100 score; — = contextual, bonus, count or audit row; N/A = required source field missing.</span><span class="lang-vi">Chú giải: huy hiệu màu = điểm độc lập 0–100; — = dòng tham chiếu, bonus, số đếm hoặc audit; N/A = thiếu trường dữ liệu bắt buộc.</span></p></h3>
         <div class="chart-container" style="flex:1; min-height: 400px;">
           <canvas id="radarChart"></canvas>
         </div>
@@ -522,31 +476,31 @@
           <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">🌐 <span class="lang-en">Global & Intermarket</span><span class="lang-vi">Global & Ngoại lực</span> — 45.3/100</h3>
           <table style="margin: 8px 0;">
             <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th><th style="width: 70px; text-align: center;"><span class="lang-en">Score</span><span class="lang-vi">Score</span></th></tr></thead>
-            <tbody><tr><td class="var-col"><span class="lang-en">DXY</span><span class="lang-vi">DXY</span></td><td>Z = 2.39</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#ef4444; color:#fff; display:inline-block; width:100%; text-align:center;">2</span></td></tr><tr><td class="var-col"><span class="lang-en">US10Y</span><span class="lang-vi">US10Y</span></td><td>1.75%</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#84cc16; color:#fff; display:inline-block; width:100%; text-align:center;">65</span></td></tr><tr><td class="var-col"><span class="lang-en">NFF Ex ETF</span><span class="lang-vi">NFF Ex ETF</span></td><td>Z = -4.06 (NET SELL)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#ef4444; color:#fff; display:inline-block; width:100%; text-align:center;">0</span></td></tr><tr><td class="var-col"><span class="lang-en">JPY Carry</span><span class="lang-vi">JPY Carry</span></td><td>Z = 1.95 (Neutral)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#84cc16; color:#fff; display:inline-block; width:100%; text-align:center;">79</span></td></tr><tr><td class="var-col"><span class="lang-en">Oil Shock</span><span class="lang-vi">Oil Shock</span></td><td>Oil Shock Score = 19.9 (Max Δ5d = 8.9%)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">80</span></td></tr><tr><td class="var-col"><span class="lang-en">NFF Ex ETF Q Ytd</span><span class="lang-vi">NFF Ex ETF Q Ytd</span></td><td>-0.98% of Market Cap (YTD in Q)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
+            <tbody><tr><td class="var-col"><span class="lang-en">DXY</span><span class="lang-vi">DXY</span></td><td>Z = 2.39</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#ef4444; color:#fff; display:inline-block; width:100%; text-align:center;">2</span></td></tr><tr><td class="var-col"><span class="lang-en">US10Y</span><span class="lang-vi">US10Y</span></td><td>1.75%</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#84cc16; color:#fff; display:inline-block; width:100%; text-align:center;">65</span></td></tr><tr><td class="var-col"><span class="lang-en">NFF Ex ETF</span><span class="lang-vi">NFF Ex ETF</span></td><td>Z = -4.06 (NET SELL)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#ef4444; color:#fff; display:inline-block; width:100%; text-align:center;">0</span></td></tr><tr><td class="var-col"><span class="lang-en">JPY Carry</span><span class="lang-vi">JPY Carry</span></td><td>Z = 1.95 (Neutral)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#84cc16; color:#fff; display:inline-block; width:100%; text-align:center;">79</span></td></tr><tr><td class="var-col"><span class="lang-en">Oil Shock</span><span class="lang-vi">Oil Shock</span></td><td>Oil Shock Score = 19.9 (Max Δ5d = 8.9%)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">80</span></td></tr><tr><td class="var-col"><span class="lang-en">NFF Ex ETF Q Ytd</span><span class="lang-vi">NFF Ex ETF Q Ytd</span></td><td>—</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
           </table>
           <div class="rationale">Global: DXY=2.4σ | US10Y=1.75% | NFF-Z=-4.1σ | JPY-Z=1.9σ | OIL-SHOCK=19.9</div>
         </div>
         <div class="section" style="padding:16px;">
-          <h3 style="color:var(--color-blue); margin-top:0; font-size: 16px;">📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span> — 61.6/100</h3>
+          <h3 style="color:var(--color-blue); margin-top:0; font-size: 16px;">📐 <span class="lang-en">Valuation & Leverage</span><span class="lang-vi">Định giá & Đòn bẩy</span> — 61.5/100</h3>
           <table style="margin: 8px 0;">
             <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th><th style="width: 70px; text-align: center;"><span class="lang-en">Score</span><span class="lang-vi">Score</span></th></tr></thead>
-            <tbody><tr><td class="var-col"><span class="lang-en">P/E Z-Score</span><span class="lang-vi">P/E Z-Score</span></td><td><span class="badge badge-fail" style="background:#94a3b8; color:#fff; margin-bottom: 4px;">N/A</span> <span class="lang-en">Default neutral</span><span class="lang-vi">Mặc định trung lập</span></td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">Margin Risk</span><span class="lang-vi">Margin Risk</span></td><td>Risk = 4/100 (SAFE)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">96</span></td></tr></tbody>
+            <tbody><tr><td class="var-col"><span class="lang-en">P/E Z-Score</span><span class="lang-vi">P/E Z-Score</span></td><td><span class="badge badge-fail" style="background:#94a3b8; color:#fff; margin-bottom: 4px;">N/A</span> <span class="lang-en">Default neutral</span><span class="lang-vi">Mặc định trung lập</span></td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">Margin Risk</span><span class="lang-vi">Margin Risk</span></td><td>Risk = 4/100 (SAFE)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">96</span></td></tr><tr><td class="var-col"><span class="lang-en">P/B Z-Score</span><span class="lang-vi">P/B Z-Score</span></td><td><span class="badge badge-fail" style="background:#94a3b8; color:#fff; margin-bottom: 4px;">N/A</span> <span class="lang-en">Default neutral</span><span class="lang-vi">Mặc định trung lập</span></td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">EYG Z-Score</span><span class="lang-vi">EYG Z-Score</span></td><td><span class="badge badge-fail" style="background:#94a3b8; color:#fff; margin-bottom: 4px;">N/A</span> <span class="lang-en">Default neutral</span><span class="lang-vi">Mặc định trung lập</span></td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
           </table>
           <div class="rationale">Valuation: Incomplete P/E, P/B, EYG, or margin data</div>
         </div>
         <div class="section" style="padding:16px;">
-          <h3 style="color:var(--color-amber); margin-top:0; font-size: 16px;">📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span> — 56.4/100</h3>
+          <h3 style="color:var(--color-blue); margin-top:0; font-size: 16px;">📊 <span class="lang-en">Quant Model</span><span class="lang-vi">Mô hình Định lượng</span> — 75.2/100</h3>
           <table style="margin: 8px 0;">
             <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th><th style="width: 70px; text-align: center;"><span class="lang-en">Score</span><span class="lang-vi">Score</span></th></tr></thead>
-            <tbody><tr><td class="var-col"><span class="lang-en">MLR Forecast</span><span class="lang-vi">MLR Forecast</span></td><td>Forward log-return/day (next ~1M) = 0.0036</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#eab308; color:#fff; display:inline-block; width:100%; text-align:center;">61</span></td></tr><tr><td class="var-col"><span class="lang-en">VAR Forecast</span><span class="lang-vi">VAR Forecast</span></td><td>VAR T+5 return = -0.0007</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#f59e0b; color:#fff; display:inline-block; width:100%; text-align:center;">48</span></td></tr><tr><td class="var-col"><span class="lang-en">MLR Adj R²</span><span class="lang-vi">MLR Adj R²</span></td><td>Adj-R² = 0.1933 → confidence bonus 1.9</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">Granger Leaders</span><span class="lang-vi">Granger Leaders</span></td><td>0 vars Granger-cause VNI (p<5%)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
+            <tbody><tr><td class="var-col"><span class="lang-en">MLR Forecast</span><span class="lang-vi">MLR Forecast</span></td><td>Forward log-return/day (next ~1M) = 0.0036</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#eab308; color:#fff; display:inline-block; width:100%; text-align:center;">61</span></td></tr><tr><td class="var-col"><span class="lang-en">VAR Forecast</span><span class="lang-vi">VAR Forecast</span></td><td>VAR T+5 return = -0.0007</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#f59e0b; color:#fff; display:inline-block; width:100%; text-align:center;">48</span></td></tr><tr><td class="var-col"><span class="lang-en">MLR Adj R²</span><span class="lang-vi">MLR Adj R²</span></td><td>—</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">Granger Leaders</span><span class="lang-vi">Granger Leaders</span></td><td>—</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
           </table>
           <div class="rationale">MLR=61 | VAR=48 | R²=0.193 | Granger=0</div>
         </div>
         <div class="section" style="padding:16px;">
-          <h3 style="color:var(--color-orange); margin-top:0; font-size: 16px;">🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span> — 38.9/100</h3>
+          <h3 style="color:var(--color-orange); margin-top:0; font-size: 16px;">🤖 <span class="lang-en">ML Forecast</span><span class="lang-vi">Dự báo Machine Learning</span> — 37.3/100</h3>
           <table style="margin: 8px 0;">
             <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th><th style="width: 70px; text-align: center;"><span class="lang-en">Score</span><span class="lang-vi">Score</span></th></tr></thead>
-            <tbody><tr><td class="var-col"><span class="lang-en">Model Quality</span><span class="lang-vi">Model Quality</span></td><td>Accuracy=59.7% F1=0.566 → quality 58</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">Ml Signal</span><span class="lang-vi">Ml Signal</span></td><td>Forecast: DOWN (conf=81%)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
+            <tbody><tr><td class="var-col"><span class="lang-en">Model Quality</span><span class="lang-vi">Model Quality</span></td><td>Accuracy=59.7% F1=0.566</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#eab308; color:#fff; display:inline-block; width:100%; text-align:center;">58</span></td></tr><tr><td class="var-col"><span class="lang-en">Ml Signal</span><span class="lang-vi">Ml Signal</span></td><td>Forecast: DOWN (conf=81.0%)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#ef4444; color:#fff; display:inline-block; width:100%; text-align:center;">29</span></td></tr></tbody>
           </table>
           <div class="rationale">ML: Forecast: DOWN (conf=81%) | Quality=58</div>
         </div>
@@ -554,7 +508,7 @@
           <h3 style="color:var(--color-green); margin-top:0; font-size: 16px;">🏗️ <span class="lang-en">Market Structure</span><span class="lang-vi">Cấu trúc & FTSE</span> — 82.7/100</h3>
           <table style="margin: 8px 0;">
             <thead><tr><th><span class="lang-en">Variable / Indicator</span><span class="lang-vi">Biến số / Chỉ số</span></th><th><span class="lang-en">Value & Analysis</span><span class="lang-vi">Giá trị & Phân tích</span></th><th style="width: 70px; text-align: center;"><span class="lang-en">Score</span><span class="lang-vi">Score</span></th></tr></thead>
-            <tbody><tr><td class="var-col"><span class="lang-en">FTSE Upgrade</span><span class="lang-vi">FTSE Upgrade</span></td><td>Status: unknown</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#eab308; color:#fff; display:inline-block; width:100%; text-align:center;">50</span></td></tr><tr><td class="var-col"><span class="lang-en">Rebalancing</span><span class="lang-vi">Rebalancing</span></td><td>3 months to rebalancing → bonus +6</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">ADTV</span><span class="lang-vi">ADTV</span></td><td>ADTV change +42.2% QoQ</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">92</span></td></tr><tr><td class="var-col"><span class="lang-en">ETF Flow</span><span class="lang-vi">ETF Flow</span></td><td>Z = 5.92 (NET BUY)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">100</span></td></tr><tr><td class="var-col"><span class="lang-en">Pillar Components Used</span><span class="lang-vi">Pillar Components Used</span></td><td>3/3 components with data → average over 3</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">ETF Flow Q Ytd</span><span class="lang-vi">ETF Flow Q Ytd</span></td><td>0.16% of Market Cap (YTD in Q)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
+            <tbody><tr><td class="var-col"><span class="lang-en">FTSE Upgrade</span><span class="lang-vi">FTSE Upgrade</span></td><td>Status: unknown</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#eab308; color:#fff; display:inline-block; width:100%; text-align:center;">50</span></td></tr><tr><td class="var-col"><span class="lang-en">Rebalancing</span><span class="lang-vi">Rebalancing</span></td><td>—</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">ADTV</span><span class="lang-vi">ADTV</span></td><td>ADTV change +42.2% QoQ</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">92</span></td></tr><tr><td class="var-col"><span class="lang-en">ETF Flow</span><span class="lang-vi">ETF Flow</span></td><td>Z = 5.92 (NET BUY)</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#16a34a; color:#fff; display:inline-block; width:100%; text-align:center;">100</span></td></tr><tr><td class="var-col"><span class="lang-en">Pillar Components Used</span><span class="lang-vi">Pillar Components Used</span></td><td>—</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr><tr><td class="var-col"><span class="lang-en">ETF Flow Q Ytd</span><span class="lang-vi">ETF Flow Q Ytd</span></td><td>—</td><td style='width: 70px; vertical-align: middle;'><span class="badge" style="background:#94a3b8; color:#fff; display:inline-block; width:100%; text-align:center;">N/A</span></td></tr></tbody>
           </table>
           <div class="rationale">FTSE: UNKNOWN | ADTV: +42% | ETF-Z: 5.9σ</div>
         </div></div></div>
@@ -890,7 +844,7 @@
             <h3 style="margin-top: 0; color: var(--color-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <span class="lang-en">Quarterly Investment Recommendation</span><span class="lang-vi">Khuyến nghị Đầu tư theo Quý</span>
             </h3>
-            <p><strong><span class="lang-en">Current Score</span><span class="lang-vi">Điểm số hiện tại</span>:</strong> <span style="color: #eab308; font-weight: bold;">60.1 / 100 (HOLD)</span></p>
+            <p><strong><span class="lang-en">Current Score</span><span class="lang-vi">Điểm số hiện tại</span>:</strong> <span style="color: #eab308; font-weight: bold;">62.8 / 100 (HOLD)</span></p>
             <p style="line-height: 1.6;"><strong><span class="lang-en">Recommendation</span><span class="lang-vi">Khuyến nghị</span>:</strong> <span class="lang-en">Based on the aggregate quantitative score, the current market environment is classified as HOLD. Investors are advised to align their equity exposure with this regime, utilizing the 'Pillars Analysis' to identify the specific macro or valuation drivers behind this score.</span><span class="lang-vi">Dựa trên tổng điểm định lượng, môi trường thị trường hiện tại được phân loại là HOLD. Nhà đầu tư được khuyến nghị điều chỉnh tỷ trọng cổ phiếu theo trạng thái này, đồng thời sử dụng 'Phân rã Điểm số' để nhận diện các động lực vĩ mô hoặc định giá cụ thể đứng sau mức điểm này.</span></p>
         </div>
 

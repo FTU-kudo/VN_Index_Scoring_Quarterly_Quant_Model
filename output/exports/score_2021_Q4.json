@@ -2,7 +2,7 @@
   "metadata": {
     "quarter": "2021-Q4",
     "generated_at": "2026-09-27T21:46:49.162850",
-    "model_version": "1.0.0",
+    "model_version": "2.0.0-pit-transparent",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
     "adtv_backfill": {
       "applied_at": "2026-09-28 11:17",
@@ -19,12 +19,18 @@
       "applied_at": "2026-09-28 15:48",
       "source": "VNDirect api-finfo /v4/foreigns — STOCK_HOSE, ETF_HOSE (2018-08-30→nay)",
       "fix": "bỏ giới hạn fetch 2021 tự đặt; splice MC HOSE công bố trước 2021-04-15"
-    }
+    },
+    "git_commit": "cfad6a0cbe10734b627893bc2827f7f0a606bae9",
+    "data_as_of": "2021-09-30",
+    "point_in_time": true,
+    "status": "FINAL",
+    "config_hash": "78ed1b50eececf3ddd9f2844eed21369a8112c56a358ca7854973ded70670923",
+    "model_hash": "b6ff7fcbdc19c34845d769b76712935423286d05715c0290f97f4105f9fcacc8"
   },
   "quarterly_score": {
     "quarter": "2021-Q4",
     "date_computed": "2026-09-28 15:48",
-    "total_score": 57.42,
+    "total_score": 60.22,
     "label": "HOLD",
     "emoji": "🟡",
     "label_description": "Neutral — Await confirming signals",
@@ -46,16 +52,16 @@
         "weighted_score": 11.93
       },
       "valuation_leverage": {
-        "raw_score": 58.78,
-        "weighted_score": 11.76
+        "raw_score": 58.75,
+        "weighted_score": 11.75
       },
       "quant_model": {
-        "raw_score": 52.92,
-        "weighted_score": 7.94
+        "raw_score": 60.06,
+        "weighted_score": 9.01
       },
       "ml_forecast": {
-        "raw_score": 30.39,
-        "weighted_score": 3.04
+        "raw_score": 47.76,
+        "weighted_score": 4.78
       },
       "market_structure": {
         "raw_score": 41.95,
@@ -80,7 +86,9 @@
       },
       "valuation_leverage": {
         "pe_zscore": "<MISSING> N/A → default 50",
-        "margin_risk": "Risk = 15/100 (SAFE) → score 85"
+        "margin_risk": "Risk = 15/100 (SAFE) → score 85",
+        "pb_zscore": "<MISSING> N/A → default 50",
+        "eyg_zscore": "<MISSING> N/A → default 50"
       },
       "quant_model": {
         "mlr_forecast": "Forward log-return/day (next ~1M) = 0.0009 → score 53",
@@ -89,8 +97,8 @@
         "granger_leaders": "0 vars Granger-cause VNI (p<5%)"
       },
       "ml_forecast": {
-        "model_quality": "Accuracy=56.5% F1=0.528 → quality 55",
-        "ml_signal": "Forecast: DOWN (conf=45%)"
+        "model_quality": "Accuracy=56.5% F1=0.528 → score 54.65",
+        "ml_signal": "Forecast: DOWN (conf=45.0%) → score 44.75"
       },
       "market_structure": {
         "ftse_upgrade": "Status: unknown → score 50\n  Est passive inflow: $6.4B USD\n  Effect: Sentiment premium VN30 +15-25% during rebalancing",
@@ -111,7 +119,7 @@
     },
     "data_as_of": "2021-09-30",
     "point_in_time": true,
-    "calibrated_score": 57.42,
+    "calibrated_score": 60.22,
     "calibrated_label": "HOLD",
     "calibrated_emoji": "🟡",
     "calibrated_description": "Neutral — Await confirming signals",
@@ -121,7 +129,73 @@
     "calibration_hist_mean": null,
     "calibration_hist_std": null,
     "calibration_n_history": 3,
-    "adtv_change_pct": -0.063721
+    "adtv_change_pct": -0.063721,
+    "data_coverage": {
+      "available": 21,
+      "required": 24,
+      "percentage": 87.5,
+      "by_group": {
+        "macro_monetary": {
+          "available": 5,
+          "required": 5,
+          "missing": []
+        },
+        "global_intermarket": {
+          "available": 5,
+          "required": 5,
+          "missing": []
+        },
+        "valuation_leverage": {
+          "available": 1,
+          "required": 4,
+          "missing": [
+            "pe_zscore",
+            "pb_zscore",
+            "eyg_zscore"
+          ]
+        },
+        "quant_model": {
+          "available": 4,
+          "required": 4,
+          "missing": []
+        },
+        "ml_forecast": {
+          "available": 2,
+          "required": 2,
+          "missing": []
+        },
+        "market_structure": {
+          "available": 4,
+          "required": 4,
+          "missing": []
+        }
+      }
+    },
+    "model_config": {
+      "score_model_params": {
+        "quant_model": {
+          "mlr_gain": 20000.0,
+          "var_gain": 5000.0
+        },
+        "ml_signal": {
+          "neutral_score": 50.0,
+          "max_directional_distance": 30.0,
+          "neutral_confidence": 0.3333333333333333
+        }
+      },
+      "scoring_weights": {
+        "macro_monetary": 0.25,
+        "global_intermarket": 0.2,
+        "valuation_leverage": 0.2,
+        "quant_model": 0.15,
+        "ml_forecast": 0.1,
+        "market_structure": 0.1
+      }
+    },
+    "raw_scorer_inputs": {
+      "ml_pred_class": -1,
+      "ml_confidence": 0.45
+    }
   },
   "mlr_regression": [
     {

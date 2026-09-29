@@ -146,6 +146,25 @@ MLR_TRAIN_RATIO = 0.75            # 75% train / 25% test
 # VAR: 50 + pred*5000 — xem SCORE_CALIBRATION và score_quant_model).
 MLR_FORECAST_HORIZON_DAYS = 21
 
+# Model scoring parameters: single source of truth for scorer and audit artifacts.
+SCORE_MODEL_PARAMS = {
+    "quant_model": {"mlr_gain": 20000.0, "var_gain": 5000.0},
+    "ml_signal": {"neutral_score": 50.0, "max_directional_distance": 30.0,
+                   "neutral_confidence": 1.0 / 3.0},
+}
+MODEL_VERSION = "2.0.0-pit-transparent"
+
+# Required fields only. Informational rows (bonuses, counts and contextual ratios)
+# are deliberately excluded from coverage denominators.
+REQUIRED_SCORING_FIELDS = {
+    "macro_monetary": ("vn1y_yield", "ir_trend", "usd_vnd", "m2_yoy_growth", "vn_bonds"),
+    "global_intermarket": ("dxy", "us10y", "nff_ex_etf", "jpy_carry", "oil_shock"),
+    "valuation_leverage": ("pe_zscore", "pb_zscore", "margin_risk", "eyg_zscore"),
+    "quant_model": ("mlr_forecast", "var_forecast", "mlr_adj_r2", "granger_leaders"),
+    "ml_forecast": ("model_quality", "ml_signal"),
+    "market_structure": ("ftse_upgrade", "rebalancing", "adtv", "etf_flow"),
+}
+
 # ── Tham số mô hình VAR ───────────────────────────────────────────────────────
 VAR_MAX_LAGS    = 8               # AIC/BIC lựa chọn lag tối ưu trong [1, 8]
 VAR_VARIABLES   = [

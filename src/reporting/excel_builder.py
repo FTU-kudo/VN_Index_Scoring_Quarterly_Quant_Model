@@ -57,7 +57,7 @@ ALLOCATION_MID = {
     "SELL":       0.10,    # 0–20%
 }
 
-_SCORE_RE = re.compile(r"(?:→|->)\s*(?:score|default)\s*([\d.]+)")
+_SCORE_RE = re.compile(r"(?:→|->)\s*(?:score|quality|default)\s*([\d.]+)")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
