@@ -277,7 +277,8 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
     ws = _sheet("01_Score_History", "#3b82f6")
     ws.set_column("A:A", 2)
     ws.write("B2", "COMPOSITE SCORE HISTORY vs VN-INDEX", F["title"])
-    ws.write("B3", "Two-tier scores: Total Score = raw composite (reference) | Calibrated Score = action signal (z-score vs prior quarters, point-in-time). "
+    ws.write("B3", "Two-tier scores: Total Score = raw composite (reference) | Calibrated Score = relative regime/allocation signal vs PRIOR quarters only "
+                   "(point-in-time, v2: σ-floor 5.0, z winsorised ±3, bounded ±25 vs raw — saturation near 5/95 by design, NOT a return forecast). "
                    "Pillar columns are weighted contributions (raw × weight). Fwd Return = VN-Index return of the NEXT quarter (signal evaluation).", F["subtitle"])
 
     headers = ["Quarter", "Total Score", "Label (Raw)", "Calibrated Score", "Calibrated Label",
@@ -616,9 +617,9 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
     # ══════════════════════════════════════════════════════════════════════
     ws = _sheet("06_Signal_Efficacy", "#ef4444")
     ws.set_column("A:A", 2)
-    ws.write("B2", "SIGNAL EFFICACY — DOES THE CALIBRATED ACTION SIGNAL PREDICT NEXT-QUARTER RETURNS?", F["title"])
-    ws.write("B3", "Primary test = CALIBRATED action signal (z-score vs prior quarters, point-in-time). Signal at quarter t is evaluated "
-                   "against the VN-Index return over quarter t+1. Raw composite shown as comparison. No look-ahead.", F["subtitle"])
+    ws.write("B2", "SIGNAL EFFICACY — DOES THE CALIBRATED ACTION SIGNAL PREDICT STRICT FORWARD (t+1) RETURNS?", F["title"])
+    ws.write("B3", "Primary test = CALIBRATED action signal (relative regime vs prior quarters only, point-in-time, winsorised v2). Signal at quarter t is evaluated "
+                   "against the VN-Index return over quarter t+1 (strict forward return — outcome data is never an input to scoring). Raw composite shown as comparison. No look-ahead.", F["subtitle"])
 
     eff = pd.DataFrame([h for h in hist_rows if h["fwd"] is not None])
     if not eff.empty:

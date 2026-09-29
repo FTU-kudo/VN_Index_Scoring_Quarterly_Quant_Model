@@ -94,7 +94,7 @@ The 2022 bear quarters and the 2026 period correctly fired defensive signals: **
 > - `pe_zscore` / `pb_zscore` / `eyg_zscore`: **4 quarters 2021-Q1→Q4**. The ex-Vingroup P/E-P/B series (computed from market cap = price × free-float shares) only starts ~2020-12 in the PE_PB_HOSE_stocks dataset; 252 sessions are needed for a z-score → first z 2021-12-20, later than the as-of of every 2021 decision (latest 2021-09-30), so 2021-Q1→Q4 remain N/A; from the 2022-Q1 decision (as-of 2021-12-31) onward real z exists.
 > - Principle: **missing data → neutral default 50 (or renormalize), no interpolation, no guesswork**. Every number in the exports is traceable to a published source.
 
-> **⚠️ Honest signal-quality disclosure:** The calibrated tier does **not** increase directional predictive power — the IC (Spearman) of the calibrated score vs next-quarter forward return ≈ 0.02 (raw ≈ 0.09), hit-rate ~50%. Tier 2's value is **restoring regime dispersion** so an asset-allocation framework gets differentiated signals across periods (previously 22/24 quarters "HOLD" made sizing impossible), not alpha prediction. Full honest backtest: `06_Signal_Efficacy` sheet in the Excel workbook.
+> **⚠️ Honest signal-quality disclosure (rechecked after calibration v2, 2026-09-29):** the calibrated tier is a **relative regime/allocation signal, not a return forecast**. Strict point-in-time evaluation (signal at quarter t vs. the strict within-quarter forward return from the t−1 close to the outcome close of t, n=23): Spearman IC ≈ **0.34 calibrated / 0.19 raw**, sign hit-rate ≈ **56.5% / 47.8%**. Against *consecutive* quarter-over-quarter forward returns (t→t+1, n=22): IC ≈ **0.18 calibrated / −0.03 raw**, hit ≈ 50%. Directional power is modest — honesty, not marketing: the signal complements valuation/context, it does not predict quarterly returns reliably by itself. Tier 2's purpose is restoring **regime dispersion** for allocation sizing (previously 22/24 quarters "HOLD" made sizing impossible) while v2 guardrails prevent neutral raw scores from being auto-driven to the 0/100 rails. Full formula-verified backtest: `06_Signal_Efficacy` sheet in the master workbook.
 
 ---
 
@@ -154,7 +154,7 @@ On the **24-quarter dashboard**, cards & timeline are colored by the **calibrate
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q4
-     Generated: 2026-09-27T21:52:19.513880
+     Generated: 2026-09-29T16:26:46.191151
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
@@ -172,17 +172,17 @@ On the **24-quarter dashboard**, cards & timeline are colored by the **calibrate
   • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score (raw)      : 47.20 / 100
+  • Total Score (raw)      : 47.67 / 100
   • Classification (raw)   : 🟠 REDUCE — Reduce exposure — Increasing pressure
-  • Calibrated Action      : 🔴 SELL — 29.37 / 100 (0–20% Equities)
-  • Calibration z          : -1.38
+  • Calibrated Action      : 🔴 SELL — 33.97 / 100 (0–20% Equities)
+  • Calibration z          : -1.07
 
 [GROUP BREAKDOWN]
   • macro_monetary                : raw=  57.9  weight=14.48
   • global_intermarket            : raw=  36.4  weight=7.28
-  • valuation_leverage            : raw=  42.9  weight=8.57
-  • quant_model                   : raw=  54.9  weight=8.24
-  • ml_forecast                   : raw=  25.9  weight=2.59
+  • valuation_leverage            : raw=  40.4  weight=8.08
+  • quant_model                   : raw=  50.8  weight=7.63
+  • ml_forecast                   : raw=  41.6  weight=4.16
   • market_structure              : raw=  60.4  weight=6.04
 ======================================================================
 ```

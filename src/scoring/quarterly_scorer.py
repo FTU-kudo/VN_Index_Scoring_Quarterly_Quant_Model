@@ -8,10 +8,13 @@ HAI TẦNG ĐIỂM (two-tier scoring):
   TẦNG 1 — RAW COMPOSITE (total_score): điểm tổng hợp 0–100 từ 6 trụ cột.
     Giữ nguyên làm tầng tham chiếu, dùng cho backtest & so sánh lịch sử.
   TẦNG 2 — CALIBRATED ACTION SIGNAL (calibrated_score): chuẩn hoá z-score
-    điểm thô so với lịch sử expanding (CHỈ các quý trước — point-in-time):
-      calibrated = clip(50 + 15 × z, 0, 100)
+    điểm thô so với lịch sử expanding (CHỈ các quý trước — point-in-time),
+    nhưng qua lớp bảo vệ winsorized (v2 — chống ghim 0/100 giả khi σ_hist nhỏ):
+      σ_eff = max(σ_hist, min_std); z_eff = clip(z, ±z_cap);
+      cal   = clip(center + z_scale·z_eff, raw ∓ max_dist_from_raw)
+    Tín hiệu này là REGIME TƯƠNG ĐỐI so với lịch sử — KHÔNG phải dự báo
+    lợi suất (forecast horizon riêng: XGBoost T+5, VAR T+5, MLR ~21 phiên).
     Nhãn hành động (HOLD/REDUCE/SELL/...) lấy từ get_score_label().
-    Khắc phục hiện tượng "HOLD mãn tính" do điểm thô bị nén quanh 45–61.
 
 Phân loại kết quả (áp dụng cho CẢ hai tầng — single source of truth):
   80–100 → BUY        🟢
@@ -64,16 +67,35 @@ def calibrate_total_score(
     hist_scores,
 ) -> Dict[str, Any]:
     """
-    Chuẩn hoá điểm thô thành Calibrated Action Signal theo spec config.SCORE_CALIBRATION:
+    Chuẩn hoá điểm thô thành Calibrated Action Signal theo spec config.SCORE_CALIBRATION
+    (method winsorized_expanding_zscore_v2 — postmortem 2026-09):
 
-        calibrated = clip(center + z_scale × (total − μ_hist) / σ_hist, clip_low, clip_high)
+        σ_eff  = max(σ_hist_sample(ddof=1), min_std)              ← sàn phương sai
+        z_raw  = (total − μ_hist) / σ_eff
+        z_eff  = clip(z_raw, ±z_cap)                              ← winsorize
+        pre    = center + z_scale × z_eff
+        cal    = clip( min(max(pre, raw − max_dist), raw + max_dist), clip_low..clip_high )
+
+    Ba tầng bảo vệ chống tín hiệu giả cực đoan (hồi trước: 2022-Q2 raw 51.25 → 0.00):
+      1. min_std  — σ_hist của cửa sổ nhỏ không được nhỏ hơn sàn (mặc định 5.0 điểm,
+                    ~ dispersion dài hạn của composite toàn mẫu ≈ 6 điểm) → σ tiny-sample
+                    không thể thổi z.
+      2. z_cap    — winsorize z tại ±3σ → tuyến tính bão hoà ngoài đuôi 99.7%;
+                    với z_scale=15 → pre nằm trong [5, 95]: 0/100 không thể xảy ra.
+      3. max_dist_from_raw — tín hiệu hành động (relative regime) không được lệch
+                    khỏi trạng thái tuyệt đối (raw composite) quá ±max_dist điểm.
 
     Nguyên tắc point-in-time (BẤT BIẾN):
-      - `hist_scores` PHẢI chỉ chứa điểm của các quý TRƯỚC quý hiện tại
-        (expanding window, không look-ahead). Hàm này không tự lọc —
+      - `hist_scores` PHẢI chỉ chứa điểm THÔ (total_score) của các quý TRƯỚC quý
+        hiện tại (expanding window, không look-ahead). Hàm này không tự lọc —
         caller chịu trách nhiệm truyền đúng lịch sử.
-      - < min_history điểm lịch sử, σ_hist ≈ 0, hoặc total_score là NaN
+      - Lịch sử calibration KHÔNG BAO GIỜ chứa calibrated score (chỉ stack raw),
+        nên thay đổi tham số calibration không làm drift μ/σ của các quý sau.
+      - < min_history điểm lịch sử, hoặc total_score là NaN
         → GIỮ NGUYÊN điểm thô, applied=False (fallback an toàn).
+
+    Monotonicity (bất biến kiểm bằng test): với cùng một `hist_scores`,
+    calibrated_score là hàm KHÔNG GIẢM theo `total_score`.
 
     Parameters
     ----------
@@ -82,10 +104,13 @@ def calibrate_total_score(
 
     Returns
     -------
-    dict: calibrated_score, applied, calibration_z, calibration_hist_mean,
-          calibration_hist_std, calibration_n_history
+    dict: calibrated_score, applied, calibration_z (đã winsorize), calibration_z_raw
+          (chưa cap), calibration_hist_mean, calibration_hist_std (σ mẫu quan sát),
+          calibration_std_effective (σ sau sàn), calibration_std_floored,
+          calibration_n_history, calibration_method
     """
     cfg = SCORE_CALIBRATION
+    method = cfg.get("method", "expanding_zscore_v1")
     hist = [float(s) for s in hist_scores if s is not None and not pd.isna(s)]
     n = len(hist)
 
@@ -94,9 +119,13 @@ def calibrate_total_score(
             "calibrated_score":      value,
             "applied":               False,
             "calibration_z":         None,
+            "calibration_z_raw":     None,
             "calibration_hist_mean": None,
             "calibration_hist_std":  None,
+            "calibration_std_effective": None,
+            "calibration_std_floored":   None,
             "calibration_n_history": n,
+            "calibration_method":    method,
         }
 
     if total_score is None:
@@ -113,23 +142,45 @@ def calibrate_total_score(
         return _fallback(raw_total)
 
     mu = float(np.mean(hist))
-    sigma = float(np.std(hist, ddof=1))   # sample std — khớp pandas .std()
-    if not np.isfinite(sigma) or sigma < 1e-9:
+    sigma = float(np.std(hist, ddof=1))   # sample std — khớp pandas .std() / Excel STDEV.S
+    if not np.isfinite(sigma):
         return _fallback(raw_total)
 
-    z = (float(total_score) - mu) / sigma
+    # ── Tầng bảo vệ 1: sàn σ (σ_hist=0 hoặc tiny-sample đều không thổi z) ─────
+    min_std = float(cfg.get("min_std", 0.0))
+    sigma_eff = max(sigma, min_std)
+    std_floored = bool(sigma_eff > sigma + 1e-12)
+    if sigma_eff < 1e-9:                  # min_std=0 VÀ σ=0 → không xác định z
+        return _fallback(raw_total)
+
+    # ── Tầng bảo vệ 2: winsorize z ────────────────────────────────────────────
+    z_raw = (raw_total - mu) / sigma_eff
+    z_cap = float(cfg.get("z_cap", np.inf))
+    z_eff = float(np.clip(z_raw, -z_cap, z_cap)) if np.isfinite(z_cap) else z_raw
+
+    pre = cfg.get("center", 50.0) + cfg.get("z_scale", 15.0) * z_eff
+
+    # ── Tầng bảo vệ 3: guardrail khoảng cách so với raw ───────────────────────
+    max_dist = float(cfg.get("max_dist_from_raw", np.inf))
+    bounded = pre
+    if np.isfinite(max_dist):
+        bounded = min(max(pre, raw_total - max_dist), raw_total + max_dist)
+
     calibrated = float(np.clip(
-        cfg.get("center", 50.0) + cfg.get("z_scale", 15.0) * z,
-        cfg.get("clip_low", 0.0), cfg.get("clip_high", 100.0),
+        bounded, cfg.get("clip_low", 0.0), cfg.get("clip_high", 100.0),
     ))
 
     return {
         "calibrated_score":      round(calibrated, 2),
         "applied":               True,
-        "calibration_z":         round(z, 4),
+        "calibration_z":         round(z_eff, 4),   # z ĐÃ winsorize (z dùng tính điểm)
+        "calibration_z_raw":     round(z_raw, 4),   # z quan sát trước cap (diagnostic)
         "calibration_hist_mean": round(mu, 4),
-        "calibration_hist_std":   round(sigma, 4),
+        "calibration_hist_std":   round(sigma, 4),      # σ mẫu QUAN SÁT (như cũ)
+        "calibration_std_effective": round(sigma_eff, 4),  # σ SAU sàn (dùng trong mẫu số)
+        "calibration_std_floored":   std_floored,
         "calibration_n_history": n,
+        "calibration_method":    method,
     }
 
 
@@ -919,10 +970,14 @@ def compute_quarterly_score(
         "calibrated_description": cal_desc,
         "calibrated_allocation": cal_alloc,
         "calibration_applied":   bool(_cal["applied"]),
-        "calibration_z":         _cal["calibration_z"],
+        "calibration_z":         _cal["calibration_z"],           # z ĐÃ winsorize
+        "calibration_z_raw":     _cal["calibration_z_raw"],       # z trước cap (diagnostic)
         "calibration_hist_mean": _cal["calibration_hist_mean"],
-        "calibration_hist_std":  _cal["calibration_hist_std"],
+        "calibration_hist_std":  _cal["calibration_hist_std"],    # σ mẫu quan sát
+        "calibration_std_effective": _cal["calibration_std_effective"],  # σ sau sàn
+        "calibration_std_floored":   _cal["calibration_std_floored"],
         "calibration_n_history": _cal["calibration_n_history"],
+        "calibration_method":    _cal["calibration_method"],
         "group_scores": {
             g["group"]: {
                 "raw_score":      g["raw_score"],
@@ -974,7 +1029,7 @@ def compute_quarterly_score(
     logger.info(
         f"[SCORER] {quarter}: {emoji} {label} — {total_weighted:.1f}/100 (raw composite)\n"
         f"  Calibrated Action: {cal_emoji} {cal_label} — {_calibrated_score:.1f}/100"
-        f"{' (z={:.2f}, μ={:.1f}, σ={:.1f}, n={})'.format(_cal['calibration_z'], _cal['calibration_hist_mean'], _cal['calibration_hist_std'], _cal['calibration_n_history']) if _cal['applied'] else ' (insufficient history — raw kept)'}\n"
+        f"{' (z={:.2f} [raw {:.2f}], μ={:.1f}, σ_eff={:.1f}{}, n={})'.format(_cal['calibration_z'], _cal['calibration_z_raw'], _cal['calibration_hist_mean'], _cal['calibration_std_effective'], ' floored' if _cal['calibration_std_floored'] else '', _cal['calibration_n_history']) if _cal['applied'] else ' (insufficient history — raw kept)'}\n"
         f"  Most divergent pillar: {most_divergent_pillar} ({group_raw[most_divergent_pillar]:.1f})"
     )
     return score_record

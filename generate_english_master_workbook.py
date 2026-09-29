@@ -276,11 +276,11 @@ def build_workbook() -> Workbook:
     ws["A20"].font = SECTION_FONT
     header_row(ws, 21, ["Metric", "Formula Result", "Acceptance Reference", "Interpretation"], SLATE)
     dashboard_metrics = [
-        ("Strategy CAGR", "='10_Backtest_Efficacy'!B33", "≈ 4.56%", "Annualized dashboard-compatible strategy return"),
+        ("Strategy CAGR", "='10_Backtest_Efficacy'!B33", "≈ 5.74%", "Annualized dashboard-compatible strategy return"),
         ("Maximum Drawdown", "='10_Backtest_Efficacy'!B34", "≈ -9.02%", "Worst peak-to-trough strategy decline"),
-        ("Annualized Volatility", "='10_Backtest_Efficacy'!B35", "≈ 7.34%", "Quarterly volatility annualized by √4"),
-        ("Sharpe Ratio", "='10_Backtest_Efficacy'!B36", "≈ 0.01", "CAGR less configured risk-free rate, divided by volatility"),
-        ("Spearman Rank IC", "='10_Backtest_Efficacy'!B37", "≈ 0.2372", "Raw score rank vs strict point-in-time quarter return rank"),
+        ("Annualized Volatility", "='10_Backtest_Efficacy'!B35", "≈ 7.70%", "Quarterly volatility annualized by √4"),
+        ("Sharpe Ratio", "='10_Backtest_Efficacy'!B36", "≈ 0.16", "CAGR less configured risk-free rate, divided by volatility"),
+        ("Spearman Rank IC", "='10_Backtest_Efficacy'!B37", "≈ 0.1927", "Raw score rank vs strict point-in-time quarter return rank"),
         ("Directional Hit Rate", "='10_Backtest_Efficacy'!B38", "Formula", "Action-direction agreement with dashboard forward return"),
     ]
     for row, values in enumerate(dashboard_metrics, 22):
@@ -328,7 +328,7 @@ def build_workbook() -> Workbook:
         ws.cell(row, 6).number_format = "0.0%"
     style_table(ws, 16, 20, 1, 7)
 
-    ws["A22"] = "3. EXPANDING CALIBRATION PARAMETERS"
+    ws["A22"] = "3. EXPANDING CALIBRATION PARAMETERS (v2 — winsorized, guard-railed)"
     ws["A22"].font = SECTION_FONT
     header_row(ws, 23, ["Parameter", "Value", "Role"], SLATE)
     params = [
@@ -354,6 +354,21 @@ def build_workbook() -> Workbook:
         for col, value in enumerate(values, 1): ws.cell(row, col, value)
     ws["B36"].number_format = "0.00%"
     style_table(ws, 32, 36, 1, 3)
+
+    # Calibration v2 robustness guards — SINGLE SOURCE OF TRUTH:
+    # config.py SCORE_CALIBRATION (min_std / z_cap / max_dist_from_raw).
+    # Rows 40-42 are read by sheet 05_Composite_Calibration formulas.
+    ws["A38"] = "5. CALIBRATION v2 ROBUSTNESS GUARDS"
+    ws["A38"].font = SECTION_FONT
+    header_row(ws, 39, ["Parameter", "Value", "Role"], SLATE)
+    guards = [
+        ("min_std", 5.0, "σ prior floor: tiny-sample σ cannot inflate z (floor ≈ long-run composite dispersion)"),
+        ("z_cap", 3.0, "Winsorise z at ±3σ → response saturates near 5/95; 0/100 unreachable"),
+        ("max_dist_from_raw", 25.0, "Action signal may not deviate more than ±25 pts from the raw composite"),
+    ]
+    for row, values in enumerate(guards, 40):
+        for col, value in enumerate(values, 1): ws.cell(row, col, value)
+    style_table(ws, 40, 42, 1, 3)
     ws.freeze_panes = "A5"
 
     # 02 Point-in-time Market Inputs
@@ -515,8 +530,8 @@ def build_workbook() -> Workbook:
     # 05 Composite & Calibration
     ws5 = wb.create_sheet("05_Composite_Calibration")
     ws5.sheet_properties.tabColor = RED
-    title(ws5, "TWO-TIER COMPOSITE & EXPANDING CALIBRATION",
-          "N<4: calibrated = raw | N≥4: clip(50 + 15 × (Raw−μprior)/σprior, 0, 100); prior quarters only")
+    title(ws5, "TWO-TIER COMPOSITE & EXPANDING CALIBRATION (v2)",
+          "N<4: calibrated = raw | N≥4: σeff=MAX(σprior, min_std)·z capped ±z_cap·cal = clip(50+15×z_eff, Raw∓max_dist, 0..100); prior quarters only")
     calibration_headers = ["Quarter", "As-of Date", "As-of Close", "Raw Score", "Raw Label", "Prior N", "Prior Mean", "Prior Std", "Z-Score",
                            "Calibrated Score", "Calibrated Label", "Suggested Allocation", "Pillar Std", "Pillar Range", "Dispersion", "Percentile Label", "P15 Prior", "P85 Prior", "Rounded Raw Rank Key"]
     header_row(ws5, 4, calibration_headers, NAVY)
@@ -536,8 +551,8 @@ def build_workbook() -> Workbook:
             nested_band_formula(f"D{r}", "C"), f"=ROWS($D$5:D{r})-1",
             f"=IF(F{r}<'01_Model_Config'!$B$26,\"\",{mean_formula})",
             f"=IF(F{r}<'01_Model_Config'!$B$26,\"\",{std_formula})",
-            f"=IF(F{r}<'01_Model_Config'!$B$26,\"\",(D{r}-G{r})/H{r})",
-            f"=ROUND(IF(F{r}<'01_Model_Config'!$B$26,D{r},MIN('01_Model_Config'!$B$28,MAX('01_Model_Config'!$B$27,'01_Model_Config'!$B$24+'01_Model_Config'!$B$25*I{r}))),2)",
+            f"=IF(F{r}<'01_Model_Config'!$B$26,\"\",MIN('01_Model_Config'!$B$41,MAX(-'01_Model_Config'!$B$41,(D{r}-G{r})/MAX(H{r},'01_Model_Config'!$B$40))))",
+            f"=ROUND(IF(F{r}<'01_Model_Config'!$B$26,D{r},MIN('01_Model_Config'!$B$28,MAX('01_Model_Config'!$B$27,MIN(D{r}+'01_Model_Config'!$B$42,MAX(D{r}-'01_Model_Config'!$B$42,'01_Model_Config'!$B$24+'01_Model_Config'!$B$25*I{r}))))),2)",
             nested_band_formula(f"J{r}", "C"), nested_band_formula(f"J{r}", "E"),
             f"=ROUND(STDEV.S('04_Pillar_Calculation'!C{r}:H{r}),2)", f"=ROUND(MAX('04_Pillar_Calculation'!C{r}:H{r})-MIN('04_Pillar_Calculation'!C{r}:H{r}),2)",
             dispersion, percentile,
@@ -635,7 +650,7 @@ def build_workbook() -> Workbook:
         ("ADTV liquidity", "24/24", "ADTV(t−1)/ADTV(t−2)−1", "No forward volume observations", "data/scores/vnindex_quarterly_adtv.json"),
         ("Valuation Z-scores", "20/24; neutral fallback in 2021", "252-session history available at t−1", "P/E, P/B and EYG rolling Z-scores; no interpolation", "data/scores/vnindex_quarterly_market_data.json"),
         ("Econometric / ML outputs", "24/24", "Training sample ends at as-of date", "MLR HAC, VAR/Granger and 8-fold expanding WFV", "output/exports/score_*.json"),
-        ("Formula reconciliation", "24/24", "Prior quarters only", "Rounded pillars and weighted legs reproduce production scorer; calibration uses STDEV.S", "verify_workbook_accuracy.py"),
+        ("Formula reconciliation", "24/24", "Prior quarters only", "Rounded pillars and weighted legs reproduce production scorer; v2 calibration uses STDEV.S with σ-floor, z winsorisation and distance guardrail", "verify_workbook_accuracy.py"),
     ]
     for row, values in enumerate(audit_rows, 5):
         for col, value in enumerate(values, 1): ws11.cell(row, col, value)

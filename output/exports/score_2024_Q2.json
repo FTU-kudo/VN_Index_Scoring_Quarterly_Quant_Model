@@ -1,8 +1,8 @@
 {
   "metadata": {
     "quarter": "2024-Q2",
-    "generated_at": "2026-09-27T21:49:15.549305",
-    "model_version": "2.0.0-pit-transparent",
+    "generated_at": "2026-09-29T16:26:46.191151",
+    "model_version": "2.1.0-calibration-v2",
     "analysis_type": "VN-Index Comprehensive Quantitative Scoring",
     "adtv_backfill": {
       "applied_at": "2026-09-28 11:17",
@@ -20,12 +20,13 @@
       "source": "VNDirect api-finfo /v4/foreigns — STOCK_HOSE, ETF_HOSE (2018-08-30→nay)",
       "fix": "bỏ giới hạn fetch 2021 tự đặt; splice MC HOSE công bố trước 2021-04-15"
     },
-    "git_commit": "cfad6a0cbe10734b627893bc2827f7f0a606bae9",
+    "git_commit": "6f4ef0c4833bc77f32bb0f9b79b4ad1bf4ade4d1",
     "data_as_of": "2024-03-29",
     "point_in_time": true,
     "status": "FINAL",
     "config_hash": "78ed1b50eececf3ddd9f2844eed21369a8112c56a358ca7854973ded70670923",
-    "model_hash": "b6ff7fcbdc19c34845d769b76712935423286d05715c0290f97f4105f9fcacc8"
+    "model_hash": "f33d0badf9fd3ca4f7de3ff2b3ca03f5b1fd223fa42be19ff39b5cd755154b3d",
+    "calibration_method": "winsorized_expanding_zscore_v2"
   },
   "quarterly_score": {
     "quarter": "2024-Q2",
@@ -125,9 +126,9 @@
     "calibrated_description": "Reduce exposure — Increasing pressure",
     "calibrated_allocation": "20–40% Equities",
     "calibration_applied": true,
-    "calibration_z": -0.4708,
-    "calibration_hist_mean": 56.7208,
-    "calibration_hist_std": 6.4164,
+    "calibration_z": -0.4717,
+    "calibration_hist_mean": 56.7223,
+    "calibration_hist_std": 6.4069,
     "calibration_n_history": 13,
     "adtv_change_pct": 0.260258,
     "data_coverage": {
@@ -191,7 +192,11 @@
     "raw_scorer_inputs": {
       "ml_pred_class": 1,
       "ml_confidence": 0.61
-    }
+    },
+    "calibration_z_raw": -0.4717,
+    "calibration_std_effective": 6.4069,
+    "calibration_std_floored": false,
+    "calibration_method": "winsorized_expanding_zscore_v2"
   },
   "mlr_regression": [
     {
