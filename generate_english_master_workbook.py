@@ -206,6 +206,118 @@ def nested_band_formula(score_ref: str, result_col: str) -> str:
     return f"={formula}"
 
 
+
+EXPLANATION_EN = {
+    "sheet": "12_Methodology_EN",
+    "title": "VN-INDEX QUANTITATIVE MODEL — METHODOLOGY & INTERPRETATION",
+    "subtitle": "English guide | scope, point-in-time discipline, architecture, calibration, validation and audit",
+    "snapshot_title": "LIVE SNAPSHOT — FORMULA-LINKED TO THE EXECUTIVE DASHBOARD",
+    "snapshot_labels": ["Latest quarter", "Calibrated action", "Calibrated score", "Equity allocation", "Raw composite"],
+    "sections": [
+        ("1. What the model produces", [
+            "The output is a quarterly allocation-regime score and an associated portfolio action. It is NOT a forecast of returns and NOT a probability of a market crash. It is a disciplined decision aid, not investment advice.",
+        ]),
+        ("2. Data and point-in-time discipline", [
+            "Inputs use VN-Index OHLCV, HOSE market capitalization, VNDirect api-finfo v4 foreign flows for STOCK_HOSE and ETF_HOSE, ADTV, a Nelson-Siegel fitted Vietnam government-bond yield curve, and M2 from ADB KIDB (SBV source) joined to GSO releases.",
+            "Each quarter uses only information available at its decision date. If a required source fails, publication stops; the model does not silently substitute fabricated or default data.",
+        ]),
+        ("3. Six-pillar architecture", [
+            "Macro & Monetary 25%; Global & Intermarket 20%; Valuation & Leverage 20%; Econometric Models 15%; Machine Learning 10%; Market Structure 10%. The weighted legs sum to the raw composite.",
+        ]),
+        ("4. Calibration v2", [
+            "After four initial quarters that retain the raw score, calibration uses prior history only: z = (raw − prior_mean) / max(prior_std, min_std); z is winsorised at ±z_cap; calibrated = center + z_scale × z; the result is clipped to [clip_low, clip_high] and constrained to max_dist_from_raw from the raw score.",
+            "SCORE_CALIBRATION parameters are center 50, z_scale 15, min_history 4, min_std 5.0, z_cap 3.0, max_dist_from_raw 25.0, and clip 0–100. The min_std floor prevents unstable small-sample dispersion from magnifying z; z_cap limits outlier leverage; max_dist_from_raw prevents the action signal from moving implausibly far from the raw evidence. These v2 safeguards address the 2022-Q2 collapse to 0.00.",
+        ]),
+        ("5. Action bands", [
+            "80–100 BUY (85–100% equities); 65–79.99 ACCUMULATE (70–85%); 50–64.99 HOLD (40–60%); 35–49.99 REDUCE (20–40%); 0–34.99 SELL (0–20%).",
+        ]),
+        ("6. Validation and backtest", [
+            "Sheets 06–09 expose regression, VAR/Granger, walk-forward ML validation and feature importance. Sheet 10 provides formula-driven efficacy and backtest statistics with point-in-time outcomes.",
+        ]),
+        ("7. Limitations", [
+            "The sample contains only 24 quarters, so confidence intervals are wide. Weights, thresholds and calibration parameters are design judgments selected with knowledge of the full sample; they were not optimized out of sample. The latest quarter may be PROVISIONAL until all quarter-end sources are complete.",
+        ]),
+        ("8. How to audit this workbook", [
+            "Start at sheet 00, trace its formulas to sheet 05, then follow raw composite links through sheets 04, 03 and 02. Confirm parameters on sheet 01, model evidence on sheets 06–09, backtest formulas on sheet 10, and provenance on sheet 11. The yellow cells are formulas; verify_workbook_accuracy.py independently evaluates and reconciles them.",
+        ]),
+    ],
+}
+
+EXPLANATION_VN = {
+    "sheet": "13_Phuong_Phap_Luan_VN",
+    "title": "MÔ HÌNH ĐỊNH LƯỢNG VN-INDEX — PHƯƠNG PHÁP & CÁCH DIỄN GIẢI",
+    "subtitle": "Hướng dẫn tiếng Việt | phạm vi, kỷ luật point-in-time, kiến trúc, hiệu chỉnh, kiểm định và kiểm toán",
+    "snapshot_title": "ẢNH CHỤP TRỰC TIẾP — LIÊN KẾT BẰNG CÔNG THỨC TỚI DASHBOARD",
+    "snapshot_labels": ["Quý mới nhất", "Hành động hiệu chỉnh", "Điểm hiệu chỉnh", "Tỷ trọng cổ phiếu", "Điểm tổng hợp thô"],
+    "sections": [
+        ("1. Mô hình cho ra cái gì", [
+            "Đầu ra là điểm thế trận phân bổ theo quý và hành động danh mục tương ứng. Đây KHÔNG phải dự báo lợi suất và KHÔNG phải xác suất thị trường sụp đổ. Mô hình là công cụ hỗ trợ quyết định có kỷ luật, không phải khuyến nghị đầu tư.",
+        ]),
+        ("2. Dữ liệu và kỷ luật point-in-time", [
+            "Đầu vào gồm OHLCV VN-Index, vốn hóa HOSE, dòng vốn ngoại VNDirect api-finfo v4 cho STOCK_HOSE và ETF_HOSE, ADTV, đường cong lợi suất TPCP Việt Nam khớp Nelson-Siegel, cùng M2 từ ADB KIDB (nguồn SBV) nối với công bố GSO.",
+            "Mỗi quý chỉ dùng thông tin đã có tại ngày ra quyết định. Nếu nguồn bắt buộc gặp lỗi, hệ thống dừng công bố; mô hình không âm thầm thay bằng dữ liệu bịa đặt hoặc giá trị mặc định.",
+        ]),
+        ("3. Kiến trúc sáu trụ cột", [
+            "Vĩ mô & Tiền tệ 25%; Toàn cầu & Liên thị trường 20%; Định giá & Đòn bẩy 20%; Mô hình Kinh tế lượng 15%; Học máy 10%; Cấu trúc Thị trường 10%. Các phần có trọng số cộng thành điểm tổng hợp thô.",
+        ]),
+        ("4. Hiệu chỉnh v2", [
+            "Bốn quý đầu giữ nguyên điểm thô. Sau đó chỉ dùng lịch sử trước quý hiện tại: z = (raw − prior_mean) / max(prior_std, min_std); winsorise z tại ±z_cap; calibrated = center + z_scale × z; cắt trong [clip_low, clip_high] và ràng buộc khoảng cách so với điểm thô bởi max_dist_from_raw.",
+            "Tham số SCORE_CALIBRATION: center 50, z_scale 15, min_history 4, min_std 5.0, z_cap 3.0, max_dist_from_raw 25.0, clip 0–100. Sàn min_std ngăn độ phân tán mẫu nhỏ làm phóng đại z; z_cap hạn chế sức chi phối của ngoại lệ; max_dist_from_raw ngăn tín hiệu hành động lệch phi lý khỏi bằng chứng thô. Ba chốt v2 này xử lý sự cố 2022-Q2 tụt về 0.00.",
+        ]),
+        ("5. Dải hành động", [
+            "80–100 BUY (85–100% cổ phiếu); 65–79.99 ACCUMULATE (70–85%); 50–64.99 HOLD (40–60%); 35–49.99 REDUCE (20–40%); 0–34.99 SELL (0–20%).",
+        ]),
+        ("6. Kiểm định và backtest", [
+            "Các sheet 06–09 trình bày hồi quy, VAR/Granger, kiểm định walk-forward cho ML và mức quan trọng đặc trưng. Sheet 10 cung cấp thống kê hiệu lực và backtest bằng công thức với kết quả point-in-time.",
+        ]),
+        ("7. Hạn chế", [
+            "Mẫu chỉ gồm 24 quý nên khoảng tin cậy rộng. Trọng số, ngưỡng và tham số hiệu chỉnh là phán định thiết kế khi đã biết toàn mẫu; chúng chưa được tối ưu ngoài mẫu. Quý mới nhất có thể ở trạng thái PROVISIONAL cho tới khi nguồn cuối quý hoàn tất.",
+        ]),
+        ("8. Cách kiểm toán workbook", [
+            "Bắt đầu ở sheet 00, lần theo công thức tới sheet 05, rồi lần điểm tổng hợp thô qua các sheet 04, 03 và 02. Đối chiếu tham số ở sheet 01, bằng chứng mô hình ở sheet 06–09, công thức backtest ở sheet 10 và nguồn gốc dữ liệu ở sheet 11. Ô màu vàng là công thức; verify_workbook_accuracy.py đánh giá độc lập và đối soát chúng.",
+        ]),
+    ],
+}
+
+
+def build_explanation_sheet(wb: Workbook, spec: dict[str, Any]) -> None:
+    ws = wb.create_sheet(spec["sheet"])
+    ws.sheet_properties.tabColor = GREEN
+    title(ws, spec["title"], spec["subtitle"])
+    ws["A4"] = spec["snapshot_title"]
+    ws["A4"].font = SECTION_FONT
+    dashboard_cells = ["A6", "B6", "C6", "D6", "E6"]
+    for row, (label, dashboard_cell) in enumerate(zip(spec["snapshot_labels"], dashboard_cells), 5):
+        ws.cell(row, 1, label)
+        ws.cell(row, 2, f"='00_Executive_Dashboard'!{dashboard_cell}")
+        ws.cell(row, 1).font = BOLD_FONT
+        ws.cell(row, 2).fill = PatternFill("solid", fgColor=FORMULA)
+        for col in (1, 2):
+            ws.cell(row, col).border = CELL_BORDER
+            ws.cell(row, col).alignment = LEFT
+    ws["B7"].number_format = "0.00"
+    ws["B9"].number_format = "0.00"
+
+    row = 12
+    for heading, paragraphs in spec["sections"]:
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
+        cell = ws.cell(row, 1, heading)
+        cell.font = SECTION_FONT
+        cell.fill = PatternFill("solid", fgColor=KPI)
+        cell.alignment = LEFT
+        row += 1
+        for paragraph in paragraphs:
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
+            cell = ws.cell(row, 1, paragraph)
+            cell.font = DATA_FONT
+            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+            cell.border = CELL_BORDER
+            ws.row_dimensions[row].height = 42
+            row += 1
+        row += 1
+    ws.freeze_panes = "A5"
+
+
 def build_workbook() -> Workbook:
     quarters, scores, closes, market, adtv, flows = load_sources()
     inputs = {q: extract_inputs(q, scores[q], market, adtv, flows) for q in quarters}
@@ -656,11 +768,15 @@ def build_workbook() -> Workbook:
         for col, value in enumerate(values, 1): ws11.cell(row, col, value)
     style_table(ws11, 5, 12, 1, 5); ws11.freeze_panes = "A5"
 
+    build_explanation_sheet(wb, EXPLANATION_EN)
+    build_explanation_sheet(wb, EXPLANATION_VN)
+
     # Exact required architecture order.
     required_order = [
         "00_Executive_Dashboard", "01_Model_Config", "02_Market_Inputs", "03_Factor_SubScores",
         "04_Pillar_Calculation", "05_Composite_Calibration", "06_MLR_Regression", "07_VAR_Granger",
         "08_ML_Validation", "09_Feature_Importance", "10_Backtest_Efficacy", "11_Data_Audit_Backfill",
+        "12_Methodology_EN", "13_Phuong_Phap_Luan_VN",
     ]
     wb._sheets = [wb[name] for name in required_order]
 
@@ -688,7 +804,7 @@ def main() -> None:
     shutil.copyfile(PRIMARY_PATH, MASTER_PATH)
     print(f"Generated: {PRIMARY_PATH}")
     print(f"Generated: {MASTER_PATH}")
-    print("Architecture: 12 interconnected sheets | point-in-time quarterly history | formulas recalculate on open")
+    print("Architecture: 14 sheets (12 model layers + EN/VN methodology) | point-in-time quarterly history | formulas recalculate on open")
 
 
 if __name__ == "__main__":

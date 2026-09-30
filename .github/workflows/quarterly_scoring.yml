@@ -98,6 +98,10 @@ jobs:
           echo "Rebuilding canonical formula-driven workbooks..."
           python generate_english_master_workbook.py
           python verify_workbook_accuracy.py
+          echo "Baking values-only twin for viewers that do not recalculate formulas..."
+          python scripts/bake_workbook_values.py
+          echo "Regenerating bilingual (EN/VN) model explanation report..."
+          python scripts/generate_bilingual_explainer.py
 
       # ── 6. Upload artifacts ────────────────────────────────────────────────
       - name: "📤 Upload HTML report"
