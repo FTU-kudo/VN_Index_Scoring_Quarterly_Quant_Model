@@ -32,6 +32,7 @@ EXPECTED_SHEETS = [
     "00_Executive_Dashboard", "01_Model_Config", "02_Market_Inputs", "03_Factor_SubScores",
     "04_Pillar_Calculation", "05_Composite_Calibration", "06_MLR_Regression", "07_VAR_Granger",
     "08_ML_Validation", "09_Feature_Importance", "10_Backtest_Efficacy", "11_Data_Audit_Backfill",
+    "12_Methodology_EN", "13_Phuong_Phap_Luan_VN",
 ]
 PILLARS = [
     "macro_monetary", "global_intermarket", "valuation_leverage",
