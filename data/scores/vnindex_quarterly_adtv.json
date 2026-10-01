@@ -1,342 +1,343 @@
 {
-  "description": "ADTV (avg daily volume) theo quý — từ vnindex_ohlcv.volume; change = ADTV(Q-1)/ADTV(Q-2)-1 dùng cho quý Q (point-in-time)",
-  "updated_at": "2026-09-28 11:17",
-  "quarters": {
+ "description": "ADTV (avg daily volume) theo quý — từ vnindex_ohlcv.volume; change = ADTV(Q-1)/ADTV(Q-2)-1 dùng cho quý Q (point-in-time)",
+ "updated_at": "2026-10-01 14:40",
+ "quarters": {
+  "2021-Q1": {
+   "quarter": "2021-Q1",
+   "adtv_change_pct": 0.606722,
+   "windows": {
+    "2020-Q4": {
+     "adtv": 431721198.48,
+     "n_sessions": 66
+    },
+    "2020-Q3": {
+     "adtv": 268696875.54,
+     "n_sessions": 65
+    }
+   }
+  },
+  "2021-Q2": {
+   "quarter": "2021-Q2",
+   "adtv_change_pct": 0.422295,
+   "windows": {
     "2021-Q1": {
-      "quarter": "2021-Q1",
-      "adtv_change_pct": 0.606722,
-      "windows": {
-        "2020-Q4": {
-          "adtv": 431721198.48,
-          "n_sessions": 66
-        },
-        "2020-Q3": {
-          "adtv": 268696875.54,
-          "n_sessions": 65
-        }
-      }
+     "adtv": 614034817.24,
+     "n_sessions": 58
+    },
+    "2020-Q4": {
+     "adtv": 431721198.48,
+     "n_sessions": 66
+    }
+   }
+  },
+  "2021-Q3": {
+   "quarter": "2021-Q3",
+   "adtv_change_pct": 0.111991,
+   "windows": {
+    "2021-Q2": {
+     "adtv": 682801170.97,
+     "n_sessions": 62
+    },
+    "2021-Q1": {
+     "adtv": 614034817.24,
+     "n_sessions": 58
+    }
+   }
+  },
+  "2021-Q4": {
+   "quarter": "2021-Q4",
+   "adtv_change_pct": -0.063721,
+   "windows": {
+    "2021-Q3": {
+     "adtv": 639292567.19,
+     "n_sessions": 64
     },
     "2021-Q2": {
-      "quarter": "2021-Q2",
-      "adtv_change_pct": 0.422295,
-      "windows": {
-        "2021-Q1": {
-          "adtv": 614034817.24,
-          "n_sessions": 58
-        },
-        "2020-Q4": {
-          "adtv": 431721198.48,
-          "n_sessions": 66
-        }
-      }
+     "adtv": 682801170.97,
+     "n_sessions": 62
+    }
+   }
+  },
+  "2022-Q1": {
+   "quarter": "2022-Q1",
+   "adtv_change_pct": 0.33276,
+   "windows": {
+    "2021-Q4": {
+     "adtv": 852023510.61,
+     "n_sessions": 66
     },
     "2021-Q3": {
-      "quarter": "2021-Q3",
-      "adtv_change_pct": 0.111991,
-      "windows": {
-        "2021-Q2": {
-          "adtv": 682801170.97,
-          "n_sessions": 62
-        },
-        "2021-Q1": {
-          "adtv": 614034817.24,
-          "n_sessions": 58
-        }
-      }
+     "adtv": 639292567.19,
+     "n_sessions": 64
+    }
+   }
+  },
+  "2022-Q2": {
+   "quarter": "2022-Q2",
+   "adtv_change_pct": -0.076852,
+   "windows": {
+    "2022-Q1": {
+     "adtv": 786543740.55,
+     "n_sessions": 58
     },
     "2021-Q4": {
-      "quarter": "2021-Q4",
-      "adtv_change_pct": -0.063721,
-      "windows": {
-        "2021-Q3": {
-          "adtv": 639292567.19,
-          "n_sessions": 64
-        },
-        "2021-Q2": {
-          "adtv": 682801170.97,
-          "n_sessions": 62
-        }
-      }
+     "adtv": 852023510.61,
+     "n_sessions": 66
+    }
+   }
+  },
+  "2022-Q3": {
+   "quarter": "2022-Q3",
+   "adtv_change_pct": -0.295489,
+   "windows": {
+    "2022-Q2": {
+     "adtv": 554128389.63,
+     "n_sessions": 62
     },
     "2022-Q1": {
-      "quarter": "2022-Q1",
-      "adtv_change_pct": 0.33276,
-      "windows": {
-        "2021-Q4": {
-          "adtv": 852023510.61,
-          "n_sessions": 66
-        },
-        "2021-Q3": {
-          "adtv": 639292567.19,
-          "n_sessions": 64
-        }
-      }
+     "adtv": 786543740.55,
+     "n_sessions": 58
+    }
+   }
+  },
+  "2022-Q4": {
+   "quarter": "2022-Q4",
+   "adtv_change_pct": -0.087319,
+   "windows": {
+    "2022-Q3": {
+     "adtv": 505742654.36,
+     "n_sessions": 64
     },
     "2022-Q2": {
-      "quarter": "2022-Q2",
-      "adtv_change_pct": -0.076852,
-      "windows": {
-        "2022-Q1": {
-          "adtv": 786543740.55,
-          "n_sessions": 58
-        },
-        "2021-Q4": {
-          "adtv": 852023510.61,
-          "n_sessions": 66
-        }
-      }
+     "adtv": 554128389.63,
+     "n_sessions": 62
+    }
+   }
+  },
+  "2023-Q1": {
+   "quarter": "2023-Q1",
+   "adtv_change_pct": 0.192768,
+   "windows": {
+    "2022-Q4": {
+     "adtv": 603233826.83,
+     "n_sessions": 65
     },
     "2022-Q3": {
-      "quarter": "2022-Q3",
-      "adtv_change_pct": -0.295489,
-      "windows": {
-        "2022-Q2": {
-          "adtv": 554128389.63,
-          "n_sessions": 62
-        },
-        "2022-Q1": {
-          "adtv": 786543740.55,
-          "n_sessions": 58
-        }
-      }
+     "adtv": 505742654.36,
+     "n_sessions": 64
+    }
+   }
+  },
+  "2023-Q2": {
+   "quarter": "2023-Q2",
+   "adtv_change_pct": -0.191478,
+   "windows": {
+    "2023-Q1": {
+     "adtv": 487728030.37,
+     "n_sessions": 59
     },
     "2022-Q4": {
-      "quarter": "2022-Q4",
-      "adtv_change_pct": -0.087319,
-      "windows": {
-        "2022-Q3": {
-          "adtv": 505742654.36,
-          "n_sessions": 64
-        },
-        "2022-Q2": {
-          "adtv": 554128389.63,
-          "n_sessions": 62
-        }
-      }
+     "adtv": 603233826.83,
+     "n_sessions": 65
+    }
+   }
+  },
+  "2023-Q3": {
+   "quarter": "2023-Q3",
+   "adtv_change_pct": 0.399685,
+   "windows": {
+    "2023-Q2": {
+     "adtv": 682665364.6,
+     "n_sessions": 62
     },
     "2023-Q1": {
-      "quarter": "2023-Q1",
-      "adtv_change_pct": 0.192768,
-      "windows": {
-        "2022-Q4": {
-          "adtv": 603233826.83,
-          "n_sessions": 65
-        },
-        "2022-Q3": {
-          "adtv": 505742654.36,
-          "n_sessions": 64
-        }
-      }
+     "adtv": 487728030.37,
+     "n_sessions": 59
+    }
+   }
+  },
+  "2023-Q4": {
+   "quarter": "2023-Q4",
+   "adtv_change_pct": 0.288734,
+   "windows": {
+    "2023-Q3": {
+     "adtv": 879774398.25,
+     "n_sessions": 63
     },
     "2023-Q2": {
-      "quarter": "2023-Q2",
-      "adtv_change_pct": -0.191478,
-      "windows": {
-        "2023-Q1": {
-          "adtv": 487728030.37,
-          "n_sessions": 59
-        },
-        "2022-Q4": {
-          "adtv": 603233826.83,
-          "n_sessions": 65
-        }
-      }
+     "adtv": 682665364.6,
+     "n_sessions": 62
+    }
+   }
+  },
+  "2024-Q1": {
+   "quarter": "2024-Q1",
+   "adtv_change_pct": -0.288754,
+   "windows": {
+    "2023-Q4": {
+     "adtv": 625735606.38,
+     "n_sessions": 65
     },
     "2023-Q3": {
-      "quarter": "2023-Q3",
-      "adtv_change_pct": 0.399685,
-      "windows": {
-        "2023-Q2": {
-          "adtv": 682665364.6,
-          "n_sessions": 62
-        },
-        "2023-Q1": {
-          "adtv": 487728030.37,
-          "n_sessions": 59
-        }
-      }
+     "adtv": 879774398.25,
+     "n_sessions": 63
+    }
+   }
+  },
+  "2024-Q2": {
+   "quarter": "2024-Q2",
+   "adtv_change_pct": 0.260258,
+   "windows": {
+    "2024-Q1": {
+     "adtv": 788588474.9,
+     "n_sessions": 59
     },
     "2023-Q4": {
-      "quarter": "2023-Q4",
-      "adtv_change_pct": 0.288734,
-      "windows": {
-        "2023-Q3": {
-          "adtv": 879774398.25,
-          "n_sessions": 63
-        },
-        "2023-Q2": {
-          "adtv": 682665364.6,
-          "n_sessions": 62
-        }
-      }
+     "adtv": 625735606.38,
+     "n_sessions": 65
+    }
+   }
+  },
+  "2024-Q3": {
+   "quarter": "2024-Q3",
+   "adtv_change_pct": -0.070967,
+   "windows": {
+    "2024-Q2": {
+     "adtv": 732624893.9,
+     "n_sessions": 61
     },
     "2024-Q1": {
-      "quarter": "2024-Q1",
-      "adtv_change_pct": -0.288754,
-      "windows": {
-        "2023-Q4": {
-          "adtv": 625735606.38,
-          "n_sessions": 65
-        },
-        "2023-Q3": {
-          "adtv": 879774398.25,
-          "n_sessions": 63
-        }
-      }
+     "adtv": 788588474.9,
+     "n_sessions": 59
+    }
+   }
+  },
+  "2024-Q4": {
+   "quarter": "2024-Q4",
+   "adtv_change_pct": -0.22597,
+   "windows": {
+    "2024-Q3": {
+     "adtv": 567073285.98,
+     "n_sessions": 64
     },
     "2024-Q2": {
-      "quarter": "2024-Q2",
-      "adtv_change_pct": 0.260258,
-      "windows": {
-        "2024-Q1": {
-          "adtv": 788588474.9,
-          "n_sessions": 59
-        },
-        "2023-Q4": {
-          "adtv": 625735606.38,
-          "n_sessions": 65
-        }
-      }
+     "adtv": 732624893.9,
+     "n_sessions": 61
+    }
+   }
+  },
+  "2025-Q1": {
+   "quarter": "2025-Q1",
+   "adtv_change_pct": -0.12025,
+   "windows": {
+    "2024-Q4": {
+     "adtv": 498882845.88,
+     "n_sessions": 66
     },
     "2024-Q3": {
-      "quarter": "2024-Q3",
-      "adtv_change_pct": -0.070967,
-      "windows": {
-        "2024-Q2": {
-          "adtv": 732624893.9,
-          "n_sessions": 61
-        },
-        "2024-Q1": {
-          "adtv": 788588474.9,
-          "n_sessions": 59
-        }
-      }
+     "adtv": 567073285.98,
+     "n_sessions": 64
+    }
+   }
+  },
+  "2025-Q2": {
+   "quarter": "2025-Q2",
+   "adtv_change_pct": 0.19508,
+   "windows": {
+    "2025-Q1": {
+     "adtv": 596204928.5,
+     "n_sessions": 58
     },
     "2024-Q4": {
-      "quarter": "2024-Q4",
-      "adtv_change_pct": -0.22597,
-      "windows": {
-        "2024-Q3": {
-          "adtv": 567073285.98,
-          "n_sessions": 64
-        },
-        "2024-Q2": {
-          "adtv": 732624893.9,
-          "n_sessions": 61
-        }
-      }
+     "adtv": 498882845.88,
+     "n_sessions": 66
+    }
+   }
+  },
+  "2025-Q3": {
+   "quarter": "2025-Q3",
+   "adtv_change_pct": 0.436843,
+   "windows": {
+    "2025-Q2": {
+     "adtv": 856653025.51,
+     "n_sessions": 61
     },
     "2025-Q1": {
-      "quarter": "2025-Q1",
-      "adtv_change_pct": -0.12025,
-      "windows": {
-        "2024-Q4": {
-          "adtv": 498882845.88,
-          "n_sessions": 66
-        },
-        "2024-Q3": {
-          "adtv": 567073285.98,
-          "n_sessions": 64
-        }
-      }
+     "adtv": 596204928.5,
+     "n_sessions": 58
+    }
+   }
+  },
+  "2025-Q4": {
+   "quarter": "2025-Q4",
+   "adtv_change_pct": 0.657237,
+   "windows": {
+    "2025-Q3": {
+     "adtv": 1419677243.56,
+     "n_sessions": 64
     },
     "2025-Q2": {
-      "quarter": "2025-Q2",
-      "adtv_change_pct": 0.19508,
-      "windows": {
-        "2025-Q1": {
-          "adtv": 596204928.5,
-          "n_sessions": 58
-        },
-        "2024-Q4": {
-          "adtv": 498882845.88,
-          "n_sessions": 66
-        }
-      }
+     "adtv": 856653025.51,
+     "n_sessions": 61
+    }
+   }
+  },
+  "2026-Q1": {
+   "quarter": "2026-Q1",
+   "adtv_change_pct": -0.384448,
+   "windows": {
+    "2025-Q4": {
+     "adtv": 873884769.56,
+     "n_sessions": 66
     },
     "2025-Q3": {
-      "quarter": "2025-Q3",
-      "adtv_change_pct": 0.436843,
-      "windows": {
-        "2025-Q2": {
-          "adtv": 856653025.51,
-          "n_sessions": 61
-        },
-        "2025-Q1": {
-          "adtv": 596204928.5,
-          "n_sessions": 58
-        }
-      }
+     "adtv": 1419677243.56,
+     "n_sessions": 64
+    }
+   }
+  },
+  "2026-Q2": {
+   "quarter": "2026-Q2",
+   "adtv_change_pct": 0.17381,
+   "windows": {
+    "2026-Q1": {
+     "adtv": 1025774984.7,
+     "n_sessions": 57
     },
     "2025-Q4": {
-      "quarter": "2025-Q4",
-      "adtv_change_pct": 0.657237,
-      "windows": {
-        "2025-Q3": {
-          "adtv": 1419677243.56,
-          "n_sessions": 64
-        },
-        "2025-Q2": {
-          "adtv": 856653025.51,
-          "n_sessions": 61
-        }
-      }
+     "adtv": 873884769.56,
+     "n_sessions": 66
+    }
+   }
+  },
+  "2026-Q3": {
+   "quarter": "2026-Q3",
+   "adtv_change_pct": -0.254737,
+   "windows": {
+    "2026-Q2": {
+     "adtv": 764471909.39,
+     "n_sessions": 62
     },
     "2026-Q1": {
-      "quarter": "2026-Q1",
-      "adtv_change_pct": -0.384448,
-      "windows": {
-        "2025-Q4": {
-          "adtv": 873884769.56,
-          "n_sessions": 66
-        },
-        "2025-Q3": {
-          "adtv": 1419677243.56,
-          "n_sessions": 64
-        }
-      }
+     "adtv": 1025774984.7,
+     "n_sessions": 57
+    }
+   }
+  },
+  "2026-Q4": {
+   "quarter": "2026-Q4",
+   "adtv_change_pct": -0.12261541306050572,
+   "windows": {
+    "2026-Q3": {
+     "adtv": 670735870.44,
+     "n_sessions": 63
     },
     "2026-Q2": {
-      "quarter": "2026-Q2",
-      "adtv_change_pct": 0.17381,
-      "windows": {
-        "2026-Q1": {
-          "adtv": 1025774984.7,
-          "n_sessions": 57
-        },
-        "2025-Q4": {
-          "adtv": 873884769.56,
-          "n_sessions": 66
-        }
-      }
-    },
-    "2026-Q3": {
-      "quarter": "2026-Q3",
-      "adtv_change_pct": -0.254737,
-      "windows": {
-        "2026-Q2": {
-          "adtv": 764471909.39,
-          "n_sessions": 62
-        },
-        "2026-Q1": {
-          "adtv": 1025774984.7,
-          "n_sessions": 57
-        }
-      }
-    },
-    "2026-Q4": {
-      "quarter": "2026-Q4",
-      "adtv_change_pct": -0.119329,
-      "windows": {
-        "2026-Q3": {
-          "adtv": 673247880.67,
-          "n_sessions": 61
-        },
-        "2026-Q2": {
-          "adtv": 764471909.39,
-          "n_sessions": 62
-        }
-      }
+     "adtv": 764471909.39,
+     "n_sessions": 62
     }
+   },
+   "source": "run_quarterly live scoring (pit_scorer_inputs)"
   }
+ }
 }

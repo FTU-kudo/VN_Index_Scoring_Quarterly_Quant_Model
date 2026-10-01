@@ -1,414 +1,415 @@
 {
-  "description": "Flows (VNDirect 2018→nay) z/YTD point-in-time + điểm re-score global_intermarket & market_structure — backfill 09/2026",
-  "updated_at": "2026-09-28 15:48",
-  "quarters": {
-    "2021-Q1": {
-      "quarter": "2021-Q1",
-      "as_of": "2020-12-31",
-      "flows_row_date": "2020-12-31",
-      "nff_z": -2.4315,
-      "nff_z_old": null,
-      "nff_ytd_pct": -0.4358,
-      "etf_z": 1.8116,
-      "etf_z_old": null,
-      "etf_ytd_pct": 0.0559,
-      "scores": {
-        "global_raw": 55.89,
-        "global_raw_old": 63.19,
-        "market_structure_raw": 77.72,
-        "market_structure_raw_old": 78.0
-      }
-    },
-    "2021-Q2": {
-      "quarter": "2021-Q2",
-      "as_of": "2021-03-31",
-      "flows_row_date": "2021-03-31",
-      "nff_z": -4.0648,
-      "nff_z_old": null,
-      "nff_ytd_pct": -0.9813,
-      "etf_z": 5.9155,
-      "etf_z_old": null,
-      "etf_ytd_pct": 0.1566,
-      "scores": {
-        "global_raw": 45.31,
-        "global_raw_old": 55.31,
-        "market_structure_raw": 82.74,
-        "market_structure_raw_old": 74.11
-      }
-    },
-    "2021-Q3": {
-      "quarter": "2021-Q3",
-      "as_of": "2021-06-30",
-      "flows_row_date": "2021-06-30",
-      "nff_z": -0.5589,
-      "nff_z_old": null,
-      "nff_ytd_pct": -0.3302,
-      "etf_z": 0.4047,
-      "etf_z_old": null,
-      "etf_ytd_pct": 0.0557,
-      "scores": {
-        "global_raw": 56.82,
-        "global_raw_old": 58.46,
-        "market_structure_raw": 57.76,
-        "market_structure_raw_old": 58.6
-      }
-    },
-    "2021-Q4": {
-      "quarter": "2021-Q4",
-      "as_of": "2021-09-30",
-      "flows_row_date": "2021-09-30",
-      "nff_z": 0.0507,
-      "nff_z_old": null,
-      "nff_ytd_pct": -0.1213,
-      "etf_z": -1.5849,
-      "etf_z_old": null,
-      "etf_ytd_pct": -0.0332,
-      "scores": {
-        "global_raw": 59.67,
-        "global_raw_old": 59.52,
-        "market_structure_raw": 41.95,
-        "market_structure_raw_old": 49.81
-      }
-    },
-    "2022-Q1": {
-      "quarter": "2022-Q1",
-      "as_of": "2021-12-31",
-      "flows_row_date": "2021-12-31",
-      "nff_z": -0.4292,
-      "nff_z_old": null,
-      "nff_ytd_pct": -0.286,
-      "etf_z": -0.3814,
-      "etf_z_old": null,
-      "etf_ytd_pct": 0.0142,
-      "scores": {
-        "global_raw": 62.99,
-        "global_raw_old": 64.27,
-        "market_structure_raw": 61.18,
-        "market_structure_raw_old": 69.64
-      }
-    },
-    "2022-Q2": {
-      "quarter": "2022-Q2",
-      "as_of": "2022-03-31",
-      "flows_row_date": "2022-03-31",
-      "nff_z": 0.1512,
-      "nff_z_old": 0.5,
-      "nff_ytd_pct": -0.0992,
-      "etf_z": -0.7594,
-      "etf_z_old": -0.5,
-      "etf_ytd_pct": -0.0039,
-      "scores": {
-        "global_raw": 55.01,
-        "global_raw_old": 56.09,
-        "market_structure_raw": 45.64,
-        "market_structure_raw_old": 46.94
-      }
-    },
-    "2022-Q3": {
-      "quarter": "2022-Q3",
-      "as_of": "2022-06-30",
-      "flows_row_date": "2022-06-30",
-      "nff_z": 0.6204,
-      "nff_z_old": 0.45,
-      "nff_ytd_pct": 0.0525,
-      "etf_z": 0.4218,
-      "etf_z_old": -0.45,
-      "etf_ytd_pct": 0.0476,
-      "scores": {
-        "global_raw": 56.65,
-        "global_raw_old": 56.16,
-        "market_structure_raw": 44.26,
-        "market_structure_raw_old": 39.9
-      }
-    },
-    "2022-Q4": {
-      "quarter": "2022-Q4",
-      "as_of": "2022-09-30",
-      "flows_row_date": "2022-09-30",
-      "nff_z": 0.5065,
-      "nff_z_old": 0.41,
-      "nff_ytd_pct": 0.0255,
-      "etf_z": -1.4748,
-      "etf_z_old": -0.41,
-      "etf_ytd_pct": -0.0348,
-      "scores": {
-        "global_raw": 50.68,
-        "global_raw_old": 50.37,
-        "market_structure_raw": 41.72,
-        "market_structure_raw_old": 47.04
-      }
-    },
-    "2023-Q1": {
-      "quarter": "2023-Q1",
-      "as_of": "2022-12-30",
-      "flows_row_date": "2022-12-30",
-      "nff_z": 2.1533,
-      "nff_z_old": 0.38,
-      "nff_ytd_pct": 0.5325,
-      "etf_z": 0.6843,
-      "etf_z_old": -0.38,
-      "etf_ytd_pct": 0.0567,
-      "scores": {
-        "global_raw": 57.38,
-        "global_raw_old": 52.06,
-        "market_structure_raw": 61.85,
-        "market_structure_raw_old": 56.53
-      }
-    },
-    "2023-Q2": {
-      "quarter": "2023-Q2",
-      "as_of": "2023-03-31",
-      "flows_row_date": "2023-03-31",
-      "nff_z": 0.5327,
-      "nff_z_old": 0.35,
-      "nff_ytd_pct": 0.0941,
-      "etf_z": -0.24,
-      "etf_z_old": -0.35,
-      "etf_ytd_pct": 0.0169,
-      "scores": {
-        "global_raw": 58.02,
-        "global_raw_old": 57.45,
-        "market_structure_raw": 44.42,
-        "market_structure_raw_old": 43.87
-      }
-    },
-    "2023-Q3": {
-      "quarter": "2023-Q3",
-      "as_of": "2023-06-30",
-      "flows_row_date": "2023-06-30",
-      "nff_z": -0.124,
-      "nff_z_old": 0.33,
-      "nff_ytd_pct": -0.1149,
-      "etf_z": -0.7902,
-      "etf_z_old": -0.34,
-      "etf_ytd_pct": -0.0072,
-      "scores": {
-        "global_raw": 55.88,
-        "global_raw_old": 57.27,
-        "market_structure_raw": 61.37,
-        "market_structure_raw_old": 63.62
-      }
-    },
-    "2023-Q4": {
-      "quarter": "2023-Q4",
-      "as_of": "2023-09-29",
-      "flows_row_date": "2023-09-29",
-      "nff_z": 0.0585,
-      "nff_z_old": 0.31,
-      "nff_ytd_pct": -0.0579,
-      "etf_z": -1.4875,
-      "etf_z_old": -0.32,
-      "etf_ytd_pct": -0.0384,
-      "scores": {
-        "global_raw": 47.36,
-        "global_raw_old": 48.13,
-        "market_structure_raw": 54.19,
-        "market_structure_raw_old": 60.02
-      }
-    },
-    "2024-Q1": {
-      "quarter": "2024-Q1",
-      "as_of": "2023-12-29",
-      "flows_row_date": "2023-12-29",
-      "nff_z": -0.2633,
-      "nff_z_old": 0.3,
-      "nff_ytd_pct": -0.1571,
-      "etf_z": -1.7808,
-      "etf_z_old": -0.31,
-      "etf_ytd_pct": -0.0563,
-      "scores": {
-        "global_raw": 20.0,
-        "global_raw_old": 20.0,
-        "market_structure_raw": 33.47,
-        "market_structure_raw_old": 40.82
-      }
-    },
-    "2024-Q2": {
-      "quarter": "2024-Q2",
-      "as_of": "2024-03-29",
-      "flows_row_date": "2024-03-29",
-      "nff_z": -0.0101,
-      "nff_z_old": 0.29,
-      "nff_ytd_pct": -0.0825,
-      "etf_z": -1.7549,
-      "etf_z_old": -0.29,
-      "etf_ytd_pct": -0.0627,
-      "scores": {
-        "global_raw": 49.38,
-        "global_raw_old": 50.26,
-        "market_structure_raw": 51.9,
-        "market_structure_raw_old": 59.23
-      }
-    },
-    "2024-Q3": {
-      "quarter": "2024-Q3",
-      "as_of": "2024-06-28",
-      "flows_row_date": "2024-06-28",
-      "nff_z": -0.919,
-      "nff_z_old": 0.27,
-      "nff_ytd_pct": -0.3509,
-      "etf_z": -2.04,
-      "etf_z_old": -0.28,
-      "etf_ytd_pct": -0.0838,
-      "scores": {
-        "global_raw": 50.74,
-        "global_raw_old": 54.31,
-        "market_structure_raw": 39.43,
-        "market_structure_raw_old": 48.23
-      }
-    },
-    "2024-Q4": {
-      "quarter": "2024-Q4",
-      "as_of": "2024-09-30",
-      "flows_row_date": "2024-09-30",
-      "nff_z": -0.2976,
-      "nff_z_old": 0.26,
-      "nff_ytd_pct": -0.1789,
-      "etf_z": -0.3091,
-      "etf_z_old": -0.27,
-      "etf_ytd_pct": -0.0056,
-      "scores": {
-        "global_raw": 52.85,
-        "global_raw_old": 54.52,
-        "market_structure_raw": 42.92,
-        "market_structure_raw_old": 43.12
-      }
-    },
-    "2025-Q1": {
-      "quarter": "2025-Q1",
-      "as_of": "2024-12-31",
-      "flows_row_date": "2024-12-31",
-      "nff_z": -0.8062,
-      "nff_z_old": 0.25,
-      "nff_ytd_pct": -0.3273,
-      "etf_z": -0.1879,
-      "etf_z_old": -0.26,
-      "etf_ytd_pct": 0.0002,
-      "scores": {
-        "global_raw": 43.19,
-        "global_raw_old": 46.37,
-        "market_structure_raw": 47.05,
-        "market_structure_raw_old": 46.69
-      }
-    },
-    "2025-Q2": {
-      "quarter": "2025-Q2",
-      "as_of": "2025-03-31",
-      "flows_row_date": "2025-03-31",
-      "nff_z": -0.8029,
-      "nff_z_old": 0.24,
-      "nff_ytd_pct": -0.3338,
-      "etf_z": -0.2756,
-      "etf_z_old": -0.25,
-      "etf_ytd_pct": -0.0043,
-      "scores": {
-        "global_raw": 50.33,
-        "global_raw_old": 53.47,
-        "market_structure_raw": 57.12,
-        "market_structure_raw_old": 57.25
-      }
-    },
-    "2025-Q3": {
-      "quarter": "2025-Q3",
-      "as_of": "2025-06-30",
-      "flows_row_date": "2025-06-30",
-      "nff_z": -0.2736,
-      "nff_z_old": 0.24,
-      "nff_ytd_pct": -0.1907,
-      "etf_z": -0.1839,
-      "etf_z_old": -0.24,
-      "etf_ytd_pct": -0.0002,
-      "scores": {
-        "global_raw": 55.35,
-        "global_raw_old": 56.9,
-        "market_structure_raw": 67.31,
-        "market_structure_raw_old": 67.03
-      }
-    },
-    "2025-Q4": {
-      "quarter": "2025-Q4",
-      "as_of": "2025-09-30",
-      "flows_row_date": "2025-09-30",
-      "nff_z": -1.65,
-      "nff_z_old": 0.23,
-      "nff_ytd_pct": -0.5756,
-      "etf_z": -0.4193,
-      "etf_z_old": -0.24,
-      "etf_ytd_pct": -0.0115,
-      "scores": {
-        "global_raw": 51.02,
-        "global_raw_old": 56.66,
-        "market_structure_raw": 68.24,
-        "market_structure_raw_old": 69.13
-      }
-    },
-    "2026-Q1": {
-      "quarter": "2026-Q1",
-      "as_of": "2025-12-31",
-      "flows_row_date": "2025-12-31",
-      "nff_z": -0.4454,
-      "nff_z_old": 0.23,
-      "nff_ytd_pct": -0.2602,
-      "etf_z": -0.0968,
-      "etf_z_old": -0.23,
-      "etf_ytd_pct": 0.0032,
-      "scores": {
-        "global_raw": 57.15,
-        "global_raw_old": 59.18,
-        "market_structure_raw": 40.37,
-        "market_structure_raw_old": 39.7
-      }
-    },
-    "2026-Q2": {
-      "quarter": "2026-Q2",
-      "as_of": "2026-03-31",
-      "flows_row_date": "2026-03-31",
-      "nff_z": -0.2095,
-      "nff_z_old": 0.22,
-      "nff_ytd_pct": -0.196,
-      "etf_z": -0.5466,
-      "etf_z_old": -0.23,
-      "etf_ytd_pct": -0.0176,
-      "scores": {
-        "global_raw": 40.38,
-        "global_raw_old": 41.63,
-        "market_structure_raw": 56.73,
-        "market_structure_raw_old": 58.31
-      }
-    },
-    "2026-Q3": {
-      "quarter": "2026-Q3",
-      "as_of": "2026-06-30",
-      "flows_row_date": "2026-06-30",
-      "nff_z": -0.8451,
-      "nff_z_old": 0.21,
-      "nff_ytd_pct": -0.3737,
-      "etf_z": -0.1918,
-      "etf_z_old": -0.22,
-      "etf_ytd_pct": -0.002,
-      "scores": {
-        "global_raw": 41.75,
-        "global_raw_old": 44.94,
-        "market_structure_raw": 44.22,
-        "market_structure_raw_old": 44.08
-      }
-    },
-    "2026-Q4": {
-      "quarter": "2026-Q4",
-      "as_of": "2026-09-25",
-      "flows_row_date": "2026-09-25",
-      "nff_z": -0.0525,
-      "nff_z_old": 0.21,
-      "nff_ytd_pct": -0.1609,
-      "etf_z": -0.1187,
-      "etf_z_old": -0.21,
-      "etf_ytd_pct": 0.0011,
-      "scores": {
-        "global_raw": 36.4,
-        "global_raw_old": 37.19,
-        "market_structure_raw": 60.43,
-        "market_structure_raw_old": 59.97
-      }
-    }
+ "description": "Flows (VNDirect 2018→nay) z/YTD point-in-time + điểm re-score global_intermarket & market_structure — backfill 09/2026",
+ "updated_at": "2026-10-01 14:40",
+ "quarters": {
+  "2021-Q1": {
+   "quarter": "2021-Q1",
+   "as_of": "2020-12-31",
+   "flows_row_date": "2020-12-31",
+   "nff_z": -2.4315,
+   "nff_z_old": null,
+   "nff_ytd_pct": -0.4358,
+   "etf_z": 1.8116,
+   "etf_z_old": null,
+   "etf_ytd_pct": 0.0559,
+   "scores": {
+    "global_raw": 55.89,
+    "global_raw_old": 63.19,
+    "market_structure_raw": 77.72,
+    "market_structure_raw_old": 78.0
+   }
+  },
+  "2021-Q2": {
+   "quarter": "2021-Q2",
+   "as_of": "2021-03-31",
+   "flows_row_date": "2021-03-31",
+   "nff_z": -4.0648,
+   "nff_z_old": null,
+   "nff_ytd_pct": -0.9813,
+   "etf_z": 5.9155,
+   "etf_z_old": null,
+   "etf_ytd_pct": 0.1566,
+   "scores": {
+    "global_raw": 45.31,
+    "global_raw_old": 55.31,
+    "market_structure_raw": 82.74,
+    "market_structure_raw_old": 74.11
+   }
+  },
+  "2021-Q3": {
+   "quarter": "2021-Q3",
+   "as_of": "2021-06-30",
+   "flows_row_date": "2021-06-30",
+   "nff_z": -0.5589,
+   "nff_z_old": null,
+   "nff_ytd_pct": -0.3302,
+   "etf_z": 0.4047,
+   "etf_z_old": null,
+   "etf_ytd_pct": 0.0557,
+   "scores": {
+    "global_raw": 56.82,
+    "global_raw_old": 58.46,
+    "market_structure_raw": 57.76,
+    "market_structure_raw_old": 58.6
+   }
+  },
+  "2021-Q4": {
+   "quarter": "2021-Q4",
+   "as_of": "2021-09-30",
+   "flows_row_date": "2021-09-30",
+   "nff_z": 0.0507,
+   "nff_z_old": null,
+   "nff_ytd_pct": -0.1213,
+   "etf_z": -1.5849,
+   "etf_z_old": null,
+   "etf_ytd_pct": -0.0332,
+   "scores": {
+    "global_raw": 59.67,
+    "global_raw_old": 59.52,
+    "market_structure_raw": 41.95,
+    "market_structure_raw_old": 49.81
+   }
+  },
+  "2022-Q1": {
+   "quarter": "2022-Q1",
+   "as_of": "2021-12-31",
+   "flows_row_date": "2021-12-31",
+   "nff_z": -0.4292,
+   "nff_z_old": null,
+   "nff_ytd_pct": -0.286,
+   "etf_z": -0.3814,
+   "etf_z_old": null,
+   "etf_ytd_pct": 0.0142,
+   "scores": {
+    "global_raw": 62.99,
+    "global_raw_old": 64.27,
+    "market_structure_raw": 61.18,
+    "market_structure_raw_old": 69.64
+   }
+  },
+  "2022-Q2": {
+   "quarter": "2022-Q2",
+   "as_of": "2022-03-31",
+   "flows_row_date": "2022-03-31",
+   "nff_z": 0.1512,
+   "nff_z_old": 0.5,
+   "nff_ytd_pct": -0.0992,
+   "etf_z": -0.7594,
+   "etf_z_old": -0.5,
+   "etf_ytd_pct": -0.0039,
+   "scores": {
+    "global_raw": 55.01,
+    "global_raw_old": 56.09,
+    "market_structure_raw": 45.64,
+    "market_structure_raw_old": 46.94
+   }
+  },
+  "2022-Q3": {
+   "quarter": "2022-Q3",
+   "as_of": "2022-06-30",
+   "flows_row_date": "2022-06-30",
+   "nff_z": 0.6204,
+   "nff_z_old": 0.45,
+   "nff_ytd_pct": 0.0525,
+   "etf_z": 0.4218,
+   "etf_z_old": -0.45,
+   "etf_ytd_pct": 0.0476,
+   "scores": {
+    "global_raw": 56.65,
+    "global_raw_old": 56.16,
+    "market_structure_raw": 44.26,
+    "market_structure_raw_old": 39.9
+   }
+  },
+  "2022-Q4": {
+   "quarter": "2022-Q4",
+   "as_of": "2022-09-30",
+   "flows_row_date": "2022-09-30",
+   "nff_z": 0.5065,
+   "nff_z_old": 0.41,
+   "nff_ytd_pct": 0.0255,
+   "etf_z": -1.4748,
+   "etf_z_old": -0.41,
+   "etf_ytd_pct": -0.0348,
+   "scores": {
+    "global_raw": 50.68,
+    "global_raw_old": 50.37,
+    "market_structure_raw": 41.72,
+    "market_structure_raw_old": 47.04
+   }
+  },
+  "2023-Q1": {
+   "quarter": "2023-Q1",
+   "as_of": "2022-12-30",
+   "flows_row_date": "2022-12-30",
+   "nff_z": 2.1533,
+   "nff_z_old": 0.38,
+   "nff_ytd_pct": 0.5325,
+   "etf_z": 0.6843,
+   "etf_z_old": -0.38,
+   "etf_ytd_pct": 0.0567,
+   "scores": {
+    "global_raw": 57.38,
+    "global_raw_old": 52.06,
+    "market_structure_raw": 61.85,
+    "market_structure_raw_old": 56.53
+   }
+  },
+  "2023-Q2": {
+   "quarter": "2023-Q2",
+   "as_of": "2023-03-31",
+   "flows_row_date": "2023-03-31",
+   "nff_z": 0.5327,
+   "nff_z_old": 0.35,
+   "nff_ytd_pct": 0.0941,
+   "etf_z": -0.24,
+   "etf_z_old": -0.35,
+   "etf_ytd_pct": 0.0169,
+   "scores": {
+    "global_raw": 58.02,
+    "global_raw_old": 57.45,
+    "market_structure_raw": 44.42,
+    "market_structure_raw_old": 43.87
+   }
+  },
+  "2023-Q3": {
+   "quarter": "2023-Q3",
+   "as_of": "2023-06-30",
+   "flows_row_date": "2023-06-30",
+   "nff_z": -0.124,
+   "nff_z_old": 0.33,
+   "nff_ytd_pct": -0.1149,
+   "etf_z": -0.7902,
+   "etf_z_old": -0.34,
+   "etf_ytd_pct": -0.0072,
+   "scores": {
+    "global_raw": 55.88,
+    "global_raw_old": 57.27,
+    "market_structure_raw": 61.37,
+    "market_structure_raw_old": 63.62
+   }
+  },
+  "2023-Q4": {
+   "quarter": "2023-Q4",
+   "as_of": "2023-09-29",
+   "flows_row_date": "2023-09-29",
+   "nff_z": 0.0585,
+   "nff_z_old": 0.31,
+   "nff_ytd_pct": -0.0579,
+   "etf_z": -1.4875,
+   "etf_z_old": -0.32,
+   "etf_ytd_pct": -0.0384,
+   "scores": {
+    "global_raw": 47.36,
+    "global_raw_old": 48.13,
+    "market_structure_raw": 54.19,
+    "market_structure_raw_old": 60.02
+   }
+  },
+  "2024-Q1": {
+   "quarter": "2024-Q1",
+   "as_of": "2023-12-29",
+   "flows_row_date": "2023-12-29",
+   "nff_z": -0.2633,
+   "nff_z_old": 0.3,
+   "nff_ytd_pct": -0.1571,
+   "etf_z": -1.7808,
+   "etf_z_old": -0.31,
+   "etf_ytd_pct": -0.0563,
+   "scores": {
+    "global_raw": 20.0,
+    "global_raw_old": 20.0,
+    "market_structure_raw": 33.47,
+    "market_structure_raw_old": 40.82
+   }
+  },
+  "2024-Q2": {
+   "quarter": "2024-Q2",
+   "as_of": "2024-03-29",
+   "flows_row_date": "2024-03-29",
+   "nff_z": -0.0101,
+   "nff_z_old": 0.29,
+   "nff_ytd_pct": -0.0825,
+   "etf_z": -1.7549,
+   "etf_z_old": -0.29,
+   "etf_ytd_pct": -0.0627,
+   "scores": {
+    "global_raw": 49.38,
+    "global_raw_old": 50.26,
+    "market_structure_raw": 51.9,
+    "market_structure_raw_old": 59.23
+   }
+  },
+  "2024-Q3": {
+   "quarter": "2024-Q3",
+   "as_of": "2024-06-28",
+   "flows_row_date": "2024-06-28",
+   "nff_z": -0.919,
+   "nff_z_old": 0.27,
+   "nff_ytd_pct": -0.3509,
+   "etf_z": -2.04,
+   "etf_z_old": -0.28,
+   "etf_ytd_pct": -0.0838,
+   "scores": {
+    "global_raw": 50.74,
+    "global_raw_old": 54.31,
+    "market_structure_raw": 39.43,
+    "market_structure_raw_old": 48.23
+   }
+  },
+  "2024-Q4": {
+   "quarter": "2024-Q4",
+   "as_of": "2024-09-30",
+   "flows_row_date": "2024-09-30",
+   "nff_z": -0.2976,
+   "nff_z_old": 0.26,
+   "nff_ytd_pct": -0.1789,
+   "etf_z": -0.3091,
+   "etf_z_old": -0.27,
+   "etf_ytd_pct": -0.0056,
+   "scores": {
+    "global_raw": 52.85,
+    "global_raw_old": 54.52,
+    "market_structure_raw": 42.92,
+    "market_structure_raw_old": 43.12
+   }
+  },
+  "2025-Q1": {
+   "quarter": "2025-Q1",
+   "as_of": "2024-12-31",
+   "flows_row_date": "2024-12-31",
+   "nff_z": -0.8062,
+   "nff_z_old": 0.25,
+   "nff_ytd_pct": -0.3273,
+   "etf_z": -0.1879,
+   "etf_z_old": -0.26,
+   "etf_ytd_pct": 0.0002,
+   "scores": {
+    "global_raw": 43.19,
+    "global_raw_old": 46.37,
+    "market_structure_raw": 47.05,
+    "market_structure_raw_old": 46.69
+   }
+  },
+  "2025-Q2": {
+   "quarter": "2025-Q2",
+   "as_of": "2025-03-31",
+   "flows_row_date": "2025-03-31",
+   "nff_z": -0.8029,
+   "nff_z_old": 0.24,
+   "nff_ytd_pct": -0.3338,
+   "etf_z": -0.2756,
+   "etf_z_old": -0.25,
+   "etf_ytd_pct": -0.0043,
+   "scores": {
+    "global_raw": 50.33,
+    "global_raw_old": 53.47,
+    "market_structure_raw": 57.12,
+    "market_structure_raw_old": 57.25
+   }
+  },
+  "2025-Q3": {
+   "quarter": "2025-Q3",
+   "as_of": "2025-06-30",
+   "flows_row_date": "2025-06-30",
+   "nff_z": -0.2736,
+   "nff_z_old": 0.24,
+   "nff_ytd_pct": -0.1907,
+   "etf_z": -0.1839,
+   "etf_z_old": -0.24,
+   "etf_ytd_pct": -0.0002,
+   "scores": {
+    "global_raw": 55.35,
+    "global_raw_old": 56.9,
+    "market_structure_raw": 67.31,
+    "market_structure_raw_old": 67.03
+   }
+  },
+  "2025-Q4": {
+   "quarter": "2025-Q4",
+   "as_of": "2025-09-30",
+   "flows_row_date": "2025-09-30",
+   "nff_z": -1.65,
+   "nff_z_old": 0.23,
+   "nff_ytd_pct": -0.5756,
+   "etf_z": -0.4193,
+   "etf_z_old": -0.24,
+   "etf_ytd_pct": -0.0115,
+   "scores": {
+    "global_raw": 51.02,
+    "global_raw_old": 56.66,
+    "market_structure_raw": 68.24,
+    "market_structure_raw_old": 69.13
+   }
+  },
+  "2026-Q1": {
+   "quarter": "2026-Q1",
+   "as_of": "2025-12-31",
+   "flows_row_date": "2025-12-31",
+   "nff_z": -0.4454,
+   "nff_z_old": 0.23,
+   "nff_ytd_pct": -0.2602,
+   "etf_z": -0.0968,
+   "etf_z_old": -0.23,
+   "etf_ytd_pct": 0.0032,
+   "scores": {
+    "global_raw": 57.15,
+    "global_raw_old": 59.18,
+    "market_structure_raw": 40.37,
+    "market_structure_raw_old": 39.7
+   }
+  },
+  "2026-Q2": {
+   "quarter": "2026-Q2",
+   "as_of": "2026-03-31",
+   "flows_row_date": "2026-03-31",
+   "nff_z": -0.2095,
+   "nff_z_old": 0.22,
+   "nff_ytd_pct": -0.196,
+   "etf_z": -0.5466,
+   "etf_z_old": -0.23,
+   "etf_ytd_pct": -0.0176,
+   "scores": {
+    "global_raw": 40.38,
+    "global_raw_old": 41.63,
+    "market_structure_raw": 56.73,
+    "market_structure_raw_old": 58.31
+   }
+  },
+  "2026-Q3": {
+   "quarter": "2026-Q3",
+   "as_of": "2026-06-30",
+   "flows_row_date": "2026-06-30",
+   "nff_z": -0.8451,
+   "nff_z_old": 0.21,
+   "nff_ytd_pct": -0.3737,
+   "etf_z": -0.1918,
+   "etf_z_old": -0.22,
+   "etf_ytd_pct": -0.002,
+   "scores": {
+    "global_raw": 41.75,
+    "global_raw_old": 44.94,
+    "market_structure_raw": 44.22,
+    "market_structure_raw_old": 44.08
+   }
+  },
+  "2026-Q4": {
+   "quarter": "2026-Q4",
+   "as_of": "2026-09-30",
+   "flows_row_date": "2026-09-30",
+   "nff_z": -0.1220948548235693,
+   "nff_z_old": 0.21,
+   "nff_ytd_pct": -0.1801222314895506,
+   "etf_z": -0.11475526919053115,
+   "etf_z_old": -0.21,
+   "etf_ytd_pct": 0.001304077894212551,
+   "scores": {
+    "global_raw": 36.4,
+    "global_raw_old": 37.19,
+    "market_structure_raw": 60.43,
+    "market_structure_raw_old": 59.97
+   },
+   "source": "run_quarterly live scoring (pit_scorer_inputs)"
   }
+ }
 }

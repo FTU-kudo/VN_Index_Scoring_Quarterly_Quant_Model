@@ -154,7 +154,7 @@ On the **24-quarter dashboard**, cards & timeline are colored by the **calibrate
 ```text
 ======================================================================
      VN-INDEX QUANTITATIVE SCORING — 2026-Q4
-     Generated: 2026-09-29T16:26:46.191151
+     Generated: 2026-10-01T14:40:50.010753
 ======================================================================
 [MARKET DATA]
   • VN-Index Close         : N/A
@@ -167,23 +167,23 @@ On the **24-quarter dashboard**, cards & timeline are colored by the **calibrate
   • R-squared              : N/A (R-adj = N/A)
 
 [MACHINE LEARNING: WALK-FORWARD VALIDATION]
-  • XGBoost Accuracy       : 0.4250
+  • XGBoost Accuracy       : 0.4846
   • N Folds (WFV)          : 8
   • Latest Prediction      : DOWN
 
 [COMPOSITE SCORE & ALLOCATION]
-  • Total Score (raw)      : 47.67 / 100
+  • Total Score (raw)      : 46.68 / 100
   • Classification (raw)   : 🟠 REDUCE — Reduce exposure — Increasing pressure
-  • Calibrated Action      : 🔴 SELL — 33.97 / 100 (0–20% Equities)
-  • Calibration z          : -1.07
+  • Calibrated Action      : 🔴 SELL — 31.50 / 100 (0–20% Equities)
+  • Calibration z          : -1.23
 
 [GROUP BREAKDOWN]
-  • macro_monetary                : raw=  57.9  weight=14.48
-  • global_intermarket            : raw=  36.4  weight=7.28
-  • valuation_leverage            : raw=  40.4  weight=8.08
-  • quant_model                   : raw=  50.8  weight=7.63
-  • ml_forecast                   : raw=  41.6  weight=4.16
-  • market_structure              : raw=  60.4  weight=6.04
+  • macro_monetary                : raw=  58.5  weight=14.62
+  • global_intermarket            : raw=  32.9  weight=6.58
+  • valuation_leverage            : raw=  41.1  weight=8.22
+  • quant_model                   : raw=  51.6  weight=7.74
+  • ml_forecast                   : raw=  39.5  weight=3.95
+  • market_structure              : raw=  55.7  weight=5.57
 ======================================================================
 ```
 <!-- AUTO_RESULTS_END -->

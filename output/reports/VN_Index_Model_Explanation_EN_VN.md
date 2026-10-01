@@ -8,15 +8,15 @@
 
 ## 2. [EN] Method / [VN] Phương pháp
 
-[EN] The published calibration method is `winsorized_expanding_zscore_v2`. For 2026-Q4, the raw score is 47.67 (REDUCE) and the calibrated score is 33.97 (SELL); the historical standard-deviation floor was applied: no. Inputs are point-in-time and publication stops if a required source fails.
+[EN] The published calibration method is `winsorized_expanding_zscore_v2`. For 2026-Q4, the raw score is 46.68 (REDUCE) and the calibrated score is 31.50 (SELL); the historical standard-deviation floor was applied: no. Inputs are point-in-time and publication stops if a required source fails.
 
-[VN] Phương pháp hiệu chỉnh đã công bố là `winsorized_expanding_zscore_v2`. Với 2026-Q4, điểm thô là 47.67 (REDUCE) và điểm hiệu chỉnh là 33.97 (SELL); sàn độ lệch chuẩn lịch sử được áp dụng: no. Dữ liệu tuân thủ point-in-time và việc công bố dừng nếu nguồn bắt buộc gặp lỗi.
+[VN] Phương pháp hiệu chỉnh đã công bố là `winsorized_expanding_zscore_v2`. Với 2026-Q4, điểm thô là 46.68 (REDUCE) và điểm hiệu chỉnh là 31.50 (SELL); sàn độ lệch chuẩn lịch sử được áp dụng: no. Dữ liệu tuân thủ point-in-time và việc công bố dừng nếu nguồn bắt buộc gặp lỗi.
 
 ## 3. [EN] Limitations / [VN] Hạn chế
 
-[EN] The evidence set contains 24 published quarters, so uncertainty is wide. Weights, thresholds, and calibration parameters reflect design judgment informed by the full sample and were not optimized out of sample. The latest observation is PROVISIONAL as of 2026-09-25.
+[EN] The evidence set contains 24 published quarters, so uncertainty is wide. Weights, thresholds, and calibration parameters reflect design judgment informed by the full sample and were not optimized out of sample. The latest observation is FINAL as of 2026-09-30.
 
-[VN] Tập bằng chứng gồm 24 quý đã công bố nên khoảng bất định rộng. Trọng số, ngưỡng và tham số hiệu chỉnh phản ánh phán định thiết kế khi đã biết toàn mẫu, chưa được tối ưu ngoài mẫu. Quan sát mới nhất ở trạng thái PROVISIONAL tại ngày 2026-09-25.
+[VN] Tập bằng chứng gồm 24 quý đã công bố nên khoảng bất định rộng. Trọng số, ngưỡng và tham số hiệu chỉnh phản ánh phán định thiết kế khi đã biết toàn mẫu, chưa được tối ưu ngoài mẫu. Quan sát mới nhất ở trạng thái FINAL tại ngày 2026-09-30.
 
 ## 4. [EN] Delivery files / [VN] Danh mục bàn giao
 
@@ -51,4 +51,4 @@
 | 2026-Q1 | 2025-12-31 | 51.47 | HOLD | 40.48 | REDUCE | FINAL |
 | 2026-Q2 | 2026-03-31 | 44.38 | REDUCE | 21.85 | SELL | FINAL |
 | 2026-Q3 | 2026-06-30 | 46.59 | REDUCE | 30.12 | SELL | FINAL |
-| 2026-Q4 | 2026-09-25 | 47.67 | REDUCE | 33.97 | SELL | PROVISIONAL |
+| 2026-Q4 | 2026-09-30 | 46.68 | REDUCE | 31.50 | SELL | FINAL |
