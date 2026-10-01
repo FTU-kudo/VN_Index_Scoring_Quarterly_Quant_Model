@@ -27,14 +27,23 @@ on:
         required: false
         default: false
         type: boolean
+      dry_run:
+        description: "Chạy đủ pipeline + verifier nhưng KHÔNG commit (validate từ branch PR)"
+        required: false
+        default: false
+        type: boolean
 
 env:
   PYTHON_VERSION: "3.11"
+  PYTHONUTF8: "1"
 
 jobs:
   quarterly-scoring:
     name: "Run Q${{ github.event.inputs.quarter || 'Auto' }} Scoring Pipeline"
-    runs-on: ubuntu-latest
+    # Ghim image có chủ đích thay vì thừa hưởng ngầm đợt migrate ubuntu-latest
+    # (ubuntu-latest sẽ chuyển sang Ubuntu 26.04) — nâng cấp phải là một thay
+    # đổi được review, không phải một sáng thứ Hai bất ngờ.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       contents: write
@@ -43,11 +52,11 @@ jobs:
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────
       - name: "📁 Checkout repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # ── 2. Python setup ───────────────────────────────────────────────────
       - name: "🐍 Setup Python ${{ env.PYTHON_VERSION }}"
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -76,11 +85,15 @@ jobs:
           echo "quarter=$QUARTER" >> $GITHUB_OUTPUT
           echo "Quarter: $QUARTER"
 
-      # ── 5. Run quarterly pipeline ──────────────────────────────────────────
-      - name: "🚀 Run quarterly scoring pipeline"
+      # ── 5. Scoring + generation gates ──────────────────────────────────────
+      # Mỗi lệnh là MỘT step riêng: log của run hỏng chỉ ra ngay bước nào vỡ
+      # (trước đây 6 lệnh nằm trong một step duy nhất nên runs #18/#19 chỉ báo
+      # "Process completed with exit code 1" cho cả cụm).
+      # KHÔNG dùng continue-on-error / `|| true`: mọi bước dưới đây là cổng chặn.
+      - name: "🚀 Run quarterly scoring"
+        id: scoring
         env:
           VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
-          PYTHONUTF8: 1
         run: |
           QUARTER="${{ steps.set-quarter.outputs.quarter }}"
           FTSE_STATUS="${{ github.event.inputs.ftse_status || 'auto' }}"
@@ -92,20 +105,42 @@ jobs:
           fi
           echo "Running: $CMD"
           $CMD
-          
-          echo "Rebuilding all HTML reports to sync chart history..."
-          python scripts/rebuild_html.py
-          echo "Rebuilding canonical formula-driven workbooks..."
-          python generate_english_master_workbook.py
-          python verify_workbook_accuracy.py
-          echo "Baking values-only twin for viewers that do not recalculate formulas..."
-          python scripts/bake_workbook_values.py
-          echo "Regenerating bilingual (EN/VN) model explanation report..."
-          python scripts/generate_bilingual_explainer.py
+
+      - name: "🧱 Rebuild HTML reports"
+        run: python scripts/rebuild_html.py
+
+      - name: "📐 Generate formula-driven workbooks"
+        run: python generate_english_master_workbook.py
+
+      - name: "🔍 Verify workbook formulas and numerical reconciliation"
+        run: python verify_workbook_accuracy.py
+
+      - name: "🧊 Generate the values-baked workbook"
+        run: python scripts/bake_workbook_values.py
+
+      - name: "📝 Generate the bilingual EN/VN reports"
+        run: python scripts/generate_bilingual_explainer.py
+
+      - name: "✅ Assert quarterly deliverables exist"
+        run: |
+          set -euo pipefail
+          MISSING=0
+          for f in \
+            "output/exports/VN_Index_Quant_Model_Complete_Architecture.xlsx" \
+            "output/exports/VN_Index_Quant_Model_Complete_Architecture_Values.xlsx" \
+            "output/exports/VN_Index_Quant_Scoring_Model_Master.xlsx" \
+            "output/reports/VN_Index_Model_Explanation_EN_VN.md" \
+            "output/reports/VN_Index_Model_Explanation_EN_VN.docx" ; do
+            if [ ! -s "$f" ]; then echo "::error::Missing deliverable: $f"; MISSING=1; else echo "OK  $f"; fi
+          done
+          # Master workbook là alias byte-identical của workbook công thức
+          cmp output/exports/VN_Index_Quant_Model_Complete_Architecture.xlsx \
+              output/exports/VN_Index_Quant_Scoring_Model_Master.xlsx
+          exit $MISSING
 
       # ── 6. Upload artifacts ────────────────────────────────────────────────
       - name: "📤 Upload HTML report"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: "quarterly-report-${{ steps.set-quarter.outputs.quarter }}"
@@ -121,7 +156,12 @@ jobs:
       # được parquet) — phát hiện & xác minh bằng diagnostic run 09/2026.
       # git add theo THƯ MỤC còn bao phủ cả các file pattern cũ bỏ quên
       # (quarters.json, README.md do pipeline tự cập nhật).
+      #
+      # `if: success()` là tường minh: chỉ commit khi MỌI bước sinh artefact và
+      # bước verifier ở trên đều xanh — không bao giờ publish một quý mà
+      # workbook chưa đối soát được với JSON.
       - name: "💾 Commit quarterly outputs (plain git)"
+        if: success() && github.event.inputs.dry_run != 'true'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
@@ -137,13 +177,19 @@ jobs:
             git push
           fi
 
+      - name: "🧪 Dry-run notice (no commit)"
+        if: success() && github.event.inputs.dry_run == 'true'
+        run: |
+          echo "dry_run=true — pipeline + verifier passed, outputs left uncommitted."
+          git status --short | head -40
+
       # ── 8. Summary ────────────────────────────────────────────────────────
       - name: "📋 Job summary"
         if: always()
         run: |
           echo "## VN-Index Quarterly Scoring — ${{ steps.set-quarter.outputs.quarter }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Pipeline completed. Check artifacts for HTML report and JSON export." >> $GITHUB_STEP_SUMMARY
+          echo "Job status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f "output/exports/score_$(echo ${{ steps.set-quarter.outputs.quarter }} | tr '-' '_').json" ]; then
             SCORE=$(python -c "
@@ -153,14 +199,14 @@ jobs:
           qs = d.get('quarterly_score', {})
           print(f\"**Total Score**: {qs.get('total_score', 'N/A')}/100\")
           print(f\"**Label**: {qs.get('emoji', '')} {qs.get('label', 'N/A')}\")
-          print(f\"**Leading Indicator**: {qs.get('leading_indicator', 'N/A')}\")
+          print(f\"**Leading Indicator**: {qs.get('most_divergent_pillar', 'N/A')}\")
           " 2>/dev/null || echo "Score data not available")
             echo "$SCORE" >> $GITHUB_STEP_SUMMARY
           fi
 
       # ── 9. Trigger Deploy ───────────────────────────────────────────────────
       - name: "🚀 Trigger Deploy to GitHub Pages"
-        if: always()
+        if: success() && github.event.inputs.dry_run != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

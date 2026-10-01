@@ -37,7 +37,10 @@ from src.features.macro_features import build_macro_features
 from src.features.global_features import build_global_features
 from src.features.valuation_features import build_valuation_leverage_features
 from src.features.technical_features import add_technical_indicators
-from src.features.market_structure_features import compute_adtv_change_pct
+from src.features.market_structure_features import (
+    compute_adtv_change_pct, compute_quarterly_adtv, previous_quarter,
+)
+from src.scoring.ledger_sync import sync_quarter_ledgers
 from src.models.regression.mlr_model import MLRModel
 from src.models.var.var_model import VARModel
 from src.models.ml.ml_model import (
@@ -425,6 +428,35 @@ def run_pipeline(args: argparse.Namespace) -> None:
             f"[SCORE] Điểm {quarter} tính với --as-of GIỮA quý "
             f"(data_as_of={score_record['data_as_of']}) — KHÔNG dùng làm backtest."
         )
+
+    # ── Đồng bộ ledger input audit NGAY TRONG lần chạy này ───────────────────
+    # Workbook công thức (generate_english_master_workbook.py) dựng từ ledger
+    # data/scores/vnindex_quarterly_{market_data,flows,adtv}.json. Trước đây
+    # chúng chỉ được ghi bởi scripts/backfill_*.py chạy tay → chấm lại quý đã
+    # publish bằng dữ liệu live làm JSON điểm đi trước ledger và verifier FAIL
+    # (GitHub Actions runs #18/#19 — 2026-Q4). Ghi ledger từ CHÍNH input scorer
+    # vừa dùng, chỉ cho quý đang chấm, giữ nguyên mọi quý lịch sử.
+    try:
+        adtv_windows = {}
+        if len(df_latest_full) > 0:
+            q_prev = previous_quarter(quarter)
+            for window_q in (q_prev, previous_quarter(q_prev)):
+                window = compute_quarterly_adtv(df_latest_full, window_q)
+                if window:
+                    adtv_windows[window_q] = {
+                        "adtv": round(float(window["adtv"]), 2),
+                        "n_sessions": int(window["n_sessions"]),
+                    }
+        sync_quarter_ledgers(
+            quarter=quarter,
+            pit_inputs=score_record.get("pit_scorer_inputs", {}),
+            scores_dir=SCORES_DIR,
+            adtv_windows=adtv_windows or None,
+        )
+    except Exception as e:
+        # Ledger lệch = workbook lệch = verifier FAIL ở bước sau. Không nuốt lỗi.
+        logger.error(f"[LEDGER] Không đồng bộ được ledger input cho {quarter}: {e}")
+        raise
 
     # ── ASSERT chặn tái diễn lỗi ML "not run" ────────────────────────────────
     # Đây là lần thứ 2 lỗi ML không chạy bị publish report mà không ai biết.

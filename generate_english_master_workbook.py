@@ -75,6 +75,30 @@ def valuation_margin_input(target: float, pe_z: float | None, pb_z: float | None
     raise RuntimeError("Inverse reconstruction is prohibited; use exported raw inputs")
 
 
+def _pit_inputs(score: dict[str, Any]) -> dict[str, Any]:
+    """Hợp đồng input point-in-time do scorer xuất ra (full precision).
+
+    Có từ schema_version 1 (xem src/scoring/quarterly_scorer.build_pit_scorer_inputs).
+    Các quý lịch sử publish trước hợp đồng này không có key → fallback ledger +
+    chuỗi details (hành vi cũ, giữ nguyên bit-for-bit).
+    """
+    pit = score.get("pit_scorer_inputs")
+    return pit if isinstance(pit, dict) else {}
+
+
+def _pit_value(pit: dict[str, Any], section: str, key: str) -> Any:
+    """Giá trị đã xuất, hoặc None khi thiếu — None nghĩa là dùng fallback."""
+    block = pit.get(section)
+    if not isinstance(block, dict):
+        return None
+    return block.get(key)
+
+
+def _prefer(exported: Any, legacy: Any) -> Any:
+    """Ưu tiên input chính xác do scorer xuất; chỉ lùi về nguồn cũ khi thiếu."""
+    return legacy if exported is None else exported
+
+
 def extract_inputs(q: str, payload: dict[str, Any], market: dict, adtv: dict, flows: dict) -> dict[str, Any]:
     score = payload["quarterly_score"]
     details = score["group_details"]
@@ -82,9 +106,19 @@ def extract_inputs(q: str, payload: dict[str, Any], market: dict, adtv: dict, fl
     valuation_details = details["valuation_leverage"]
     structure_details = details["market_structure"]
     quant_details = details["quant_model"]
-    mkt = market[q]
-    bonds = mkt["bonds"]
-    zdata = mkt["pepb_z"]
+    pit = _pit_inputs(score)
+    # Ledger audit chỉ còn là fallback cho các quý lịch sử; quý chấm live lấy
+    # thẳng input full-precision từ JSON điểm (cùng một lần chạy, không lệch).
+    mkt = market.get(q, {}) if isinstance(market, dict) else {}
+    bonds = mkt.get("bonds", {})
+    zdata = mkt.get("pepb_z", {})
+    flows_q = flows.get(q, {}) if isinstance(flows, dict) else {}
+    adtv_q = adtv.get(q, {}) if isinstance(adtv, dict) else {}
+    if not pit and (not mkt or q not in flows or q not in adtv):
+        raise ValueError(
+            f"{q}: thiếu cả input point-in-time trong JSON điểm lẫn ledger audit "
+            "— không được suy diễn ngược input từ điểm đã publish"
+        )
 
     dxy_z = match_float(global_details.get("dxy", ""), r"Z\s*=\s*([-\d.]+)", 0.0)
     us10y = match_float(global_details.get("us10y", ""), r"([-\d.]+)%", 2.5)
@@ -103,42 +137,47 @@ def extract_inputs(q: str, payload: dict[str, Any], market: dict, adtv: dict, fl
     granger_count = sum(p < 0.05 for p in granger_ps)
 
     # Use independently exported model observations. Never solve backward from
-    # a published pillar score. Rounded report text is the declared source
-    # observation until the scorer exports higher precision inputs.
+    # a published pillar score. Rounded report text is only the LAST-RESORT
+    # observation for quarters published before the scorer exported its exact
+    # point-in-time inputs (`pit_scorer_inputs`): 4-decimal display rounding of
+    # the MLR/VAR forecasts moves the quant pillar by up to ±0.5 points, i.e.
+    # ten times the ±0.05 reconciliation tolerance.
     mlr_pred = float(mlr_pred_printed)
     margin_risk = match_float(valuation_details.get("margin_risk", ""), r"Risk\s*=\s*([-\d.]+)", 50.0)
 
     wfv = payload["ml_walk_forward_validation"]
-    return {
-        "as_of": score["data_as_of"],
-        "vn1y": bonds.get("vn1y_yield"),
-        "d_vn1y": bonds.get("delta_vn1y_yield"),
-        "vn10y": bonds.get("vn10y_yield"),
-        "spread": bonds.get("vn_yield_spread"),
-        "fx_z": mkt.get("fx_zscore"),
-        "m2": mkt.get("m2", {}).get("m2_yoy_pct"),
-        "dxy_z": dxy_z,
-        "us10y": us10y,
-        "nff_z": flows[q].get("nff_z"),
-        "nff_mc": flows[q].get("nff_ytd_pct"),
-        "jpy_z": jpy_z,
-        "oil": oil,
-        "pe_z": zdata.get("pe"),
-        "pb_z": zdata.get("pb"),
-        "margin_risk": margin_risk,
-        "eyg_z": zdata.get("eyg"),
+    item = {
+        "as_of": _prefer(pit.get("as_of"), score["data_as_of"]),
+        "vn1y": _prefer(_pit_value(pit, "bonds", "vn1y_yield"), bonds.get("vn1y_yield")),
+        "d_vn1y": _prefer(_pit_value(pit, "bonds", "delta_vn1y_yield"), bonds.get("delta_vn1y_yield")),
+        "vn10y": _prefer(_pit_value(pit, "bonds", "vn10y_yield"), bonds.get("vn10y_yield")),
+        "spread": _prefer(_pit_value(pit, "bonds", "vn_yield_spread"), bonds.get("vn_yield_spread")),
+        "fx_z": _prefer(_pit_value(pit, "macro", "fx_zscore"), mkt.get("fx_zscore")),
+        "m2": _prefer(_pit_value(pit, "macro", "m2_yoy_pct"), mkt.get("m2", {}).get("m2_yoy_pct")),
+        "dxy_z": _prefer(_pit_value(pit, "global", "dxy_zscore"), dxy_z),
+        "us10y": _prefer(_pit_value(pit, "global", "us10y_yield"), us10y),
+        "nff_z": _prefer(_pit_value(pit, "flows", "nff_z"), flows_q.get("nff_z")),
+        "nff_mc": _prefer(_pit_value(pit, "flows", "nff_ytd_pct"), flows_q.get("nff_ytd_pct")),
+        "jpy_z": _prefer(_pit_value(pit, "global", "usdjpy_zscore"), jpy_z),
+        "oil": _prefer(_pit_value(pit, "global", "oil_shock_score"), oil),
+        "pe_z": _prefer(_pit_value(pit, "valuation", "pe_zscore"), zdata.get("pe")),
+        "pb_z": _prefer(_pit_value(pit, "valuation", "pb_zscore"), zdata.get("pb")),
+        "margin_risk": _prefer(_pit_value(pit, "valuation", "margin_risk_score"), margin_risk),
+        "eyg_z": _prefer(_pit_value(pit, "valuation", "eyg_zscore"), zdata.get("eyg")),
         "valuation_composite": None,
-        "adtv": adtv[q].get("adtv_change_pct"),
-        "ftse": ftse_status,
-        "months": months,
-        "etf_z": flows[q].get("etf_z"),
-        "etf_mc": flows[q].get("etf_ytd_pct"),
-        "mlr_pred": mlr_pred,
-        "var_pred": float(var_pred),
-        "adj_r2": float(adj_r2),
+        "adtv": _prefer(_pit_value(pit, "structure", "adtv_change_pct"), adtv_q.get("adtv_change_pct")),
+        "ftse": _prefer(_pit_value(pit, "structure", "ftse_upgrade_status"), ftse_status),
+        "months": _prefer(_pit_value(pit, "structure", "months_to_next_rebalancing"), months),
+        "etf_z": _prefer(_pit_value(pit, "flows", "etf_z"), flows_q.get("etf_z")),
+        "etf_mc": _prefer(_pit_value(pit, "flows", "etf_ytd_pct"), flows_q.get("etf_ytd_pct")),
+        "mlr_pred": float(_prefer(_pit_value(pit, "quant", "mlr_pred"), mlr_pred)),
+        "var_pred": float(_prefer(_pit_value(pit, "quant", "var_forecast"), var_pred)),
+        "adj_r2": float(_prefer(_pit_value(pit, "quant", "mlr_adj_r2"), adj_r2)),
         "granger_pvalues": granger_ps[:5],
         "wfv": wfv,
     }
+    item["months"] = int(item["months"])
+    return item
 
 
 # ── Workbook style helpers ───────────────────────────────────────────────────

@@ -27,6 +27,7 @@ Thiết kế: Mỗi nhóm có hàm scorer riêng, nhận DataFrame features và 
   dict(raw_score=0-100, weighted_score, details=dict, rationale=str)
 """
 
+import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -38,7 +39,8 @@ from src.utils.config import (
     SCORING_WEIGHTS, SCORE_LABELS, SCORE_LABEL_RANGES, get_score_label,
     PE_ZSCORE_OVERBOUGHT, PE_ZSCORE_OVERSOLD,
     PB_ZSCORE_OVERBOUGHT, PB_ZSCORE_OVERSOLD,
-    SCORE_CALIBRATION, SCORES_DIR, FTSE_PASSIVE_INFLOW_BASE_USD, SCORE_MODEL_PARAMS
+    SCORE_CALIBRATION, SCORES_DIR, EXPORTS_DIR,
+    FTSE_PASSIVE_INFLOW_BASE_USD, SCORE_MODEL_PARAMS
 )
 
 logger = logging.getLogger(__name__)
@@ -187,6 +189,143 @@ def calibrate_total_score(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. Macro & Monetary Score (0–100)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+def published_pillar_std_history(
+    quarters: Any,
+    fallback: Optional[Dict[str, float]] = None,
+) -> np.ndarray:
+    """Độ phân tán trụ cột của các quý ĐÃ PUBLISH, tính lại từ chính điểm đã publish.
+
+    `pillar_std` của một quý = std mẫu (ddof=1) của 6 raw pillar score của quý đó.
+    Đây đúng là đại lượng workbook công thức tự tính lại
+    (`ROUND(STDEV.S('04_Pillar_Calculation'!C:H),2)`), nên dùng nó làm cơ sở
+    percentile giữ cho nhãn `dispersion_level` của JSON và của workbook luôn
+    khớp nhau. Quý nào không đọc được JSON thì lùi về giá trị parquet (fallback).
+    """
+    fallback = fallback or {}
+    out = []
+    for q in quarters:
+        path = EXPORTS_DIR / f"score_{str(q).replace('-', '_')}.json"
+        value = None
+        if path.exists():
+            try:
+                with open(path, encoding="utf-8") as f:
+                    groups = json.load(f)["quarterly_score"]["group_scores"]
+                raws = [float(g["raw_score"]) for g in groups.values()]
+                if len(raws) >= 2:
+                    value = round(float(np.std(np.array(raws), ddof=1)), 2)
+            except Exception as exc:  # pragma: no cover - diagnostic path
+                logger.warning(f"[DISPERSION] Không đọc được {path.name}: {exc}")
+        if value is None:
+            value = fallback.get(q)
+        if value is not None and pd.notna(value):
+            out.append(float(value))
+    return np.array(out)
+
+
+def _json_number(value: Any) -> Optional[float]:
+    """Trả về float JSON-safe (NaN/inf/None → None). KHÔNG bịa giá trị mặc định."""
+    if value is None:
+        return None
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(out):
+        return None
+    return out
+
+
+# Phiên bản schema của hợp đồng input point-in-time xuất ra JSON.
+PIT_INPUTS_SCHEMA_VERSION = 1
+
+
+def build_pit_scorer_inputs(
+    df_latest: pd.Series,
+    mlr_pred: Optional[float],
+    var_forecast: Optional[float],
+    mlr_adj_r2: Optional[float],
+    granger_leaders: Optional[int],
+    ftse_upgrade_status: str,
+    months_to_next_rebalancing: Optional[int],
+    adtv_change_pct: Optional[float],
+) -> Dict[str, Any]:
+    """Xuất CHÍNH XÁC (full precision) các input point-in-time mà scorer đã dùng.
+
+    Đây là *hợp đồng nguồn sự thật duy nhất* cho mọi artifact hạ nguồn
+    (workbook công thức, ledger audit, verifier). Trước đây workbook phải
+    regex-parse lại chuỗi `group_details` đã làm tròn 2–4 chữ số và đọc ledger
+    `data/scores/vnindex_quarterly_*.json` được backfill thủ công — hai nguồn
+    này lệch khỏi JSON ngay khi một quý được chấm lại bằng dữ liệu live, làm
+    verifier đối soát thất bại (GitHub Actions runs #18/#19, 2026-Q4).
+
+    KHÔNG có giá trị mặc định ở đây: input thiếu → None (hạ nguồn tự xử lý),
+    tuyệt đối không thay dữ liệu nguồn thiếu bằng số bịa.
+    """
+    get = df_latest.get if hasattr(df_latest, "get") else (lambda *_: None)
+
+    as_of = None
+    _date = get("date", None)
+    if _date is not None and pd.notna(_date):
+        try:
+            as_of = str(pd.to_datetime(_date).date())
+        except Exception:
+            as_of = None
+
+    return {
+        "schema_version": PIT_INPUTS_SCHEMA_VERSION,
+        "as_of": as_of,
+        "bonds": {
+            "vn1y_yield": _json_number(get("vn1y_yield", None)),
+            "delta_vn1y_yield": _json_number(get("delta_vn1y_yield", None)),
+            "vn10y_yield": _json_number(get("vn10y_yield", None)),
+            "vn_yield_spread": _json_number(get("vn_yield_spread", None)),
+        },
+        "macro": {
+            "fx_zscore": _json_number(get("usd_vnd_zscore", None)),
+            "m2_yoy_pct": _json_number(get("m2_yoy_pct", None)),
+        },
+        "global": {
+            "dxy_zscore": _json_number(get("dxy_zscore_60d", None)),
+            "us10y_yield": _json_number(get("us10y_yield", None)),
+            "usdjpy_zscore": _json_number(get("usdjpy_zscore_60d", None)),
+            "oil_shock_score": _json_number(get("oil_shock_score_ytd", None)),
+        },
+        "flows": {
+            # z-score dùng để chấm điểm; *_ytd_pct là % vốn hoá (đơn vị phần trăm,
+            # khớp với ledger data/scores/vnindex_quarterly_flows.json).
+            "nff_z": _json_number(get("nff_ex_etf_q_zscore_live", None)),
+            "nff_ytd_pct": (
+                None if _json_number(get("nff_ex_etf_q_ytd", None)) is None
+                else _json_number(get("nff_ex_etf_q_ytd", None)) * 100.0
+            ),
+            "etf_z": _json_number(get("etf_flow_q_zscore_live", None)),
+            "etf_ytd_pct": (
+                None if _json_number(get("etf_flow_q_ytd", None)) is None
+                else _json_number(get("etf_flow_q_ytd", None)) * 100.0
+            ),
+        },
+        "valuation": {
+            "pe_zscore": _json_number(get("pe_zscore", None)),
+            "pb_zscore": _json_number(get("pb_zscore", None)),
+            "eyg_zscore": _json_number(get("eyg_zscore", None)),
+            "margin_risk_score": _json_number(get("margin_risk_score", None)),
+        },
+        "structure": {
+            "adtv_change_pct": _json_number(adtv_change_pct),
+            "ftse_upgrade_status": str(ftse_upgrade_status).lower() if ftse_upgrade_status else None,
+            "months_to_next_rebalancing": (
+                None if months_to_next_rebalancing is None else int(months_to_next_rebalancing)
+            ),
+        },
+        "quant": {
+            "mlr_pred": _json_number(mlr_pred),
+            "var_forecast": _json_number(var_forecast),
+            "mlr_adj_r2": _json_number(mlr_adj_r2),
+            "granger_leaders": None if granger_leaders is None else int(granger_leaders),
+        },
+    }
+
 
 def score_macro_monetary(df_latest: pd.Series) -> Dict[str, Any]:
     """
@@ -918,7 +1057,17 @@ def compute_quarterly_score(
 
             # Dispersion percentile (expanding window)
             if "pillar_std" in _hist.columns:
-                _disp_hist = _hist["pillar_std"].dropna().values
+                # Cơ sở so sánh PHẢI cùng định nghĩa với pillar_std của quý này:
+                # độ lệch chuẩn mẫu của 6 raw pillar ĐÃ PUBLISH. Cột pillar_std
+                # trong parquet là giá trị của lần chấm GỐC và đã cũ so với các
+                # pillar được backfill re-score (lệch ở 24/24 quý) — dùng nó làm
+                # ngưỡng percentile khiến nhãn dispersion của workbook (tự tính
+                # lại từ pillar) và của JSON lệch nhau ở các quý sát ngưỡng
+                # (2026-Q4, GitHub Actions runs #18/#19).
+                _disp_hist = published_pillar_std_history(
+                    _hist["quarter"].tolist(),
+                    fallback=dict(zip(_hist["quarter"], _hist["pillar_std"])),
+                )
                 if len(_disp_hist) >= 4:
                     _disp_p33 = float(np.percentile(_disp_hist, 33))
                     _disp_p67 = float(np.percentile(_disp_hist, 67))
@@ -999,6 +1148,18 @@ def compute_quarterly_score(
         "ml_pred_class": ml_pred_class, "ml_confidence": ml_confidence,
         "adtv_change_pct": adtv_change_pct,
     }
+    # Hợp đồng input point-in-time FULL PRECISION — nguồn sự thật duy nhất cho
+    # workbook công thức + ledger audit (xem build_pit_scorer_inputs).
+    score_record["pit_scorer_inputs"] = build_pit_scorer_inputs(
+        df_latest=df_latest,
+        mlr_pred=mlr_pred,
+        var_forecast=var_forecast,
+        mlr_adj_r2=mlr_adj_r2,
+        granger_leaders=granger_leaders,
+        ftse_upgrade_status=ftse_upgrade_status,
+        months_to_next_rebalancing=months_to_next_rebalancing,
+        adtv_change_pct=adtv_change_pct,
+    )
     score_record["model_config"] = {"score_model_params": SCORE_MODEL_PARAMS, "scoring_weights": SCORING_WEIGHTS}
 
 
