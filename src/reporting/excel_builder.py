@@ -774,7 +774,7 @@ def build_excel_report(out_path: Optional[Path] = None) -> Path:
         "Composite score (TIER 1 - raw): 6 pillar raw scores (0-100) × fixed weights; labels/allocations from config.py SCORE_LABELS. Kept unchanged as the reference layer.",
         "Calibrated Action Signal (TIER 2): calibrated = clip(center + z_scale × (raw − μ_hist)/σ_hist, 0, 100) where μ/σ come from PRIOR quarters only (expanding window, point-in-time, no look-ahead); parameters in config.py SCORE_CALIBRATION. First 4 quarters (or σ≈0) keep the raw score. Raw composite is never overwritten.",
         "Anti-compression at source: MLR signal gain 20000 (±0.10%/day → 70/30), VAR gain 5000; missing MLR/VAR/ADTV/ETF signals are excluded from pillar averages (renormalized over live signals) instead of defaulting to neutral 50.",
-        "Data: vnstock (HOSE OHLCV, foreign flows, valuation), yfinance/FRED (DXY, US10Y, USD/JPY), SBV (rates, USD/VND), KBNN (VN yield curve).",
+        "Data: market price API, VNDirect foreign flows, separate valuation inputs, yfinance/FRED (DXY, US10Y, USD/JPY), SBV (rates, USD/VND), KBNN (VN yield curve).",
         f"Workbook generated at {generated} from output/exports/score_*.json, data/scores/quarterly_scores_history.parquet and data/scores/vnindex_quarterly_close.json.",
         "Disclaimer: for research purposes only. Not financial advice.",
     ]

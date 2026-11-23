@@ -50,8 +50,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: "🚀 Run Batch Pipeline"
-        env:
-          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
           PYTHONUTF8: 1
         run: |
           START_YEAR=${{ github.event.inputs.start_year }}

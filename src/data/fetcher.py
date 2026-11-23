@@ -2,11 +2,11 @@
 fetcher.py — Thu thập dữ liệu VN-Index, macro, và global indicators
 =====================================================================
 Dữ liệu nguồn:
-  - vnstock v4 (Unified API)  : OHLCV VNI, giá cổ phiếu, P/B, EPS
+  - Market-data API          : VN-Index OHLCV and current VN30 constituents
   - SBV (State Bank of VN)    : Lãi suất OMO, tỷ giá USD/VND
   - FRED / yfinance            : DXY, US10Y Yield (proxy qua yfinance)
   - HNX / HOSE public data     : Dư nợ margin (báo cáo tháng)
-  - Thủ công / tiêu chuẩn      : Net Foreign Flows (từ vnstock price_board)
+  - VNDirect                  : Net Foreign Flows
 
 Lưu ý: Module này KHÔNG đọc file .env — credentials được load bởi config.py
 """
@@ -21,7 +21,7 @@ import pandas as pd
 import numpy as np
 
 from src.utils.config import (
-    VNSTOCK_API_KEY, RAW_DIR, DATA_DIR, HISTORY_START, HISTORY_END,
+    RAW_DIR, DATA_DIR, HISTORY_START, HISTORY_END,
     VNINDEX_TICKER, VN30_TICKERS, get_vn30_tickers
 )
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 1. VN-Index OHLCV từ vnstock
+# 1. VN-Index OHLCV
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def fetch_vnindex_ohlcv(
@@ -54,25 +54,16 @@ def fetch_vnindex_ohlcv(
             logger.info(f"[VNI] Dùng cache OHLCV (đến {latest.date()})")
             return df
 
-    logger.info("[VNI] Đang tải OHLCV từ vnstock API...")
+    logger.info("[VNI] Fetching daily index history")
     try:
-        from vnstock.api.quote import Quote
-        q = Quote(symbol=VNINDEX_TICKER, source="VCI")
-        df = q.history(
-            start=start, end=end, interval="1D"
-        ).reset_index()
-        df.columns = [c.lower() for c in df.columns]
-        # Chuẩn hóa tên cột
-        rename_map = {"time": "date", "ticker": "symbol"}
-        df = df.rename(columns=rename_map)
-        df["date"] = pd.to_datetime(df["date"])
-        df = df.sort_values("date").reset_index(drop=True)
+        from src.data.yuanta import daily_history
+        df = daily_history(VNINDEX_TICKER, start, end)
         df.to_parquet(cache_path, index=False)
-        logger.info(f"[VNI] Đã tải {len(df)} phiên, lưu vào {cache_path}")
+        logger.info("[VNI] Saved %d daily bars", len(df))
     except Exception as e:
-        logger.error(f"[VNI] Lỗi khi fetch OHLCV: {e}")
+        logger.error("[VNI] History unavailable: %s", e)
         if cache_path.exists():
-            logger.warning("[VNI] Fallback về cache cũ")
+            logger.warning("[VNI] Falling back to stale cache")
             df = pd.read_parquet(cache_path)
         else:
             raise
@@ -100,7 +91,7 @@ def compute_vni_returns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 2. Net Foreign Flows từ vnstock
+# 2. Net Foreign Flows
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def fetch_foreign_flows(

@@ -28,8 +28,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: "📊 Run daily update"
-        env:
-          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
         run: python run_daily_update.py
 
       - name: "📤 Upload daily logs"
