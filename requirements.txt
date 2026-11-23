@@ -23,6 +23,7 @@ yfinance>=0.2.50          # Yahoo Finance data (DXY proxy, US10Y)
 # ── Utilities ────────────────────────────────────────────────────────────────
 python-dotenv==1.0.0      # .env loading
 requests==2.31.0          # HTTP calls
+PyYAML>=6.0,<7            # workflow syntax validation
 tqdm==4.65.0              # Progress bars
 
 # ── Reporting / Excel export & formula audit ─────────────────────────────────

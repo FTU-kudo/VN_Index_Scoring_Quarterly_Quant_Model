@@ -92,6 +92,13 @@ def live_sandbox(tmp_path_factory) -> Path:
     sandbox = tmp_path_factory.mktemp("live_refresh") / "repo"
     _copy_repo(sandbox)
 
+    # Build the stale-ledger precondition inside the isolated fixture. The
+    # production ledger is allowed to advance independently of this test.
+    ledger_path = sandbox / "data/scores/vnindex_quarterly_market_data.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger["quarters"][QUARTER]["as_of"] = "2026-09-25"
+    ledger_path.write_text(json.dumps(ledger, ensure_ascii=False, indent=2), encoding="utf-8")
+
     script = sandbox / "_simulate_live_quarter.py"
     script.write_text(
         "import json, sys\n"

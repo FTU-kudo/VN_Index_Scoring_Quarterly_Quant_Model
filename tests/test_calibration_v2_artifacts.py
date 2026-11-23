@@ -151,9 +151,6 @@ class TestPublicationStatus:
             rec = payload["quarterly_score"]
             expect = resolve_publication_status(q, rec.get("data_as_of"))
             assert payload["metadata"]["status"] == expect, q
-        # 2026-Q4 tại thởi điểm review: provisional vì nguồn 2026-09-25 < cuối quý
-        assert records["2026-Q4"]["metadata"]["status"] == "PROVISIONAL"
-        assert records["2026-Q4"]["quarterly_score"]["data_as_of"] == "2026-09-25"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
