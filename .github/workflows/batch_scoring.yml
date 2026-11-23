@@ -50,7 +50,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: "🚀 Run Batch Pipeline"
-          PYTHONUTF8: 1
+        env:
+          PYTHONUTF8: "1"
         run: |
           START_YEAR=${{ github.event.inputs.start_year }}
           END_YEAR=${{ github.event.inputs.end_year }}
@@ -68,13 +69,12 @@ jobs:
               echo "=========================================================="
               # Không dùng || echo vì sẽ nuốt lỗi ML ASSERT
               # Thay bằng: capture exit code, log rõ ràng, continue nhưng mark failed
-              python run_quarterly.py --quarter $QUARTER --ftse-status $FTSE_STATUS
-              EXIT_CODE=$?
-              if [ $EXIT_CODE -ne 0 ]; then
+              if python run_quarterly.py --quarter "$QUARTER" --ftse-status "$FTSE_STATUS"; then
+                echo "✅ Pipeline OK for $QUARTER"
+              else
+                EXIT_CODE=$?
                 echo "::error::❌ Pipeline FAILED for $QUARTER (exit code $EXIT_CODE)"
                 echo "FAILED: $QUARTER" >> /tmp/batch_failures.txt
-              else
-                echo "✅ Pipeline OK for $QUARTER"
               fi
             done
           done
@@ -111,19 +111,19 @@ jobs:
           else
             git commit -m "chore: batch update quarterly scores from ${{ github.event.inputs.start_year }} to ${{ github.event.inputs.end_year }}"
             # Rebase phòng trường hợp có commit khác chen vào giữa lúc chạy
-            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
           fi
 
       - name: "📋 Job summary"
         if: always()
         run: |
-          echo "## ✅ Batch Run Completed" >> $GITHUB_STEP_SUMMARY
-          echo "Đã chạy thành công từ năm ${{ github.event.inputs.start_year }} đến ${{ github.event.inputs.end_year }}." >> $GITHUB_STEP_SUMMARY
+          echo "## Batch Run — ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Phạm vi: ${{ github.event.inputs.start_year }}–${{ github.event.inputs.end_year }}. Xem kết quả các bước ở trên." >> $GITHUB_STEP_SUMMARY
           echo "Vui lòng kiểm tra tab Actions hoặc nhánh main để xem dữ liệu mới nhất." >> $GITHUB_STEP_SUMMARY
 
       - name: "🚀 Trigger Deploy to GitHub Pages"
-        if: always()
+        if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
