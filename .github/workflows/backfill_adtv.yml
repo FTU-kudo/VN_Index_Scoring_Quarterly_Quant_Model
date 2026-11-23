@@ -1,7 +1,7 @@
 name: "📈 Backfill ADTV (Market Structure)"
 
 # Backfill chỉ báo ADTV (Average Daily Trading Volume) cho lịch sử 24 quý.
-# Sandbox/dev không có mạng thị trường → chạy trên Actions nơi vnstock hoạt động.
+# Sandbox/dev không có mạng thị trường → chạy trên Actions nơi market data API is reachable.
 # Pipeline: backfill_adtv → backfill_calibrated → rebuild HTML/Excel → README → commit.
 on:
   workflow_dispatch:
@@ -50,11 +50,9 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ── 4. Backfill ADTV (fetch OHLCV vnstock → re-score market_structure) ─
+      # ── 4. Backfill ADTV (fetch OHLCV market API → re-score market_structure) ─
       # Fail loudly nếu cột volume không dùng được — KHÔNG tự ý dùng số giả.
       - name: "📊 Backfill ADTV"
-        env:
-          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
         run: |
           set -euo pipefail
           python scripts/backfill_adtv.py --force-fetch ${{ (github.event.inputs.dry_run == 'true') && '--dry-run' || '' }} 2>&1 | tee /tmp/backfill_adtv.log

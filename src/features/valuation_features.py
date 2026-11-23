@@ -9,7 +9,7 @@ Phương pháp:
 
 Nguồn dữ liệu:
   - VN_PE_PB_analysis (dự án đã có): sector_history.parquet, ticker_history.parquet
-  - Hoặc tính lại từ vnstock Finance.ratio()
+  - Hoặc tính lại từ external financial ratios
 """
 
 import logging

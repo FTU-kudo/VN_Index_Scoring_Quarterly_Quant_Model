@@ -3,7 +3,7 @@ market_structure_features.py — Features cho trụ cột Market Structure & FTS
 ============================================================================
 ADTV (Average Daily Trading Volume) — khối lượng giao dịch bình quân mỗi phiên
 của VN-Index, tính từ dữ liệu OHLCV (cột `volume`) mà pipeline đã fetch qua
-vnstock.
+market data API.
 
 Nguyên tắc point-in-time (BẤT BIẾN — giống toàn bộ dự án):
   Khi chấm điểm quý Q, quyết định được ra vào ĐẦU quý Q → chỉ số "mới nhất"

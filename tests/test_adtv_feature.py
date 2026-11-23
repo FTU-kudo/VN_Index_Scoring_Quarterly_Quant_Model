@@ -327,7 +327,7 @@ def test_backfill_all_end_to_end(synthetic_workspace):
     assert first_payload["quarterly_score"]["percentile_p15"] is None
 
     # ── metadata audit ──────────────────────────────────────────────────────
-    assert last_payload["metadata"]["adtv_backfill"]["source"] == "vnindex_ohlcv.volume (vnstock VCI)"
+    assert last_payload["metadata"]["adtv_backfill"]["source"] == "vnindex_ohlcv.volume (market history API or cached historical data)"
 
 
 def test_backfill_all_dry_run_writes_nothing(synthetic_workspace):

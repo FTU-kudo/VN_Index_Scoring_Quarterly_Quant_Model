@@ -26,7 +26,7 @@
 The system is engineered to fully meet **5 Gold Standards**:
 1. **Comprehensive variable coverage**: 4 quantitative pillars integrated (Macro & Monetary, Historical Valuation, Flows & Margin, Technical Momentum).
 2. **Rigorous quantification**: Multi-Linear Regression (MLR with Newey-West HAC robust errors), Vector Autoregression (VAR with Granger Causality & IRF), and Machine Learning (XGBoost / Random Forest).
-3. **Automated, real-world data**: Direct integration with the new-generation `vnstock` API (`Quote`, `Listing`) and the VNDirect API.
+3. **Automated, real-world data**: Daily index prices and current VN30 membership use the market data API; foreign flows use the VNDirect API.
 4. **100% automation**: CI/CD via GitHub Actions runs automatically at the start of every quarter and deploys HTML reports to GitHub Pages.
 5. **Strict empirical validation (Backtest & WFV)**: Walk-Forward Validation (WFV) with a rolling scheme that avoids future-information leakage (data leakage). The model has been successfully backtested on **24 consecutive quarters (Q1/2021 to Q4/2026)**.
 
@@ -216,7 +216,7 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 │   └── inject_navbar.py           # Validator: navbar quarter navigation (fails loudly if missing)
 ├── src/
 │   ├── data/
-│   │   └── fetcher.py             # Data ingestion: vnstock 4.0.2 (Quote, Listing) & yfinance
+│   │   └── fetcher.py             # Data ingestion: market API & yfinance
 │   ├── features/
 │   │   ├── macro_features.py      # Pillar 1: rates, DXY, US10Y, FX, M2
 │   │   ├── valuation_features.py  # Pillar 2: P/E, P/B Z-scores, ERP
@@ -242,7 +242,7 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 │   ├── conftest.py                # Test hygiene: SCORES_DIR isolation (pytest never touches production data/)
 │   ├── test_score_calibration.py  # 13 tests: calibrated formula, clip, fallback, point-in-time, SSOT, gains
 │   └── ...                        # MLR forecast, point-in-time dates, label sync, scoring weights
-├── .env.example                   # API key config template (VNSTOCK_API_KEY, Telegram, SMTP)
+├── .env.example                   # configuration template (Telegram, SMTP)
 ├── .gitignore                     # Excludes sensitive files and handoff notes
 ├── LICENSE                        # GNU AGPL v3.0 open-source license
 ├── requirements.txt               # Dependencies compatible with Python 3.11 – 3.14
@@ -278,10 +278,7 @@ pip install -r requirements.txt
 cp .env.example .env     # Linux / macOS
 copy .env.example .env   # Windows
 ```
-Edit `.env` and add your vnstock API key:
-```ini
-VNSTOCK_API_KEY=your_vnstock_api_key
-```
+Configure optional email and Telegram credentials in `.env`. The price-board endpoints above do not require a configured API key.
 
 ---
 
@@ -387,7 +384,7 @@ Distributed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See
 Hệ thống được thiết kế đáp ứng trọn vẹn **5 Tiêu chuẩn Vàng**:
 1. **Xác định toàn diện các biến số**: Tích hợp 4 trụ cột định lượng (Vĩ mô & Tiền tệ, Định giá lịch sử, Dòng tiền & Margin, Động lượng Kỹ thuật).
 2. **Định lượng hóa chặt chẽ**: Ứng dụng Hồi quy Đa biến (MLR với Newey-West HAC robust errors), Mô hình Tự hồi quy Vectơ (VAR với Granger Causality & IRF), và Machine Learning (XGBoost / Random Forest).
-3. **Thu thập dữ liệu tự động & thực tế**: Tích hợp trực tiếp với API `vnstock` thế hệ mới (`Quote`, `Listing`) và API VNDirect.
+3. **Thu thập dữ liệu tự động & thực tế**: Giá chỉ số và danh sách VN30 hiện tại lấy từ API dữ liệu thị trường; dòng vốn ngoại dùng API VNDirect.
 4. **Tự động hóa 100%**: Sẵn sàng với CI/CD GitHub Actions chạy tự động vào đầu mỗi quý và tự động Deploy Báo cáo HTML lên GitHub Pages.
 5. **Kiểm định thực nghiệm nghiêm ngặt (Backtest & WFV)**: Áp dụng phương pháp Walk-Forward Validation (WFV) trượt tránh rò rỉ thông tin tương lai (Data Leakage). Mô hình đã được backtest thành công trên **24 quý liên tiếp (Q1/2021 đến Q4/2026)**.
 
@@ -505,7 +502,7 @@ VN_Index_Scoring_Quarterly_Quant_Model/
 │   └── charts/                   # Biểu đồ phân rã điểm số và hàm phản ứng xung
 ├── scripts/                      # backfill_calibrated_scores · rebuild_html · generate_excel_report · export_excel_detailed · inject validators
 ├── src/
-│   ├── data/fetcher.py           # Data Ingestion: vnstock 4.0.2 (Quote, Listing) & yfinance & VNDirect
+│   ├── data/fetcher.py           # Data Ingestion: market API & yfinance & VNDirect
 │   ├── features/                 # macro · valuation · flow · technical · global
 │   ├── models/                   # regression/mlr_model · var/var_model · ml/ml_model
 │   ├── scoring/quarterly_scorer.py  # Bộ tính điểm 2 tầng: raw + Calibrated Action Signal
@@ -547,10 +544,7 @@ Tạo file `.env` từ file mẫu:
 cp .env.example .env     # Linux / macOS
 copy .env.example .env   # Windows
 ```
-Chỉnh sửa file `.env` và thêm khóa API vnstock của bạn:
-```ini
-VNSTOCK_API_KEY=your_vnstock_api_key
-```
+Cấu hình email và Telegram trong `.env` nếu cần.
 
 ---
 

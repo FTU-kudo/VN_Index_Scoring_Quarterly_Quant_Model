@@ -7,7 +7,7 @@ Vấn đề: `run_quarterly.py` TRƯỚC ĐÂY không bao giờ truyền `adtv_c
 
 Fix (commit này): `run_quarterly.py` giờ tính ADTV point-in-time
     ADTV(Q−1) / ADTV(Q−2) − 1   (Q = quý đang chấm, chỉ dùng 2 quý ĐÃ KẾT THÚC)
-từ cột `volume` của chính OHLCV VN-Index đã fetch qua vnstock (VCI).
+từ cột `volume` của chính OHLCV VN-Index đã fetch qua market history API.
 
 Script này áp dụng fix cho LỊCH SỬ mà không chạy lại toàn pipeline (ML/VAR/
 macro... không đổi). Với mỗi quý (đi TỪ XƯA ĐẾN MỚI để percentile expanding
@@ -74,14 +74,14 @@ MIN_HIST_FOR_PERCENTILE = 4
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def load_ohlcv(force_fetch: bool = False) -> pd.DataFrame:
-    """Cache parquet nếu có; không thì fetch qua vnstock (chỉ chạy được trên CI)."""
+    """Cache parquet nếu có; không thì fetch qua market API (chỉ chạy được trên CI)."""
     cache_path = RAW_DIR / "vnindex_ohlcv.parquet"
     if not force_fetch and cache_path.exists():
         df = pd.read_parquet(cache_path)
         logger.info(f"[OHLCV] Cache: {len(df)} phiên, {df['date'].min().date()} → {df['date'].max().date()}")
         return df
 
-    logger.info("[OHLCV] Không có cache (hoặc --force-fetch) — tải qua vnstock...")
+    logger.info("[OHLCV] Không có cache (hoặc --force-fetch) — tải qua market API...")
     from src.data.fetcher import fetch_vnindex_ohlcv
     try:
         df = fetch_vnindex_ohlcv(use_cache=not force_fetch)
@@ -304,7 +304,7 @@ def backfill_all(
         rec["group_rationale"]["market_structure"] = g6["rationale"]
         payload.setdefault("metadata", {})["adtv_backfill"] = {
             "applied_at": now_str,
-            "source": "vnindex_ohlcv.volume (vnstock VCI)",
+            "source": "vnindex_ohlcv.volume (market history API or cached historical data)",
             "definition": "ADTV(Q-1)/ADTV(Q-2) - 1, point-in-time",
         }
 
@@ -404,7 +404,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Backfill ADTV cho market_structure pillar")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ in so sánh, không ghi")
     ap.add_argument("--force-fetch", action="store_true",
-                    help="Bỏ qua cache OHLCV local, tải lại từ vnstock")
+                    help="Bỏ qua cache OHLCV local, tải lại từ market API")
     ap.add_argument("--from-cache", action="store_true",
                     help="Dùng adtv_change_pct từ data/scores/vnindex_quarterly_adtv.json "
                          "(offline — không cần OHLCV/mạng; hữu ích khi cần refresh label "

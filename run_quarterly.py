@@ -374,7 +374,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
     # ── ADTV: khối lượng giao dịch bình quân mỗi phiên (point-in-time) ──────
     # ADTV(Q−1)/ADTV(Q−2) − 1 — chỉ dùng 2 quý ĐÃ KẾT THÚC trước quý đang chấm.
     # Trước đây chưa bao giờ truyền → chỉ báo ADTV luôn N/A trong trụ cột
-    # Market Structure. Dữ liệu volume lấy từ chính OHLCV vnstock đã fetch.
+    # Market Structure. Dữ liệu volume lấy từ chính OHLCV market API đã fetch.
     adtv_change_pct = (
         compute_adtv_change_pct(df_latest_full, quarter)
         if len(df_latest_full) > 0 else None

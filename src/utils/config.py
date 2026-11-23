@@ -34,7 +34,6 @@ for _d in [RAW_DIR, PROCESSED_DIR, FEATURES_DIR, SCORES_DIR,
 
 # ── API Credentials (từ .env, không bao giờ hardcode) ─────────────────────────
 load_dotenv(ROOT_DIR / ".env")
-VNSTOCK_API_KEY = os.getenv("VNSTOCK_API_KEY", "")
 
 # ── Khoảng thời gian dữ liệu ─────────────────────────────────────────────────
 # Dữ liệu lịch sử tối đa cho backtest & calibration
@@ -54,78 +53,31 @@ ZSCORE_MIN_PERIODS_DAYS = 252
 VNINDEX_TICKER  = "VNINDEX"
 
 
-def get_vn30_tickers(source: str = "VCI", force_refresh: bool = False) -> list:
-    """
-    Lấy danh sách mã cổ phiếu rổ VN30 ĐỘNG từ nguồn vnstock API, không hardcode.
-    Tự động cache vào data/raw/vn30_tickers.json và fallback an toàn khi offline.
+def get_vn30_tickers(source: str = "", force_refresh: bool = False) -> list:
+    """Return current constituents, falling back to the last cached snapshot offline.
 
-    Parameters
-    ----------
-    source : str
-        Nguồn dữ liệu vnstock (mặc định 'VCI')
-    force_refresh : bool
-        Nếu True, bỏ qua cache và truy vấn trực tiếp từ API
-
-    Returns
-    -------
-    list[str]
-        Danh sách các mã cổ phiếu VN30 hiện hành (30 mã)
+    Membership is current, not point-in-time historical membership.
     """
     cache_file = RAW_DIR / "vn30_tickers.json"
-
-    # 1. Trả về từ cache nếu có và không ép refresh
-    if not force_refresh and cache_file.exists():
+    def cached():
         try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                tickers = data.get("tickers", [])
-                if len(tickers) >= 30:
-                    return tickers
-        except Exception:
-            pass
-
-    # 2. Lấy động từ vnstock API
+            return json.loads(cache_file.read_text(encoding="utf-8")).get("tickers", [])
+        except (OSError, ValueError):
+            return []
+    if not force_refresh and len(cached()) >= 30:
+        return cached()
     try:
-        from vnstock.api.listing import Listing
-        l = Listing()
-        res = l.symbols_by_group("VN30")
-        if hasattr(res, "tolist"):
-            raw_list = res.tolist()
-        elif hasattr(res, "symbol"):
-            raw_list = res["symbol"].tolist()
-        elif isinstance(res, (list, tuple)):
-            raw_list = list(res)
-        else:
-            raw_list = [str(x) for x in res]
-
-        tickers = sorted([str(t).strip().upper() for t in raw_list if t and str(t).strip()])
-        if len(tickers) >= 30:
-            try:
-                with open(cache_file, "w", encoding="utf-8") as f:
-                    json.dump({
-                        "updated_at": datetime.now().isoformat(),
-                        "source": f"vnstock.api.listing (source={source})",
-                        "count": len(tickers),
-                        "tickers": tickers
-                    }, f, indent=2, ensure_ascii=False)
-            except Exception:
-                pass
-            return tickers
-    except Exception as e:
-        logging.getLogger(__name__).warning(f"[CONFIG] Không thể lấy VN30 trực tiếp từ vnstock: {e}")
-
-    # 3. Fallback đọc từ cache cũ nếu có
-    if cache_file.exists():
-        try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                cached = data.get("tickers", [])
-                if cached:
-                    return cached
-        except Exception:
-            pass
-
-    # 4. Fallback an toàn (snapshot thực tế từ HOSE tháng 09/2026)
+        from src.data.yuanta import vn30_constituents
+        tickers = vn30_constituents()
+        cache_file.write_text(json.dumps({"updated_at": datetime.now().isoformat(),
+                                        "source": "price board", "count": len(tickers),
+                                        "tickers": tickers}, indent=2), encoding="utf-8")
+        return tickers
+    except Exception as exc:
+        logging.getLogger(__name__).warning("[CONFIG] VN30 unavailable: %s", exc)
+    if cached():
+        return cached()
+    logging.getLogger(__name__).warning("[CONFIG] Using historical September 2026 VN30 snapshot")
     return [
         "ACB", "BID", "BSR", "CTG", "FPT", "GAS", "GVR", "HDB", "HPG", "LPB",
         "MBB", "MCH", "MSN", "MWG", "SAB", "SHB", "SSB", "SSI", "STB", "TCB",
@@ -133,7 +85,6 @@ def get_vn30_tickers(source: str = "VCI", force_refresh: bool = False) -> list:
     ]
 
 
-# Biến VN30_TICKERS được tải động từ vnstock API (không hardcode)
 VN30_TICKERS = get_vn30_tickers()
 
 # ── Tham số mô hình MLR ───────────────────────────────────────────────────────

@@ -92,8 +92,6 @@ jobs:
       # KHÔNG dùng continue-on-error / `|| true`: mọi bước dưới đây là cổng chặn.
       - name: "🚀 Run quarterly scoring"
         id: scoring
-        env:
-          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
         run: |
           QUARTER="${{ steps.set-quarter.outputs.quarter }}"
           FTSE_STATUS="${{ github.event.inputs.ftse_status || 'auto' }}"

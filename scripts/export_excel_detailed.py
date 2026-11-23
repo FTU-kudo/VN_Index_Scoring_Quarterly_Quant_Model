@@ -72,7 +72,7 @@ NA_REGISTER = [
     # (mục, trạng thái, quý từng N/A, cách fill, nguồn)
     ("ADTV change (market_structure.adtv)", "ĐÃ FILL 24/24", "toàn bộ 24 quý (đợt 1)",
      "ADTV(Q-1)/ADTV(Q-2)-1 point-in-time từ cột volume OHLCV VN-Index; điểm = clip(50+100×%Δ, 0, 100)",
-     "vnindex_ohlcv.volume (vnstock, nguồn VCI) — audit data/scores/vnindex_quarterly_adtv.json"),
+     "vnindex_ohlcv.volume (market history API) — audit data/scores/vnindex_quarterly_adtv.json"),
     ("Trái phiếu VN1Y / ΔVN1Y / VN10Y / spread (macro_monetary)", "ĐÃ FILL 24/24", "7 quý 2021-Q1→2022-Q3",
      "Đường cong fitted Nelson-Siegel bản full-history 2012-08-06→nay (3.397 ngày), as-of point-in-time; pre-check 68/68 khớp",
      "VN_Bond_Yield_pipeline — fitted_curve_ns_full.json"),
